@@ -3,7 +3,10 @@ const datePicker = document.getElementById('date-picker');
 const calendarPopup = document.getElementById('calendar-popup');
 
 // 地图初始化
-const map = L.map('map').setView([48.6, 37.9], 10);
+const map = L.map('map', {
+  zoomControl: false  // ⛔ 禁用缩放控件
+}).setView([48.6, 37.9], 10);
+
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
 // 日期格式工具
