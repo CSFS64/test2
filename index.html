@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Map Layout</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      height: 50px;
+      background: #33334E;
+      color: white;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+    }
+
+    #sidebar {
+      width: 300px;
+      background: #f1f1f1;
+      padding: 20px;
+    }
+
+    #map {
+      flex: 1;
+      background: #ddd; /* 模拟地图区域 */
+    }
+
+    footer {
+      height: 40px;
+      background: #33334E;
+      color: white;
+      text-align: center;
+      line-height: 40px;
+    }
+  </style>
+</head>
+<body>
+  <header>🛰️ DeepStateMAP Clone</header>
+  <main>
+    <div id="sidebar">
+      <h2>菜单</h2>
+      <ul>
+        <li>图层切换</li>
+        <li>日期选择</li>
+        <li>语言设置</li>
+      </ul>
+    </div>
+    <div id="map">🗺️ 地图区域</div>
+  </main>
+  <footer>📍 状态栏 | 离线 | 加载错误 | 用户操作</footer>
+</body>
+</html>
