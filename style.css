@@ -6,31 +6,54 @@
 
 body, html {
   height: 100%;
-  font-family: sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
 #map {
   position: absolute;
-  top: 60px;
-  left: 0;
+  top: 0;
+  left: 60px;
   right: 0;
   bottom: 0;
+  z-index: 0;
 }
 
+/* 🧱 左侧图标栏 */
+#sidebar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 60px;
+  background: white;
+  border-right: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 10px;
+  z-index: 1001;
+}
+
+#sidebar .icon {
+  font-size: 22px;
+  margin: 14px 0;
+  cursor: pointer;
+  color: #333;
+}
+
+/* 🧭 顶部日期浮框 */
 .top-bar {
   position: absolute;
-  top: 10px;
+  top: 20px;
   left: 50%;
   transform: translateX(-50%);
   background: white;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 8px 12px;
+  border-radius: 12px;
+  padding: 8px 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
   display: flex;
   gap: 10px;
   align-items: center;
   z-index: 1000;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .top-bar button {
@@ -38,28 +61,47 @@ body, html {
   background: #eee;
   padding: 6px 10px;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 6px;
+  font-size: 16px;
 }
 
+.top-bar #current-date {
+  min-width: 110px;
+  text-align: center;
+  font-weight: bold;
+}
+
+/* 📆 日历弹窗 */
 #calendar-popup {
   position: absolute;
-  top: 60px;
+  top: 80px;
   left: 50%;
   transform: translateX(-50%);
   background: white;
   border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 10px;
+  border-radius: 12px;
+  padding: 14px;
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
 #calendar-popup input[type="date"] {
-  padding: 4px;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
 }
 
-#calendar-popup.hidden {
+#calendar-popup button {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  background: #eee;
+  cursor: pointer;
+}
+
+.hidden {
   display: none;
 }
