@@ -7,6 +7,13 @@ const map = L.map('map', {
   zoomControl: false  // ⛔ 禁用缩放控件
 }).setView([48.6, 37.9], 10);
 
+L.control.scale({
+  position: 'bottomleft',  // 默认就是 bottomleft，可省略
+  imperial: false,         // 只显示米制
+  metric: true,
+  maxWidth: 100
+}).addTo(map);
+
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
 // 日期格式工具
