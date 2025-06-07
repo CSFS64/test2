@@ -2,147 +2,27 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8" />
-  <title>前线地图终端</title>
+  <title>前线地图</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <style>
-    /* Pip-Boy 绿色终端风格 */
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Courier New', Courier, monospace;
-      background-color: #0d1e0d;
-      color: #33ff33;
-    }
-
-    #map {
-      position: absolute;
-      top: 80px;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 1;
-    }
-
-    .top-bar {
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      background-color: #0d1e0d;
-      border: 2px solid #33ff33;
-      padding: 10px 20px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      z-index: 1000;
-      border-radius: 8px;
-    }
-
-    .top-bar button, .top-bar input {
-      background-color: #0d1e0d;
-      color: #33ff33;
-      border: 1px solid #33ff33;
-      padding: 6px 10px;
-      font-size: 16px;
-      border-radius: 6px;
-    }
-
-    .top-bar button:hover {
-      background-color: #33ff33;
-      color: #0d1e0d;
-      cursor: pointer;
-    }
-
-    #calendar-popup {
-      position: absolute;
-      top: 70px;
-      left: 50%;
-      transform: translateX(-50%);
-      background-color: #0d1e0d;
-      color: #33ff33;
-      border: 2px solid #33ff33;
-      padding: 10px;
-      display: none;
-      z-index: 2000;
-    }
-
-    .hidden { display: none; }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="top-bar">
-    <button id="prev-day">&#8592;</button>
-    <input type="text" id="current-date" readonly value="06.06.2025" />
-    <button id="next-day">&#8594;</button>
-    <button id="toggle-calendar">📅</button>
+    <button id="prev-day">←</button>
+    <div id="current-date">06.06.2025</div>
+    <button id="next-day">→</button>
+    <button id="open-calendar">📅</button>
   </div>
 
-  <div id="calendar-popup">
-    <input type="date" id="calendar-select" />
-    <button onclick="selectToday()">Today</button>
+  <div id="calendar-popup" class="hidden">
+    <input type="date" id="date-picker" />
+    <button id="today-button">Today</button>
   </div>
 
   <div id="map"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script>
-    const map = L.map('map').setView([48.6, 37.9], 11);
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-    const currentDateInput = document.getElementById('current-date');
-    const calendarPopup = document.getElementById('calendar-popup');
-    const calendarSelect = document.getElementById('calendar-select');
-
-    function format(date) {
-      return date.toLocaleDateString('en-GB').split('/').join('.');
-    }
-
-    function parse(dateStr) {
-      const [dd, mm, yyyy] = dateStr.split('.');
-      return new Date(`${yyyy}-${mm}-${dd}`);
-    }
-
-    function updateDateDisplay(date) {
-      currentDateInput.value = format(date);
-      calendarSelect.value = date.toISOString().split('T')[0];
-      loadDataForDate(format(date));
-    }
-
-    function loadDataForDate(dateStr) {
-      // 实际上你会加载 data/yyyy-mm-dd.json 文件
-      console.log(`加载数据：${dateStr}`);
-    }
-
-    document.getElementById('prev-day').onclick = () => {
-      const d = parse(currentDateInput.value);
-      d.setDate(d.getDate() - 1);
-      updateDateDisplay(d);
-    };
-
-    document.getElementById('next-day').onclick = () => {
-      const d = parse(currentDateInput.value);
-      d.setDate(d.getDate() + 1);
-      updateDateDisplay(d);
-    };
-
-    document.getElementById('toggle-calendar').onclick = () => {
-      calendarPopup.style.display = calendarPopup.style.display === 'none' ? 'block' : 'none';
-    };
-
-    calendarSelect.onchange = () => {
-      updateDateDisplay(new Date(calendarSelect.value));
-      calendarPopup.style.display = 'none';
-    };
-
-    function selectToday() {
-      const today = new Date();
-      updateDateDisplay(today);
-      calendarPopup.style.display = 'none';
-    }
-
-    // 初始化默认日期为今天
-    selectToday();
-  </script>
+  <script src="main.js"></script>
 </body>
 </html>
