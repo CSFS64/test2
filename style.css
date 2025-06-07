@@ -23,21 +23,37 @@ body, html {
   position: absolute;
   top: 0;
   bottom: 0;
+  left: 0;
   width: 60px;
   background: white;
   border-right: 1px solid #ddd;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 10px;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 0;
   z-index: 1001;
 }
 
-#sidebar .icon {
-  font-size: 22px;
-  margin: 14px 0;
-  cursor: pointer;
+.icon-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.icon {
+  font-size: 20px;
   color: #333;
+  cursor: pointer;
+}
+
+.separator {
+  width: 30px;
+  height: 1px;
+  background: #ccc;
+  margin: 10px 0;
 }
 
 /* 日期控制面板（左上角） */
@@ -88,7 +104,7 @@ body, html {
   display: none;
 }
 
-#calendar-popup input[type=\"date\"] {
+#calendar-popup input[type="date"] {
   width: 100%;
   padding: 6px;
   border-radius: 6px;
@@ -139,4 +155,3 @@ body, html {
   width: 100%;
   font-size: 14px;
 }
-
