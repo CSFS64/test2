@@ -118,17 +118,11 @@ body, html {
   height: 40px;  
 }
 
-.search-icon {
-  font-size: 18px;
-  cursor: pointer;
-  color: #33334F;
-}
-
 /* 分隔线 */
 .divider {
   height: 1px;
   background: #ddd;
-  margin: 5px 0;
+  margin: 4px 0;
 }
 
 /* 日期控制面板（左上角） */
