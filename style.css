@@ -30,9 +30,8 @@ body, html {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 12px 0;
+  justify-content: space-between; /* ✅ 关键：使三组分布到上下中 */
+  padding: 20px 0;
   z-index: 1001;
 }
 
