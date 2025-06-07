@@ -29,11 +29,14 @@ body, html {
   border-right: 1px solid #ddd;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 12px 0;
+  justify-content: space-between; /* ✅ 关键：三段垂直拉满 */
   z-index: 1001;
+}
+
+.sidebar-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .icon-group {
@@ -47,6 +50,17 @@ body, html {
   font-size: 20px;
   color: #333;
   cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.icon:hover {
+  background-color: #f0f0f0;
 }
 
 .separator {
