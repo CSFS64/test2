@@ -123,17 +123,12 @@ body, html {
 
 /* 日期控制面板（左上角） */
 .control-panel {
-  position: absolute;
-  top: 20px;
-  left: 80px;
   background: white;
   border-radius: 12px;
   padding: 10px 16px;
   display: flex;
   align-items: center;
   gap: 10px;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-  z-index: 1000;
 }
 
 .control-panel button {
