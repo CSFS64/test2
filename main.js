@@ -23,7 +23,7 @@ function formatDate(date) {
 }
 function parseDate(str) {
   const [dd, mm, yyyy] = str.split('.');
-  return new Date(${yyyy}-${mm}-${dd});
+  return new Date(`${yyyy}-${mm}-${dd}`);
 }
 function toIsoDate(date) {
   return date.toISOString().split('T')[0];
