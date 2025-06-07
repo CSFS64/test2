@@ -12,7 +12,6 @@ L.control.scale({
   imperial: true,         // 只显示米制
   metric: true,
   maxWidth: 100,
-  updateWhenIdle: false
 }).addTo(map);
 
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
