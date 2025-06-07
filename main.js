@@ -11,7 +11,8 @@ L.control.scale({
   position: 'bottomleft',  // 默认就是 bottomleft，可省略
   imperial: true,         // 只显示米制
   metric: true,
-  maxWidth: 100
+  maxWidth: 100,
+  updateWhenIdle: false
 }).addTo(map);
 
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
