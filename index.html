@@ -4,43 +4,36 @@
   <meta charset="UTF-8" />
   <title>前线地图</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- Leaflet 地图样式 -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <!-- 自定义样式 -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
   <!-- 左侧图标栏 -->
   <div id="sidebar">
-    <div class="icon-group">
-      <div class="icon">☰</div>
-      <div class="icon">🌐</div>
-      <div class="icon">🔔</div>
-      <div class="icon">ℹ️</div>
+    <div class="icon-group top">
+      <div class="icon" title="菜单">☰</div>
+      <div class="icon" title="地图">🌐</div>
+      <div class="icon" title="通知">🔔</div>
+      <div class="icon" title="信息">ℹ️</div>
     </div>
-  
-    <div class="separator"></div>
-  
-    <div class="icon-group">
-      <div class="icon">🎛️</div>
-      <div class="icon">⌨️</div>
-      <div class="icon">✏️</div>
+
+    <div class="icon-group middle">
+      <div class="icon" title="控制">🎛️</div>
+      <div class="icon" title="键盘">⌨️</div>
+      <div class="icon" title="编辑">✏️</div>
     </div>
-  
-    <div class="separator"></div>
-  
-    <div class="icon-group">
-      <div class="icon">☁️</div>
-      <div class="icon">💨</div>
-      <div class="icon">📡</div>
-      <div class="icon">🔥</div>
-      <div class="icon">☢️</div>
+
+    <div class="icon-group bottom">
+      <div class="icon" title="云图">☁️</div>
+      <div class="icon" title="风力">💨</div>
+      <div class="icon" title="卫星">📡</div>
+      <div class="icon" title="火力">🔥</div>
+      <div class="icon" title="核态势">☢️</div>
     </div>
   </div>
 
-  <!-- 顶部浮动控制框（仿 DeepStateMAP 日期栏） -->
+  <!-- 顶部浮动控制框 -->
   <div class="control-panel">
     <button id="play-speed">1x</button>
     <button id="prev-day">←</button>
@@ -63,9 +56,7 @@
   <!-- 地图容器 -->
   <div id="map"></div>
 
-  <!-- Leaflet 脚本 -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- 自定义逻辑 -->
   <script src="main.js"></script>
 </body>
 </html>
