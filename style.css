@@ -67,7 +67,7 @@ body, html {
   width: 30px;
   height: 1px;
   background: #ccc;
-  margin: 10px 0;
+  margin: 10px auto;  /* ✅ 水平居中 */
 }
 
 /* 日期控制面板（左上角） */
