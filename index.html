@@ -4,24 +4,27 @@
   <meta charset="UTF-8" />
   <title>前线地图</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Leaflet 地图样式 -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- 自定义样式 -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="ui-wrapper">
-    <!-- 左侧图标栏 -->
-    <div id="sidebar">
-      <div class="sidebar-section top">
-        <div class="icon-group">
-          <div class="icon">☰</div>
-          <div class="icon">🌐</div>
-          <div class="icon">🔔</div>
-          <div class="icon">ℹ️</div>
+  
+  <!-- 左侧图标栏 -->
+  <div id="sidebar">
+    <div class="sidebar-section top">
+      <div class="icon-group">
+        <div class="icon">☰</div>
+        <div class="icon">🌐</div>
+        <div class="icon">🔔</div>
+        <div class="icon">ℹ️</div>
         </div>
       </div>
 
-      <div class="separator"></div>
-
+    <div class="separator"></div>
+    
       <div class="sidebar-section middle">
         <div class="icon-group">
           <div class="icon">🛠️</div>
@@ -30,8 +33,8 @@
         </div>
       </div>
 
-      <div class="separator"></div>
-
+    <div class="separator"></div>
+    
       <div class="sidebar-section bottom">
         <div class="icon-group">
           <div class="icon">☁️</div>
@@ -42,14 +45,15 @@
         </div>
       </div>
     </div>
-
-    <!-- 顶部控制栏 -->
+  
     <div class="top-panel">
       <div class="logo-bar">
-        <img src="https://github.com/CSFS64/test2/blob/main/images/LOGO.jpg?raw=true" class="logo" alt="Logo" />
+        <img src="https://github.com/CSFS64/test2/blob/main/images/LOGO.jpg?raw=true" alt="Logo" class="logo" />
         <span class="brand-name">CSFS<br>MAPPING</span>
       </div>
+    
       <div class="divider"></div>
+    
       <div class="control-panel">
         <button id="play-speed">1x</button>
         <button id="prev-day">←</button>
@@ -60,21 +64,22 @@
       </div>
     </div>
 
-    <!-- 日历 -->
-    <div id="calendar-popup" class="hidden">
-      <div class="calendar-header">
-        <strong>Calendar</strong>
-        <button id="close-calendar">✕</button>
-      </div>
-      <input type="date" id="date-picker" />
-      <button id="today-button">Today</button>
+  <!-- 日历弹窗 -->
+  <div id="calendar-popup" class="hidden">
+    <div class="calendar-header">
+      <strong>Calendar</strong>
+      <button id="close-calendar" aria-label="Close">✕</button>
     </div>
+    <input type="date" id="date-picker" />
+    <button id="today-button">Today</button>
   </div>
 
   <!-- 地图容器 -->
   <div id="map"></div>
 
+  <!-- Leaflet 脚本 -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- 自定义逻辑 -->
   <script src="main.js"></script>
 </body>
 </html>
