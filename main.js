@@ -1,4 +1,4 @@
-trconst currentDateEl = document.getElementById('current-date');
+const currentDateEl = document.getElementById('current-date');
 const datePicker = document.getElementById('date-picker');
 const calendarPopup = document.getElementById('calendar-popup');
 
