@@ -141,10 +141,6 @@ body, html {
   line-height: 1;
 }
 
-#close-calendar:hover {
-  color: black;
-}
-
 #today-button {
   margin-top: 10px;
   padding: 6px 10px;
