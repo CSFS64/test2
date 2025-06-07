@@ -45,7 +45,7 @@ body, html {
 .icon {
   width: 40px;
   height: 40px;
-  margin: 10px;
+  margin: 8px 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -54,6 +54,7 @@ body, html {
   cursor: pointer;
   border-radius: 8px;
   transition: background-color 0.2s;
+  /* ✅ 固定尺寸 + 没有 padding，hover 时也不变 */
 }
 
 .icon:hover {
