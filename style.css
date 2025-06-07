@@ -18,7 +18,7 @@ body, html {
   z-index: 0;
 }
 
-/* 🧱 左侧图标栏 */
+/* 左侧图标栏 */
 #sidebar {
   position: absolute;
   top: 0;
@@ -40,68 +40,76 @@ body, html {
   color: #333;
 }
 
-/* 🧭 顶部日期浮框 */
-.top-bar {
+/* 日期控制面板（左上角） */
+.control-panel {
   position: absolute;
   top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 80px;
   background: white;
   border-radius: 12px;
-  padding: 8px 14px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  padding: 10px 16px;
   display: flex;
-  gap: 10px;
   align-items: center;
+  gap: 10px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
   z-index: 1000;
 }
 
-.top-bar button {
+.control-panel button {
   border: none;
-  background: #eee;
+  background: #f2f2f2;
   padding: 6px 10px;
-  cursor: pointer;
+  font-size: 14px;
   border-radius: 6px;
-  font-size: 16px;
+  cursor: pointer;
 }
 
-.top-bar #current-date {
-  min-width: 110px;
-  text-align: center;
+.control-panel #current-date {
   font-weight: bold;
+  font-size: 15px;
+  padding: 2px 6px;
 }
 
-/* 📆 日历弹窗 */
+/* 日历弹窗样式 */
 #calendar-popup {
   position: absolute;
   top: 80px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 80px;
   background: white;
   border: 1px solid #ccc;
-  border-radius: 12px;
-  padding: 14px;
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  border-radius: 14px;
+  padding: 16px;
+  width: 220px;
+  z-index: 1001;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
-#calendar-popup input[type="date"] {
+#calendar-popup.hidden {
+  display: none;
+}
+
+#calendar-popup input[type=\"date\"] {
+  width: 100%;
   padding: 6px;
-  border: 1px solid #ccc;
   border-radius: 6px;
+  border: 1px solid #ccc;
+  margin-top: 10px;
 }
 
 #calendar-popup button {
+  margin-top: 10px;
   padding: 6px 10px;
   border: none;
-  border-radius: 6px;
   background: #eee;
+  border-radius: 6px;
   cursor: pointer;
+  width: 100%;
 }
 
-.hidden {
-  display: none;
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 16px;
+  margin-bottom: 4px;
 }
