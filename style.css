@@ -29,15 +29,16 @@ body, html {
   border-right: 1px solid #ddd;
   display: flex;
   flex-direction: column;
-  justify-content: space-between; /* ✅ 关键：三段垂直拉满 */
+  justify-content: space-between; /* ✅ 顶部、中部、底部分散分布 */
+  align-items: center;
+  padding: 12px 0;
   z-index: 1001;
 }
 
+/* 每段只包内容，不拉伸 */
 .sidebar-section {
   display: flex;
   justify-content: center;
-  align-items: center;
-  flex: 1;
 }
 
 .icon-group {
@@ -48,15 +49,15 @@ body, html {
 }
 
 .icon {
-  font-size: 20px;
-  color: #333;
-  cursor: pointer;
   width: 40px;
   height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 20px;
+  color: #333;
   border-radius: 8px;
+  cursor: pointer;
   transition: background-color 0.2s;
 }
 
@@ -68,7 +69,7 @@ body, html {
   width: 40px;
   height: 1px;
   background: #ccc;
-  margin: 10px auto;  /* ✅ 水平居中 */
+  margin: 10px auto;
 }
 
 /* 日期控制面板（左上角） */
