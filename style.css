@@ -101,14 +101,14 @@ body, html {
 }
 
 .logo {
-  width: 28px;         /* ✅ 更小更贴合 */
-  height: 28px;
+  width: 40px;         /* ✅ 更小更贴合 */
+  height: 40px;
   flex-shrink: 0;
 }
 
 .brand-name {
   font-family: 'Ethnocentric', sans-serif;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: normal;
   color: #2c2c3c;
   line-height: 1.1;
