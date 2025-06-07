@@ -107,8 +107,9 @@ body, html {
 }
 
 .brand-name {
-  font-weight: 800;
-  font-size: 16px;     /* ✅ 字体略小 */
+  font-family: 'Ethnocentric', sans-serif;
+  font-size: 16px;
+  font-weight: normal;
   color: #2c2c3c;
   line-height: 1.1;
 }
