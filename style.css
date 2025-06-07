@@ -77,35 +77,33 @@ body, html {
   top: 20px;
   left: 80px;
   background: white;
-  border-radius: 14px;
+  border-radius: 12px;
   box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-  padding: 12px 16px;
+  padding: 12px;               /* ↓ 原来是 12px 16px，横向空间更紧凑 */
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  width: fit-content;
-  min-width: 300px;
+  gap: 8px;
+  min-width: unset;            /* ✅ 移除默认宽度限制 */
 }
 
 .logo-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
+  gap: 8px;
 }
 
 .logo {
-  width: 32px;
-  height: 32px;
+  width: 28px;         /* ✅ 更小更贴合 */
+  height: 28px;
+  flex-shrink: 0;
 }
 
 .brand-name {
   font-weight: 800;
-  font-size: 16px;
+  font-size: 16px;     /* ✅ 字体略小 */
   color: #2c2c3c;
   line-height: 1.1;
-  margin-left: 8px;
-  flex-grow: 1;
 }
 
 .search-icon {
@@ -124,18 +122,18 @@ body, html {
 /* 日期控制面板（左上角） */
 .control-panel {
   background: white;
-  border-radius: 12px;
-  padding: 10px 16px;
+  border-radius: 10px;
+  padding: 6px 8px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;               /* ✅ 原本是 10px */
 }
 
 .control-panel button {
   border: none;
   background: #f2f2f2;
-  padding: 6px 10px;
-  font-size: 14px;
+  padding: 4px 8px;       /* ✅ 更紧凑的按钮 */
+  font-size: 13px;
   border-radius: 6px;
   cursor: pointer;
 }
