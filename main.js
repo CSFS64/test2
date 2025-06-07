@@ -1,73 +1,60 @@
-let currentLayers = [];
+const map = L.map('map').setView([48.6, 37.9], 10);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-const map = L.map('map').setView([48.6, 37.9], 12);
-L.tileLayer('https://tile.maptiler.com/maps/satellite/{z}/{x}/{y}.jpg?key=YOUR_MAPTILER_KEY', {
-  attribution: '© MapTiler © OpenStreetMap contributors'
-}).addTo(map);
+const currentDateEl = document.getElementById('current-date');
+const datePicker = document.getElementById('date-picker');
+const calendarPopup = document.getElementById('calendar-popup');
 
-function clearLayers() {
-  currentLayers.forEach(layer => map.removeLayer(layer));
-  currentLayers = [];
-}
-
-function loadDate(dateStr) {
-  const path = `data/${dateStr}.json`;
-  fetch(path)
-    .then(res => {
-      if (!res.ok) throw new Error('No data for this date');
-      return res.json();
-    })
-    .then(json => {
-      clearLayers();
-
-      if (json.red) {
-        const red = L.geoJSON(json.red, {
-          style: { color: 'rgba(200, 0, 0, 0.4)', fillOpacity: 0.4 }
-        }).addTo(map);
-        currentLayers.push(red);
-      }
-
-      if (json.contested) {
-        const contested = L.geoJSON(json.contested, {
-          style: { color: 'orange', fillOpacity: 0.4 }
-        }).addTo(map);
-        currentLayers.push(contested);
-      }
-    })
-    .catch(err => {
-      alert('找不到该日期的数据。');
-    });
-}
-
+// 工具函数
 function formatDate(date) {
+  return date.toLocaleDateString('en-GB').split('/').join('.');
+}
+function parseDate(str) {
+  const [dd, mm, yyyy] = str.split('.');
+  return new Date(`${yyyy}-${mm}-${dd}`);
+}
+function toIsoDate(date) {
   return date.toISOString().split('T')[0];
 }
 
-function getLatestDateFromDataFolder() {
-  // 手动设置默认加载日期（你也可以用服务器端生成最新的）
-  return '2025-06-06'; // 改成你当前的最新日期
+// 加载数据（你可以改成加载 JSON 图层）
+function loadDataForDate(dateStr) {
+  console.log(`加载前线数据：${dateStr}`);
 }
 
-const datePicker = document.getElementById('date-picker');
-const prevBtn = document.getElementById('prev-date');
-const nextBtn = document.getElementById('next-date');
-
-function shiftDate(offset) {
-  const date = new Date(datePicker.value);
-  date.setDate(date.getDate() + offset);
-  const newDateStr = formatDate(date);
-  datePicker.value = newDateStr;
-  loadDate(newDateStr);
+// 日期切换逻辑
+function updateDate(date) {
+  const formatted = formatDate(date);
+  currentDateEl.textContent = formatted;
+  datePicker.value = toIsoDate(date);
+  loadDataForDate(formatted);
 }
 
-datePicker.addEventListener('change', () => {
-  loadDate(datePicker.value);
-});
+// 初始化为今天
+updateDate(new Date());
 
-prevBtn.addEventListener('click', () => shiftDate(-1));
-nextBtn.addEventListener('click', () => shiftDate(1));
+document.getElementById('prev-day').onclick = () => {
+  const date = parseDate(currentDateEl.textContent);
+  date.setDate(date.getDate() - 1);
+  updateDate(date);
+};
 
-// 默认加载最新日期
-const defaultDate = getLatestDateFromDataFolder();
-datePicker.value = defaultDate;
-loadDate(defaultDate);
+document.getElementById('next-day').onclick = () => {
+  const date = parseDate(currentDateEl.textContent);
+  date.setDate(date.getDate() + 1);
+  updateDate(date);
+};
+
+document.getElementById('open-calendar').onclick = () => {
+  calendarPopup.classList.toggle('hidden');
+};
+
+datePicker.onchange = () => {
+  updateDate(new Date(datePicker.value));
+  calendarPopup.classList.add('hidden');
+};
+
+document.getElementById('today-button').onclick = () => {
+  updateDate(new Date());
+  calendarPopup.classList.add('hidden');
+};
