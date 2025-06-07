@@ -14,6 +14,7 @@
 body, html {
   height: 100%;
   font-family: 'Inter', sans-serif;
+  overflow: hidden;
 }
 
 #map {
@@ -36,13 +37,14 @@ body, html {
   border-right: 1px solid #ddd;
   display: flex;
   flex-direction: column;
-  justify-content: space-between; /* ✅ 顶部、中部、底部分散分布 */
+  justify-content: space-between;
   align-items: center;
   padding: 12px 0;
   z-index: 1001;
+  max-height: 100vh;
+  overflow-y: auto;
 }
 
-/* 每段只包内容，不拉伸 */
 .sidebar-section {
   display: flex;
   justify-content: center;
@@ -53,6 +55,7 @@ body, html {
   flex-direction: column;
   align-items: center;
   gap: 14px;
+  flex-shrink: 0;
 }
 
 .icon {
@@ -79,6 +82,7 @@ body, html {
   margin: 10px auto;
 }
 
+/* 顶部信息面板 */
 .top-panel {
   position: absolute;
   top: 20px;
@@ -86,12 +90,13 @@ body, html {
   background: white;
   border-radius: 12px;
   box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-  padding: 12px;               /* ↓ 原来是 12px 16px，横向空间更紧凑 */
+  padding: 12px;
   z-index: 1000;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  min-width: unset;            /* ✅ 移除默认宽度限制 */
+  max-height: 25vh;
+  overflow: auto;
 }
 
 .logo-bar {
@@ -101,7 +106,7 @@ body, html {
 }
 
 .logo {
-  width: 40px;         /* ✅ 更小更贴合 */
+  width: 40px;
   height: 40px;
   object-fit: contain;
 }
@@ -114,31 +119,30 @@ body, html {
   line-height: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;   /* ✅ 让上下行文字垂直居中 */
-  height: 40px;  
+  justify-content: center;
+  height: 40px;
 }
 
-/* 分隔线 */
 .divider {
   height: 1px;
   background: #ddd;
   margin: 4px 0;
 }
 
-/* 日期控制面板（左上角） */
+/* 日期控制面板 */
 .control-panel {
   background: white;
   border-radius: 10px;
   padding: 6px 8px;
   display: flex;
   align-items: center;
-  gap: 6px;               /* ✅ 原本是 10px */
+  gap: 6px;
 }
 
 .control-panel button {
   border: none;
   background: #f2f2f2;
-  padding: 4px 8px;       /* ✅ 更紧凑的按钮 */
+  padding: 4px 8px;
   font-size: 13px;
   border-radius: 6px;
   cursor: pointer;
@@ -150,7 +154,7 @@ body, html {
   padding: 2px 6px;
 }
 
-/* 日历弹窗样式 */
+/* 日历弹窗 */
 #calendar-popup {
   position: absolute;
   top: 160px;
@@ -195,11 +199,11 @@ body, html {
 }
 
 #close-calendar {
-  background: none;         /* 去除背景 */
-  border: none;             /* 去除边框 */
+  background: none;
+  border: none;
   font-size: 18px;
   cursor: pointer;
-  padding: 0;               /* 去除多余空隙 */
+  padding: 0;
   margin: 0;
   line-height: 1;
   color: #333;
@@ -218,4 +222,27 @@ body, html {
   cursor: pointer;
   width: 100%;
   font-size: 14px;
+}
+
+/* 📱 小屏幕适配 */
+@media (max-height: 600px) {
+  .icon {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+
+  .top-panel {
+    transform: scale(0.85);
+    transform-origin: top left;
+  }
+
+  .control-panel button {
+    font-size: 12px;
+    padding: 3px 6px;
+  }
+
+  .control-panel #current-date {
+    font-size: 13px;
+  }
 }
