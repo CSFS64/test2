@@ -103,7 +103,7 @@ body, html {
 .logo {
   width: 40px;         /* ✅ 更小更贴合 */
   height: 40px;
-  flex-shrink: 0;
+  object-fit: contain;
 }
 
 .brand-name {
@@ -111,7 +111,11 @@ body, html {
   font-size: 18px;
   font-weight: normal;
   color: #2c2c3c;
-  line-height: 1.1;
+  line-height: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;   /* ✅ 让上下行文字垂直居中 */
+  height: 40px;  
 }
 
 .search-icon {
