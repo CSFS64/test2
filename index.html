@@ -20,16 +20,22 @@
     <div class="icon">⚙️</div>
   </div>
 
-  <!-- 日期控制栏 -->
-  <div class="top-bar">
+  <!-- 顶部浮动控制框（仿 DeepStateMAP 日期栏） -->
+  <div class="control-panel">
+    <button id="play-speed">1x</button>
     <button id="prev-day">←</button>
     <div id="current-date">06.06.2025</div>
     <button id="next-day">→</button>
     <button id="open-calendar">📅</button>
+    <button id="jump-latest">⇱</button>
   </div>
 
   <!-- 日历弹窗 -->
   <div id="calendar-popup" class="hidden">
+    <div class="calendar-header">
+      <strong>Calendar</strong>
+      <button id="close-calendar">✕</button>
+    </div>
     <input type="date" id="date-picker" />
     <button id="today-button">Today</button>
   </div>
@@ -39,7 +45,7 @@
 
   <!-- Leaflet 脚本 -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- 自定义脚本 -->
+  <!-- 自定义逻辑 -->
   <script src="main.js"></script>
 </body>
 </html>
