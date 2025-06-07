@@ -26,7 +26,12 @@ body, html {
   z-index: 0;
 }
 
-/* 左侧图标栏 */
+#ui-wrapper {
+  transform-origin: top left;
+  transition: transform 0.2s ease;
+}
+
+/* —— Sidebar —— */
 #sidebar {
   position: absolute;
   top: 0;
@@ -41,8 +46,6 @@ body, html {
   align-items: center;
   padding: 12px 0;
   z-index: 1001;
-  max-height: 100vh;
-  overflow-y: auto;
 }
 
 .sidebar-section {
@@ -55,17 +58,16 @@ body, html {
   flex-direction: column;
   align-items: center;
   gap: 14px;
-  flex-shrink: 0;
 }
 
 .icon {
   width: 40px;
   height: 40px;
+  font-size: 20px;
+  color: #333;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  color: #333;
   border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.2s;
@@ -82,7 +84,7 @@ body, html {
   margin: 10px auto;
 }
 
-/* 顶部信息面板 */
+/* —— 顶部栏 —— */
 .top-panel {
   position: absolute;
   top: 20px;
@@ -95,8 +97,6 @@ body, html {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 25vh;
-  overflow: auto;
 }
 
 .logo-bar {
@@ -114,7 +114,6 @@ body, html {
 .brand-name {
   font-family: 'Ethnocentric', sans-serif;
   font-size: 18px;
-  font-weight: normal;
   color: #2c2c3c;
   line-height: 1;
   display: flex;
@@ -129,7 +128,6 @@ body, html {
   margin: 4px 0;
 }
 
-/* 日期控制面板 */
 .control-panel {
   background: white;
   border-radius: 10px;
@@ -154,7 +152,7 @@ body, html {
   padding: 2px 6px;
 }
 
-/* 日历弹窗 */
+/* —— 日历 —— */
 #calendar-popup {
   position: absolute;
   top: 160px;
@@ -211,38 +209,4 @@ body, html {
 
 #close-calendar:hover {
   color: black;
-}
-
-#today-button {
-  margin-top: 10px;
-  padding: 6px 10px;
-  border: none;
-  background: #eee;
-  border-radius: 6px;
-  cursor: pointer;
-  width: 100%;
-  font-size: 14px;
-}
-
-/* 📱 小屏幕适配 */
-@media (max-height: 600px) {
-  .icon {
-    width: 32px;
-    height: 32px;
-    font-size: 16px;
-  }
-
-  .top-panel {
-    transform: scale(0.85);
-    transform-origin: top left;
-  }
-
-  .control-panel button {
-    font-size: 12px;
-    padding: 3px 6px;
-  }
-
-  .control-panel #current-date {
-    font-size: 13px;
-  }
 }
