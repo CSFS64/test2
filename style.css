@@ -4,7 +4,7 @@
   box-sizing: border-box;
 }
 
-body, html {
+html, body {
   height: 100%;
   font-family: 'Inter', sans-serif;
 }
@@ -29,8 +29,7 @@ body, html {
   border-right: 1px solid #ddd;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: space-between; /* ✅ 关键：使三组分布到上下中 */
+  justify-content: space-between;
   padding: 20px 0;
   z-index: 1001;
 }
@@ -40,12 +39,12 @@ body, html {
   flex-direction: column;
   align-items: center;
   gap: 14px;
+  position: relative;
 }
 
 .icon {
   width: 40px;
   height: 40px;
-  margin: 8px 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -54,21 +53,13 @@ body, html {
   cursor: pointer;
   border-radius: 8px;
   transition: background-color 0.2s;
-  /* ✅ 固定尺寸 + 没有 padding，hover 时也不变 */
 }
 
 .icon:hover {
   background-color: #f0f0f0;
 }
 
-.separator {
-  width: 30px;
-  height: 1px;
-  background: #ccc;
-  margin: 10px 0;
-}
-
-/* 日期控制面板（左上角） */
+/* 日期控制面板 */
 .control-panel {
   position: absolute;
   top: 20px;
@@ -98,7 +89,7 @@ body, html {
   padding: 2px 6px;
 }
 
-/* 日历弹窗样式 */
+/* 日历弹窗 */
 #calendar-popup {
   position: absolute;
   top: 80px;
@@ -166,4 +157,9 @@ body, html {
   cursor: pointer;
   width: 100%;
   font-size: 14px;
+}
+
+/* 比例尺右移，避开sidebar */
+.leaflet-control-scale {
+  margin-left: 70px !important;
 }
