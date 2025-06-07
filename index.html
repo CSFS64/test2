@@ -4,10 +4,23 @@
   <meta charset="UTF-8" />
   <title>前线地图</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Leaflet 地图样式 -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- 自定义样式 -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+
+  <!-- 左侧图标栏 -->
+  <div id="sidebar">
+    <div class="icon">📅</div>
+    <div class="icon">🛰️</div>
+    <div class="icon">💬</div>
+    <div class="icon">⚙️</div>
+  </div>
+
+  <!-- 日期控制栏 -->
   <div class="top-bar">
     <button id="prev-day">←</button>
     <div id="current-date">06.06.2025</div>
@@ -15,14 +28,18 @@
     <button id="open-calendar">📅</button>
   </div>
 
+  <!-- 日历弹窗 -->
   <div id="calendar-popup" class="hidden">
     <input type="date" id="date-picker" />
     <button id="today-button">Today</button>
   </div>
 
+  <!-- 地图容器 -->
   <div id="map"></div>
 
+  <!-- Leaflet 脚本 -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- 自定义脚本 -->
   <script src="main.js"></script>
 </body>
 </html>
