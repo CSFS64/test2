@@ -1,4 +1,4 @@
-const currentDateEl = document.getElementById('current-date');
+trconst currentDateEl = document.getElementById('current-date');
 const datePicker = document.getElementById('date-picker');
 const calendarPopup = document.getElementById('calendar-popup');
 
@@ -9,7 +9,7 @@ const map = L.map('map', {
 
 L.control.scale({
   position: 'bottomleft',  // 默认就是 bottomleft，可省略
-  imperial: false,         // 只显示米制
+  imperial: true,         // 只显示米制
   metric: true,
   maxWidth: 100
 }).addTo(map);
