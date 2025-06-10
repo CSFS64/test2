@@ -43,8 +43,8 @@ function toIsoDate(date) {
 fetch("data/latest.json")
   .then(res => res.json())
   .then(obj => {
-    const date = new Date(obj.date);
-    updateDate(date);
+    const [yyyy, mm, dd] = obj.date.split('-');
+    updateDate(new Date(Number(yyyy), Number(mm) - 1, Number(dd)));
   })
   .catch(() => {
     // 如果 latest.json 加载失败，默认使用今天
@@ -130,8 +130,8 @@ document.getElementById('jump-latest').onclick = () => {
   fetch("data/latest.json")
     .then(res => res.json())
     .then(obj => {
-      const date = new Date(obj.date);
-      updateDate(date);
+      const [yyyy, mm, dd] = obj.date.split('-');
+      updateDate(new Date(Number(yyyy), Number(mm) - 1, Number(dd)));
     })
     .catch(() => {
       updateDate(new Date());
