@@ -73,7 +73,6 @@ function loadDataForDate(dateStr) {
         }
       }).addTo(map);
 
-      map.fitBounds(window.currentLayer.getBounds());
     })
     .catch(() => {
       console.warn('地图数据加载失败：' + url);
