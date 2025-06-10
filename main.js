@@ -112,7 +112,8 @@ document.getElementById('open-calendar').onclick = () => {
 };
 
 datePicker.onchange = () => {
-  updateDate(new Date(datePicker.value));
+  const [yyyy, mm, dd] = datePicker.value.split('-');
+  updateDate(new Date(Number(yyyy), Number(mm) - 1, Number(dd)));
   calendarPopup.classList.add('hidden');
 };
 
