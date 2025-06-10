@@ -56,6 +56,13 @@ function loadDataForDate(dateStr) {
   const iso = toIsoDate(parseDate(dateStr));
   const url = `data/frontline-${iso}.json`;
 
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      if (window.currentLayer) {
+        map.removeLayer(window.currentLayer);
+      }
+
       window.currentLayer = L.geoJSON(data, {
         style: feature => {
           const name = feature.properties.Name?.toLowerCase(); // 关键在这里
