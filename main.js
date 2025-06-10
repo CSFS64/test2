@@ -17,8 +17,15 @@ L.control.scale({
 }).addTo(map);
 
 // 底图
+// 卫星底图
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
   attribution: 'Tiles © Esri'
+}).addTo(map);
+
+// 地名注记覆盖层
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+  attribution: 'Labels © Esri',
+  pane: 'overlayPane'  // 保证显示在图层上方
 }).addTo(map);
 
 // 当前图层引用（全局变量）
