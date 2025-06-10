@@ -39,22 +39,22 @@ function toIsoDate(date) {
   return date.toISOString().split('T')[0];
 }
 
+// 初始化为最新日期（由 latest.json 提供）
+fetch("data/latest.json")
+  .then(res => res.json())
+  .then(obj => {
+    const date = new Date(obj.date);
+    updateDate(date);
+  })
+  .catch(() => {
+    // 如果 latest.json 加载失败，默认使用今天
+    updateDate(new Date());
+  });
+
 // 加载前线图层
 function loadDataForDate(dateStr) {
   const iso = toIsoDate(parseDate(dateStr));
   const url = `data/frontline-${iso}.json`;
-
-  // 初始化为最新日期（由 latest.json 提供）
-  fetch("data/latest.json")
-    .then(res => res.json())
-    .then(obj => {
-      const date = new Date(obj.date);
-      updateDate(date);
-    })
-    .catch(() => {
-      // 如果 latest.json 加载失败，默认使用今天
-      updateDate(new Date());
-    });
 
       window.currentLayer = L.geoJSON(data, {
         style: feature => {
