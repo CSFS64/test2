@@ -24,12 +24,17 @@ let currentLayer = null;
 
 // 日期格式工具
 function formatDate(date) {
-  return date.toLocaleDateString('en-GB').split('/').join('.');
+  const dd = String(date.getDate()).padStart(2, '0');
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const yyyy = date.getFullYear();
+  return `${dd}.${mm}.${yyyy}`;
 }
+
 function parseDate(str) {
   const [dd, mm, yyyy] = str.split('.');
-  return new Date(`${yyyy}-${mm}-${dd}`);
+  return new Date(Number(yyyy), Number(mm) - 1, Number(dd));
 }
+
 function toIsoDate(date) {
   return date.toISOString().split('T')[0];
 }
