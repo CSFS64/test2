@@ -75,9 +75,9 @@ function loadDataForDate(dateStr) {
       window.currentLayer = L.geoJSON(data, {
         style: feature => {
           const name = feature.properties.Name?.toLowerCase(); // 关键在这里
-          if (name === 'red') return { color: 'red', fillOpacity: 0.3 };
-          if (name === 'contested') return { color: 'gray', fillOpacity: 0.3 };
-          if (name === 'dpr') return { color: 'purple', fillOpacity: 0.3 };
+          if (name === 'red') return { color: 'red', fillOpacity: 0.3, weight: 0 };
+          if (name === 'contested') return { color: 'gray', fillOpacity: 0.3, weight: 0 };
+          if (name === 'dpr') return { color: 'purple', fillOpacity: 0.3, weight: 0 };
           return { color: 'black', fillOpacity: 0.3 };
         }
       }).addTo(map);
