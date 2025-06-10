@@ -44,12 +44,17 @@ function loadDataForDate(dateStr) {
   const iso = toIsoDate(parseDate(dateStr));
   const url = `data/frontline-${iso}.json`;
 
-  fetch(url)
+  // 初始化为最新日期（由 latest.json 提供）
+  fetch("data/latest.json")
     .then(res => res.json())
-    .then(data => {
-      if (window.currentLayer) {
-        map.removeLayer(window.currentLayer);
-      }
+    .then(obj => {
+      const date = new Date(obj.date);
+      updateDate(date);
+    })
+    .catch(() => {
+      // 如果 latest.json 加载失败，默认使用今天
+      updateDate(new Date());
+    });
 
       window.currentLayer = L.geoJSON(data, {
         style: feature => {
