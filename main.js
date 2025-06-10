@@ -92,9 +92,6 @@ function updateDate(date) {
   loadDataForDate(formatted);
 }
 
-// 初始化为今天
-updateDate(new Date());
-
 // ← 前一天
 document.getElementById('prev-day').onclick = () => {
   const date = parseDate(currentDateEl.textContent);
