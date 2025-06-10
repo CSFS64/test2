@@ -76,7 +76,7 @@ function loadDataForDate(dateStr) {
         style: feature => {
           const name = feature.properties.Name?.toLowerCase(); // 关键在这里
           if (name === 'red') return { color: '#A74B35', fillOpacity: 0.5, weight: 0 };
-          if (name === 'contested') return { color: 'white', fillOpacity: 0.3, weight: 0 };
+          if (name === 'contested') return { color: 'white', fillOpacity: 0.15, weight: 0 };
           if (name === 'dpr') return { color: 'purple', fillOpacity: 0.3, weight: 0 };
           return { color: 'black', fillOpacity: 0.3 };
         }
