@@ -17,7 +17,9 @@ L.control.scale({
 }).addTo(map);
 
 // 底图
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+  attribution: 'Tiles © Esri'
+}).addTo(map);
 
 // 当前图层引用（全局变量）
 let currentLayer = null;
