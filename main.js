@@ -2,20 +2,25 @@ const currentDateEl = document.getElementById('current-date');
 const datePicker = document.getElementById('date-picker');
 const calendarPopup = document.getElementById('calendar-popup');
 
-// 地图初始化
+// 初始化地图
 const map = L.map('map', {
-  zoomControl: false  // ⛔ 禁用缩放控件
+  zoomControl: false
 }).setView([48.6, 37.9], 10);
 
+// 比例尺
 L.control.scale({
-  position: 'bottomleft',  // 默认就是 bottomleft，可省略
-  imperial: true,         // 只显示米制
+  position: 'bottomleft',
+  imperial: true,
   metric: true,
   maxWidth: 100,
   updateWhenIdle: false
 }).addTo(map);
 
+// 底图
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+// 当前图层引用（全局变量）
+let currentLayer = null;
 
 // 日期格式工具
 function formatDate(date) {
@@ -29,12 +34,39 @@ function toIsoDate(date) {
   return date.toISOString().split('T')[0];
 }
 
-// 加载数据函数（此处占位）
+// 加载前线图层
 function loadDataForDate(dateStr) {
-  console.log('加载地图图层：' + dateStr);
+  const iso = toIsoDate(parseDate(dateStr));
+  const url = `data/frontline-${iso}.json`; // 文件路径
+
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      if (currentLayer) map.removeLayer(currentLayer);
+
+      currentLayer = L.geoJSON(data, {
+        style: feature => {
+          const type = feature.properties.layer;
+          if (type === 'contested') return { color: 'gray', fillOpacity: 0.4 };
+          if (type === 'red') return { color: 'red', fillOpacity: 0.4 };
+          if (type === 'dpr') return { color: 'purple', fillOpacity: 0.4 };
+          return { color: 'black', fillOpacity: 0.3 };
+        }
+      }).addTo(map);
+
+      // 自动聚焦
+      map.fitBounds(currentLayer.getBounds());
+    })
+    .catch(() => {
+      console.warn('找不到地图数据：' + url);
+      if (currentLayer) {
+        map.removeLayer(currentLayer);
+        currentLayer = null;
+      }
+    });
 }
 
-// 设置日期
+// 设置日期并更新 UI + 地图
 function updateDate(date) {
   const formatted = formatDate(date);
   currentDateEl.textContent = formatted;
@@ -45,19 +77,21 @@ function updateDate(date) {
 // 初始化为今天
 updateDate(new Date());
 
-// 控制按钮事件
+// ← 前一天
 document.getElementById('prev-day').onclick = () => {
   const date = parseDate(currentDateEl.textContent);
   date.setDate(date.getDate() - 1);
   updateDate(date);
 };
 
+// → 后一天
 document.getElementById('next-day').onclick = () => {
   const date = parseDate(currentDateEl.textContent);
   date.setDate(date.getDate() + 1);
   updateDate(date);
 };
 
+// ⬇️ 日历弹出逻辑
 document.getElementById('open-calendar').onclick = () => {
   calendarPopup.classList.toggle('hidden');
 };
@@ -77,5 +111,5 @@ document.getElementById('close-calendar').onclick = () => {
 };
 
 document.getElementById('jump-latest').onclick = () => {
-  updateDate(new Date()); // 可以改成你的“最新有数据的日期”
+  updateDate(new Date()); // 可改成网站“最新有数据日期”
 };
