@@ -126,5 +126,13 @@ document.getElementById('close-calendar').onclick = () => {
 };
 
 document.getElementById('jump-latest').onclick = () => {
-  updateDate(new Date()); // 可改成网站“最新有数据日期”
+  fetch("data/latest.json")
+    .then(res => res.json())
+    .then(obj => {
+      const date = new Date(obj.date);
+      updateDate(date);
+    })
+    .catch(() => {
+      updateDate(new Date());
+    });
 };
