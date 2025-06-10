@@ -37,31 +37,32 @@ function toIsoDate(date) {
 // 加载前线图层
 function loadDataForDate(dateStr) {
   const iso = toIsoDate(parseDate(dateStr));
-  const url = `data/frontline-${iso}.json`; // 文件路径
+  const url = `data/frontline-${iso}.json`;
 
   fetch(url)
     .then(res => res.json())
     .then(data => {
-      if (currentLayer) map.removeLayer(currentLayer);
+      if (window.currentLayer) {
+        map.removeLayer(window.currentLayer);
+      }
 
-      currentLayer = L.geoJSON(data, {
+      window.currentLayer = L.geoJSON(data, {
         style: feature => {
-          const type = feature.properties.layer;
-          if (type === 'contested') return { color: 'gray', fillOpacity: 0.4 };
-          if (type === 'red') return { color: 'red', fillOpacity: 0.4 };
-          if (type === 'dpr') return { color: 'purple', fillOpacity: 0.4 };
+          const name = feature.properties.Name?.toLowerCase(); // 关键在这里
+          if (name === 'red') return { color: 'red', fillOpacity: 0.4 };
+          if (name === 'contested') return { color: 'gray', fillOpacity: 0.4 };
+          if (name === 'dpr') return { color: 'purple', fillOpacity: 0.4 };
           return { color: 'black', fillOpacity: 0.3 };
         }
       }).addTo(map);
 
-      // 自动聚焦
-      map.fitBounds(currentLayer.getBounds());
+      map.fitBounds(window.currentLayer.getBounds());
     })
     .catch(() => {
-      console.warn('找不到地图数据：' + url);
-      if (currentLayer) {
-        map.removeLayer(currentLayer);
-        currentLayer = null;
+      console.warn('地图数据加载失败：' + url);
+      if (window.currentLayer) {
+        map.removeLayer(window.currentLayer);
+        window.currentLayer = null;
       }
     });
 }
