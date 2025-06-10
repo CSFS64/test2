@@ -118,7 +118,8 @@ datePicker.onchange = () => {
 };
 
 document.getElementById('today-button').onclick = () => {
-  updateDate(new Date());
+  const today = new Date();
+  updateDate(new Date(today.getFullYear(), today.getMonth(), today.getDate()));
   calendarPopup.classList.add('hidden');
 };
 
