@@ -230,11 +230,11 @@ body, html {
 
 /* 更新信息 */
 #update-panel {
-  width: 240px;
-  max-height: 360px;
+  width: 210px;
+  max-height: 75px;
   overflow-y: auto;
   position: absolute;
-  top: calc(20px + 12px + 40px + 12px); /* 顶部间距 + padding + 控件高度 + margin */
+  top: 200px; /* 顶部间距 + padding + 控件高度 + margin */
   left: 80px; /* 与 .top-panel 左对齐 */
   background: white;
   border-radius: 10px;
