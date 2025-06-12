@@ -224,6 +224,49 @@ body, html {
   font-size: 14px;
 }
 
+/* 更新信息 */
+#update-panel {
+  position: absolute;
+  top: 120px; /* 正好在 control-panel 下方 */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 360px;
+  max-height: 400px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 1000;
+  padding: 1em;
+  font-family: sans-serif;
+}
+
+.update-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6em;
+  font-weight: bold;
+}
+
+.update-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8em;
+}
+
+.update-item {
+  background: #f0f0f0;
+  padding: 0.8em;
+  border-radius: 8px;
+  cursor: pointer;
+  border-left: 4px solid #444;
+}
+
+.update-item:hover {
+  background: #e0e0e0;
+}
+
 /* 📱 小屏幕适配 */
 @media (max-height: 600px) {
   .icon {
