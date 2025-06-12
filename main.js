@@ -187,7 +187,6 @@ closeUpdatePanel.onclick = () => {
 
 // 📥 加载更新数据（你可以从 JSON 文件加载）
 const updates = [
-  { date: "2025-06-10", summary: "俄军推进至Yablunivka、Dniproenergia等地" },
   { date: "2025-06-09", summary: "激战于Yunakivka、Malyinivka一线" },
   { date: "2025-06-08", summary: "乌军收复NovaKakhovka，敌军溃退" }
 ];
