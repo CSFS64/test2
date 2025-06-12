@@ -230,8 +230,8 @@ body, html {
 
 /* 更新信息 */
 #update-panel {
-  width: 240px;
-  max-height: 175px;
+  width: 300px;
+  max-height: 750px;
   overflow-y: auto;
   position: absolute;
   top: 180px;
