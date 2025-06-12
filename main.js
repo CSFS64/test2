@@ -35,7 +35,7 @@ function formatDate(date) {
   const dd = String(date.getDate()).padStart(2, '0');
   const mm = String(date.getMonth() + 1).padStart(2, '0');
   const yyyy = date.getFullYear();
-  return ${dd}.${mm}.${yyyy};
+  return `${dd}.${mm}.${yyyy}`;
 }
 function parseDate(str) {
   const [dd, mm, yyyy] = str.split('.');
@@ -47,13 +47,13 @@ function toIsoDate(date) {
 
 // 显示提醒
 function showMessage(msg) {
-  alert(msg); // 可以替换为你网站样式更合适的弹窗系统
+  alert(msg);
 }
 
 // 加载图层
 function loadDataForDate(dateStr) {
   const iso = toIsoDate(parseDate(dateStr));
-  const url = data/frontline-${iso}.json;
+  const url = `data/frontline-${iso}.json`;
 
   fetch(url)
     .then(res => res.json())
@@ -195,7 +195,7 @@ const updates = [
 updates.forEach(item => {
   const div = document.createElement('div');
   div.className = 'update-item';
-  div.textContent = ${item.date}：${item.summary};
+  div.textContent = `${item.date}：${item.summary}`;
   div.onclick = () => {
     const [yyyy, mm, dd] = item.date.split('-');
     const date = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
