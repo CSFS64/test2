@@ -169,3 +169,39 @@ document.getElementById('jump-latest').onclick = () => {
       updateDate(new Date());
     });
 };
+
+// 📦 绑定 🔔按钮逻辑
+const bellButton = document.querySelector('.icon-group .icon:nth-child(3)');
+const updatePanel = document.getElementById('update-panel');
+const updateList = document.getElementById('update-list');
+const closeUpdatePanel = document.getElementById('close-update-panel');
+
+bellButton.onclick = () => {
+  updatePanel.classList.toggle('hidden');
+};
+
+// ❌ 关闭按钮
+closeUpdatePanel.onclick = () => {
+  updatePanel.classList.add('hidden');
+};
+
+// 📥 加载更新数据（你可以从 JSON 文件加载）
+const updates = [
+  { date: "2025-06-10", summary: "俄军推进至Yablunivka、Dniproenergia等地" },
+  { date: "2025-06-09", summary: "激战于Yunakivka、Malyinivka一线" },
+  { date: "2025-06-08", summary: "乌军收复NovaKakhovka，敌军溃退" }
+];
+
+// 渲染更新列表
+updates.forEach(item => {
+  const div = document.createElement('div');
+  div.className = 'update-item';
+  div.textContent = `${item.date}：${item.summary}`;
+  div.onclick = () => {
+    const [yyyy, mm, dd] = item.date.split('-');
+    const date = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+    updateDate(date);
+    updatePanel.classList.add('hidden');
+  };
+  updateList.appendChild(div);
+});
