@@ -63,10 +63,10 @@ function loadDataForDate(dateStr) {
       currentLayer = L.geoJSON(data, {
         style: feature => {
           const name = feature.properties.Name?.toLowerCase();
-          if (name === 'red') return { color: 'red', fillOpacity: 0.25, weight: 0 };
-          if (name === 'lib') return { color: 'blue', fillOpacity: 0.25, weight: 0 };
+          if (name === 'red') return { color: 'red', fillOpacity: 0.2, weight: 0 };
+          if (name === 'lib') return { color: 'blue', fillOpacity: 0.2, weight: 0 };
           if (name === 'contested') return { color: 'white', fillOpacity: 0.25, weight: 0 };
-          if (name === 'dpr') return { color: 'purple', fillOpacity: 0.3, weight: 0 };
+          if (name === 'dpr') return { color: 'purple', fillOpacity: 0.25, weight: 0 };
           return { color: 'black', fillOpacity: 0.3 };
         }
       }).addTo(map);
