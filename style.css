@@ -231,18 +231,21 @@ body, html {
 /* 更新信息 */
 #update-panel {
   position: absolute;
-  top: 120px; /* 正好在 control-panel 下方 */
-  left: 50%;
-  transform: translateX(-50%);
-  width: 360px;
-  max-height: 400px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 12px;
+  top: calc(20px + 12px + 40px + 12px); /* 顶部间距 + padding + 控件高度 + margin */
+  left: 80px; /* 与 .top-panel 左对齐 */
+  background: white;
+  border-radius: 10px;
+  padding: 6px 8px;
+  z-index: 1001;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+  max-height: 45vh;
+  width: fit-content;
+  min-width: 260px;
   overflow-y: auto;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  z-index: 1000;
-  padding: 1em;
-  font-family: sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
 }
 
 .update-header {
