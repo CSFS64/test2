@@ -5,6 +5,10 @@
   font-style: normal;
 }
 
+.hidden {
+  display: none !important;
+}
+
 * {
   margin: 0;
   padding: 0;
