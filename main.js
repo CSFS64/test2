@@ -188,7 +188,8 @@ closeUpdatePanel.onclick = () => {
 // 📥 加载更新数据（你可以从 JSON 文件加载）
 const updates = [
   { date: "2025-06-09", summary: "更新了苏梅、卢甘茨克和顿涅茨克方向的部分前线" },
-  { date: "2025-06-08", summary: "更新了哈尔科夫方向的前线" }
+  { date: "2025-06-08", summary: "更新了哈尔科夫方向的前线" },
+  { date: "2025-08-21", summary: "测试0" }
 ];
 
 // 渲染更新列表
