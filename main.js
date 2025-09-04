@@ -31,22 +31,22 @@ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/Worl
   pane: 'overlayPane'
 }).addTo(map);
 
-// 日期格式工具
+// 日期格式工具 (使用 UTC 时间格式)
 function formatDate(date) {
-  const dd = String(date.getDate()).padStart(2, '0');
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const yyyy = date.getFullYear();
-  return `${dd}.${mm}.${yyyy}`;
+  const dd = String(date.getUTCDate()).padStart(2, '0');
+  const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const yyyy = date.getUTCFullYear();
+  return `${yyyy}-${mm}-${dd}`; // 改为 YYYY-MM-DD 格式
 }
 
 function parseDate(str) {
-  const [dd, mm, yyyy] = str.split('.');
-  return new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+  const [yyyy, mm, dd] = str.split('-');
+  return new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd))); // 使用 UTC 解析
 }
 
-// 转换为ISO格式的本地时间
+// 转换为ISO格式的 UTC 日期
 function toIsoDate(date) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString().split('T')[0];
+  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())).toISOString().split('T')[0];
 }
 
 // 显示提醒
@@ -90,7 +90,7 @@ function loadAvailableDates() {
     .then(res => res.json())
     .then(obj => {
       const [yyyy, mm, dd] = obj.date.split('-');
-      latestDate = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+      latestDate = new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd)));
       latestDate.setHours(0, 0, 0, 0); // 清除时分秒，确保对比的是日期
       availableDates.push(latestDate); // 添加最新的日期
       datePicker.max = toIsoDate(latestDate); // 限制日历最大值
@@ -108,7 +108,7 @@ function loadAvailableDates() {
       // 解析所有日期，并排序
       availableDates = dates.map(dateStr => {
         const [yyyy, mm, dd] = dateStr.split('-');
-        return new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+        return new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd)));
       }).sort((a, b) => a - b); // 升序排序
     });
 }
@@ -137,14 +137,14 @@ loadAvailableDates();
 // ⬅️ 前一天
 document.getElementById('prev-day').onclick = () => {
   const date = parseDate(currentDateEl.textContent);
-  date.setDate(date.getDate() - 1);
+  date.setUTCDate(date.getUTCDate() - 1);
   updateDate(date);
 };
 
 // ➡️ 后一天（不能超过 latestDate）
 document.getElementById('next-day').onclick = () => {
   const date = parseDate(currentDateEl.textContent);
-  date.setDate(date.getDate() + 1);
+  date.setUTCDate(date.getUTCDate() + 1);
 
   // 如果当前日期没有更新，跳转到下一个有更新的日期
   const nextDate = getNextAvailableDate(date);
@@ -163,16 +163,13 @@ document.getElementById('open-calendar').onclick = () => {
 // 📅 选择日期
 datePicker.onchange = () => {
   const [yyyy, mm, dd] = datePicker.value.split('-');
-  const selected = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+  const selected = new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd)));
 
-  // 确保选择的日期是本地时区
-  const localSelectedDate = new Date(selected.toLocaleString());
-
-  if (latestDate && localSelectedDate > latestDate) {
+  if (latestDate && selected > latestDate) {
     showMessage('当日暂未更新');
     updateDate(latestDate);
   } else {
-    updateDate(localSelectedDate);
+    updateDate(selected);
   }
   calendarPopup.classList.add('hidden');
 };
@@ -180,7 +177,7 @@ datePicker.onchange = () => {
 // 📅 今天按钮
 document.getElementById('today-button').onclick = () => {
   const today = new Date();
-  const selected = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const selected = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
 
   if (latestDate && selected > latestDate) {
     showMessage('当日暂未更新');
@@ -202,7 +199,7 @@ document.getElementById('jump-latest').onclick = () => {
     .then(res => res.json())
     .then(obj => {
       const [yyyy, mm, dd] = obj.date.split('-');
-      const date = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+      const date = new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd)));
       updateDate(date);
     })
     .catch(() => {
@@ -239,7 +236,7 @@ updates.forEach(item => {
   div.textContent = `${item.date}：${item.summary}`;
   div.onclick = () => {
     const [yyyy, mm, dd] = item.date.split('-');
-    const date = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+    const date = new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd)));
     updateDate(date);
     updatePanel.classList.add('hidden');
   };
