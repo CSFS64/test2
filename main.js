@@ -4,6 +4,7 @@ const calendarPopup = document.getElementById('calendar-popup');
 
 let latestDate = null; // 🔹 记录最新可用日期
 let currentLayer = null; // 当前图层
+let availableDates = []; // 用于记录所有有更新的日期
 
 // 初始化地图
 const map = L.map('map', {
@@ -83,6 +84,45 @@ function loadDataForDate(dateStr) {
     });
 }
 
+// 加载所有可用的更新日期
+function loadAvailableDates() {
+  fetch("data/latest.json")
+    .then(res => res.json())
+    .then(obj => {
+      const [yyyy, mm, dd] = obj.date.split('-');
+      latestDate = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+      latestDate.setHours(0, 0, 0, 0); // 清除时分秒，确保对比的是日期
+      availableDates.push(latestDate); // 添加最新的日期
+      datePicker.max = toIsoDate(latestDate); // 限制日历最大值
+      updateDate(latestDate);
+    })
+    .catch(() => {
+      latestDate = new Date();
+      updateDate(latestDate);
+    });
+
+  // 加载其他所有的日期
+  fetch("data/available-dates.json")
+    .then(res => res.json())
+    .then(dates => {
+      // 解析所有日期，并排序
+      availableDates = dates.map(dateStr => {
+        const [yyyy, mm, dd] = dateStr.split('-');
+        return new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+      }).sort((a, b) => a - b); // 升序排序
+    });
+}
+
+// 获取下一个有更新的日期
+function getNextAvailableDate(date) {
+  for (let i = 0; i < availableDates.length; i++) {
+    if (availableDates[i] > date) {
+      return availableDates[i];
+    }
+  }
+  return null; // 没有更多更新
+}
+
 // 设置并更新日期
 function updateDate(date) {
   const formatted = formatDate(date);
@@ -92,19 +132,7 @@ function updateDate(date) {
 }
 
 // 初始化为 latest.json 日期
-fetch("data/latest.json")
-  .then(res => res.json())
-  .then(obj => {
-    const [yyyy, mm, dd] = obj.date.split('-');
-    latestDate = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
-    latestDate.setHours(0, 0, 0, 0); // 清除时分秒，确保对比的是日期
-    datePicker.max = toIsoDate(latestDate); // 限制日历最大值
-    updateDate(latestDate);
-  })
-  .catch(() => {
-    latestDate = new Date();
-    updateDate(latestDate);
-  });
+loadAvailableDates();
 
 // ⬅️ 前一天
 document.getElementById('prev-day').onclick = () => {
@@ -117,11 +145,14 @@ document.getElementById('prev-day').onclick = () => {
 document.getElementById('next-day').onclick = () => {
   const date = parseDate(currentDateEl.textContent);
   date.setDate(date.getDate() + 1);
-  if (latestDate && date > latestDate) {
+
+  // 如果当前日期没有更新，跳转到下一个有更新的日期
+  const nextDate = getNextAvailableDate(date);
+  if (nextDate) {
+    updateDate(nextDate);
+  } else {
     showMessage('当日暂未更新');
-    return;
   }
-  updateDate(date);
 };
 
 // 📅 打开日历
