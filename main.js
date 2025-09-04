@@ -37,12 +37,15 @@ function formatDate(date) {
   const yyyy = date.getFullYear();
   return `${dd}.${mm}.${yyyy}`;
 }
+
 function parseDate(str) {
   const [dd, mm, yyyy] = str.split('.');
   return new Date(Number(yyyy), Number(mm) - 1, Number(dd));
 }
+
+// 转换为ISO格式的本地时间
 function toIsoDate(date) {
-  return date.toISOString().split('T')[0];
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString().split('T')[0];
 }
 
 // 显示提醒
@@ -94,6 +97,7 @@ fetch("data/latest.json")
   .then(obj => {
     const [yyyy, mm, dd] = obj.date.split('-');
     latestDate = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+    latestDate.setHours(0, 0, 0, 0); // 清除时分秒，确保对比的是日期
     datePicker.max = toIsoDate(latestDate); // 限制日历最大值
     updateDate(latestDate);
   })
@@ -129,11 +133,15 @@ document.getElementById('open-calendar').onclick = () => {
 datePicker.onchange = () => {
   const [yyyy, mm, dd] = datePicker.value.split('-');
   const selected = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
-  if (latestDate && selected > latestDate) {
+
+  // 确保选择的日期是本地时区
+  const localSelectedDate = new Date(selected.toLocaleString());
+
+  if (latestDate && localSelectedDate > latestDate) {
     showMessage('当日暂未更新');
     updateDate(latestDate);
   } else {
-    updateDate(selected);
+    updateDate(localSelectedDate);
   }
   calendarPopup.classList.add('hidden');
 };
@@ -142,6 +150,7 @@ datePicker.onchange = () => {
 document.getElementById('today-button').onclick = () => {
   const today = new Date();
   const selected = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
   if (latestDate && selected > latestDate) {
     showMessage('当日暂未更新');
     updateDate(latestDate);
