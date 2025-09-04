@@ -113,17 +113,6 @@ function loadAvailableDates() {
     });
 }
 
-// 获取下一个有更新的日期
-function getNextAvailableDate(date) {
-  // 寻找当前日期之后的下一个有更新的日期
-  for (let i = 0; i < availableDates.length; i++) {
-    if (availableDates[i] > date) {
-      return availableDates[i]; // 找到下一个日期
-    }
-  }
-  return null; // 如果没有更多更新，则返回 null
-}
-
 // 设置并更新日期
 function updateDate(date) {
   const formatted = formatDate(date);
@@ -142,18 +131,11 @@ document.getElementById('prev-day').onclick = () => {
   updateDate(date);
 };
 
-// ➡️ 后一天（跳过没有更新的日期，直接跳到下一个有更新的日期）
+// ➡️ 后一天（直接跳转到下一天，不管是否有更新）
 document.getElementById('next-day').onclick = () => {
   const date = parseDate(currentDateEl.textContent);
   date.setUTCDate(date.getUTCDate() + 1);
-
-  // 获取下一个有更新的日期
-  const nextDate = getNextAvailableDate(date);
-  if (nextDate) {
-    updateDate(nextDate); // 如果有更新的日期，跳转到下一个日期
-  } else {
-    showMessage('当日暂未更新');
-  }
+  updateDate(date); // 直接跳转到下一天
 };
 
 // 📅 打开日历
