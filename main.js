@@ -69,7 +69,7 @@ function loadDataForDate(dateStr) {
           const name = feature.properties.Name?.toLowerCase();
           if (name === 'dpr') return { color: 'purple', fillOpacity: 0.25, weight: 2 };
           if (name === 'red') return { color: 'red', fillOpacity: 0.2, weight: 1.5 };
-          if (name === 'lib') return { color: #ADD8E6, fillOpacity: 0.2, weight: 1.5 };
+          if (name === 'lib') return { color: '#ADD8E6', fillOpacity: 0.2, weight: 1.5 };
           if (name === 'contested') return { color: 'white', fillOpacity: 0.25, weight: 0 };
           return { color: 'black', fillOpacity: 0.3 };
         }
