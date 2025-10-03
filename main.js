@@ -70,7 +70,7 @@ function loadDataForDate(dateStr) {
           if (name === 'red') return { color: 'red', fillOpacity: 0.2, weight: 2 };
           if (name === 'lib') return { color: 'blue', fillOpacity: 0.2, weight: 0 };
           if (name === 'contested') return { color: 'white', fillOpacity: 0.25, weight: 0 };
-          if (name === 'dpr') return { color: 'purple', fillOpacity: 0.25, weight: 0 };
+          if (name === 'dpr') return { color: 'purple', fillOpacity: 0.25, weight: 2 };
           return { color: 'black', fillOpacity: 0.3 };
         }
       }).addTo(map);
