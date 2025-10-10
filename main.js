@@ -422,7 +422,7 @@ const fmtDelta = v => {
   return (v === 0) ? '±0.0 km²' : (v > 0 ? `+${km2} km²` : `${km2} km²`);
 };
 
-/* 渲染信息面板（使用指定的百分比口径） */
+/* 渲染信息面板 */
 async function renderInfoPanel(dateStr){
   const curUrl  = `data/frontline-${dateStr}.json`;
   const prevStr = getPrevAvailable(dateStr);
@@ -451,13 +451,13 @@ async function renderInfoPanel(dateStr){
   const A = curSum.occupied_after   || 0;  // after
   const B = curSum.occupied_before  || 0;  // before
   const L = curSum.liberated        || 0;  // liberated
-  const G = curSum.gray             || 0;  // gray（此处不参与你的百分比定义，仅保留可选展示）
+  const G = curSum.gray             || 0;  // gray
 
   const A_prev = prevSum.occupied_after  || 0;
   const B_prev = prevSum.occupied_before || 0;
   const L_prev = prevSum.liberated       || 0;
 
-  // 基数：乌克兰不含克里米亚（m²）。若未设置，退化为四类之和。
+  // 基数：乌克兰不含克里米亚（m²）
   const BASE = (UA_BASE_NO_CRIMEA_M2 && UA_BASE_NO_CRIMEA_M2 > 0)
     ? UA_BASE_NO_CRIMEA_M2
     : (A + B + L + G || 1);
@@ -534,7 +534,7 @@ async function renderInfoPanel(dateStr){
   dot2.style.background = totalColor;
   const lab2 = document.createElement('div');
   lab2.style.minWidth = '120px';
-  lab2.textContent = 'Total temporarily occupied';
+  lab2.textContent = '总暂时被占';
   const barWrap2 = document.createElement('div');
   barWrap2.className = 'info-bar-wrap';
   const bar2 = document.createElement('div');
