@@ -944,21 +944,46 @@ function toGeoJSONFeatureCollection(){
 }
 
 // 构造箭头三角形（用像素空间计算，最后反投影回经纬度）
-function makeArrowHead(a, b, sizePx=12, deg=28){
-  const pA = map.latLngToLayerPoint(a);
-  const pB = map.latLngToLayerPoint(b);
+function makeArrowGeometry(aLL, bLL, sizePx=12, deg=28){
+  const pA = map.latLngToLayerPoint(aLL);
+  const pB = map.latLngToLayerPoint(bLL);
   const v  = pB.subtract(pA);
   const len = Math.max(1, Math.hypot(v.x, v.y));
-  const ux = v.x / len, uy = v.y / len;            // 单位向量
-  const back = sizePx;
-  const half = Math.tan(deg * Math.PI/180) * sizePx;
+  const ux = v.x / len, uy = v.y / len; // 单位方向
 
-  const tip   = pB;
-  const base  = L.point(pB.x - ux*back, pB.y - uy*back);
-  const left  = L.point(base.x + (-uy)*half, base.y + (ux)*half);
-  const right = L.point(base.x - (-uy)*half, base.y - (ux)*half);
+  const back = sizePx;                         // 箭头从尖端往回的长度
+  const half = Math.tan(deg * Math.PI/180) * sizePx; // 半宽
 
-  return [ map.layerPointToLatLng(left), map.layerPointToLatLng(tip), map.layerPointToLatLng(right) ];
+  const tip  = pB;
+  const base = L.point(pB.x - ux*back, pB.y - uy*back); // 底边中心（对齐主线）
+  const left = L.point(base.x + (-uy)*half, base.y + (ux)*half);
+  const right= L.point(base.x - (-uy)*half, base.y - (ux)*half);
+
+  return {
+    tipLL:   map.layerPointToLatLng(tip),
+    baseLL:  map.layerPointToLatLng(base),     // 用于截断主线
+    leftLL:  map.layerPointToLatLng(left),
+    rightLL: map.layerPointToLatLng(right)
+  };
+}
+
+function finalizeArrow(lineLayer){
+  const pts = lineLayer.getLatLngs();
+  if (pts.length !== 2) { shapes.push(lineLayer); return; }
+  const a = pts[0], b = pts[1];
+
+  const { tipLL, baseLL, leftLL, rightLL } = makeArrowGeometry(a, b, 12, 28);
+
+  // 1) 截断主线到“基底中心”
+  lineLayer.setLatLngs([a, baseLL]);
+
+  // 2) 画头（三角形）
+  const head = L.polygon([leftLL, tipLL, rightLL], {
+    color: drawColor, weight: 1, fillColor: drawColor, fillOpacity: 1, interactive: true
+  }).addTo(map);
+
+  // 3) 存为组合
+  shapes.push({ type:'arrow', parts:[lineLayer, head] });
 }
 
 /* —— 触摸事件转鼠标 —— */
