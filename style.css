@@ -508,3 +508,35 @@ body, html {
   cursor: pointer;
 }
 
+
+
+
+
+/* 统一关闭按钮样式 */
+.close-btn,
+#close-update-panel,
+#close-info-panel {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #222;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+  border-radius: 4px;
+  user-select: none;
+}
+
+/* 鼠标悬停变深 */
+.close-btn:hover,
+#close-update-panel:hover,
+#close-info-panel:hover {
+  color: #000;
+}
+
+/* 按下缩小并加黑框 */
+.close-btn:active,
+#close-update-panel:active,
+#close-info-panel:active {
+  transform: scale(0.9);
+  box-shadow: 0 0 0 2px #000;
+}
