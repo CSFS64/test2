@@ -270,7 +270,6 @@ if (updateList) {
       const [yyyy, mm, dd] = item.date.split('-');
       const date = new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd)));
       updateDate(date);
-      updatePanel?.classList.add('hidden');
     };
     updateList.appendChild(div);
   });
@@ -283,30 +282,48 @@ function setSelectedUpdateItem(dateStr){
   const list = document.getElementById('update-list') || document.querySelector('.update-list');
   if (!list) return;
 
-  // 清除旧的选中
-  list.querySelectorAll('.update-item.selected').forEach(el => el.classList.remove('selected'));
+  // 1) 解除旧的“选中外壳”
+  list.querySelectorAll('.selected-frame').forEach(frame => {
+    const inner = frame.firstElementChild;              // .update-item
+    if (inner) frame.replaceWith(inner);                // 解包
+  });
 
-  // 找到“YYYY-MM-DD：”开头的那条
+  // 2) 找到目标项
   const item = Array.from(list.querySelectorAll('.update-item'))
     .find(el => el.textContent.trim().startsWith(dateStr + '：'));
+  if (!item) return;
 
-  if (item){
-    item.classList.add('selected');
+  // 3) 若已在外壳中就不用重复包
+  if (item.parentElement && item.parentElement.classList.contains('selected-frame')) {
+    // 仍要保证滚动到可见
+    scrollItemIntoView(list, item.parentElement);
+    return;
+  }
 
-    // 滚动到“接近中间”的位置
-    const top = item.offsetTop;
-    const bottom = top + item.offsetHeight;
-    const viewTop = list.scrollTop;
-    const viewBottom = viewTop + list.clientHeight;
+  // 4) 创建“黑框外壳”，把选中项包进去
+  const frame = document.createElement('div');
+  frame.className = 'selected-frame';      // 黑色外框容器
+  item.replaceWith(frame);
+  frame.appendChild(item);
 
-    if (top < viewTop || bottom > viewBottom){
-      list.scrollTo({
-        top: Math.max(0, top - (list.clientHeight - item.offsetHeight) / 2),
-        behavior: 'smooth'
-      });
-    }
+  // 5) 滚动到“接近中间”的位置（以外壳作为目标）
+  scrollItemIntoView(list, frame);
+}
+
+// 小工具：把目标滚到列表中间附近
+function scrollItemIntoView(list, target){
+  const top = target.offsetTop;
+  const bottom = top + target.offsetHeight;
+  const viewTop = list.scrollTop;
+  const viewBottom = viewTop + list.clientHeight;
+  if (top < viewTop || bottom > viewBottom){
+    list.scrollTo({
+      top: Math.max(0, top - (list.clientHeight - target.offsetHeight) / 2),
+      behavior: 'smooth'
+    });
   }
 }
+
 function syncSelectedToList(){
   const dateStr = currentDateEl?.textContent?.trim();
   if (dateStr) setSelectedUpdateItem(dateStr);
