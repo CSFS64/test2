@@ -379,3 +379,18 @@ body, html {
 @media (prefers-reduced-motion: reduce){
   .button-pressable{ transition: none; }
 }
+
+/* 选中行的黑色外框容器 */
+.selected-frame{
+  width: 100%;
+  box-sizing: border-box;           /* 确保总宽度与普通条目一致 */
+  border: 2px solid #000;           /* 黑框 */
+  border-radius: 12px;              /* 与面板风格一致的圆角 */
+  padding: 6px;                     /* ← 这个就是“黑框与文本框之间的距离”，可调 4~8px */
+  /* 为了视觉对齐，保持与普通 .update-item 相同的外边距由列表控制 */
+}
+
+/* 被包裹在黑框里的原 .update-item 自身不需要特殊处理，保留你原来的灰底、左侧条等 */
+.selected-frame > .update-item{
+  margin: 0;                        /* 内层不再产生额外外边距，避免影响黑框尺寸 */
+}
