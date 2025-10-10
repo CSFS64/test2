@@ -239,6 +239,7 @@ if (jumpLatestBtn) {
 const bellButton = document.querySelector('.icon-group .icon:nth-child(3)');
 const updatePanel = document.getElementById('update-panel');
 const closeUpdatePanel = document.getElementById('close-update-panel');
+const updateList = document.getElementById('update-list');
 
 // ℹ️ 信息按钮
 const infoIcon = document.querySelector('.icon-group .icon:nth-child(4)');
@@ -384,7 +385,8 @@ function makePressable(el){
 // 把按压效果应用到固定按钮与图标
 [
   prevBtn, nextBtn, openCalBtn, todayBtn, closeCalBtn, jumpLatestBtn,
-  bellButton, closeUpdatePanel
+  bellButton, closeUpdatePanel,
+  closeInfoBtn
 ].forEach(makePressable);
 
 // 左侧所有图标（若需要）
