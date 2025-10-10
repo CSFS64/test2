@@ -229,3 +229,77 @@ updates.forEach(item => {
   };
   updateList.appendChild(div);
 });
+
+/* ===== 选中高亮 + 小圆点 + toast ===== */
+
+/* 简易 toast（右下角） */
+function showToast(msg){
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  // 进入动画
+  requestAnimationFrame(() => el.classList.add('show'));
+  // 自动移除
+  setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(() => el.remove(), 250);
+  }, 2200);
+}
+
+/* 高亮当日更新，并把列表滚到可见 */
+function markSelectedDate(dateStr, hasData){
+  // 1) 顶部日期上的小圆点
+  const label = document.getElementById('current-date');
+  label.classList.remove('has-data','no-data');
+  label.classList.add(hasData ? 'has-data' : 'no-data');
+
+  // 2) 更新列表里的高亮
+  const list = document.getElementById('update-list') || document.querySelector('.update-list');
+  if (!list) return;
+
+  // 统一清除旧高亮
+  list.querySelectorAll('.update-item.active').forEach(el => el.classList.remove('active'));
+
+  // 找到对应日期的那条（以“YYYY-MM-DD：”开头）
+  const target = Array.from(list.querySelectorAll('.update-item'))
+    .find(el => el.textContent.trim().startsWith(dateStr + '：'));
+
+  if (target){
+    target.classList.add('active', 'pulse');
+    target.scrollIntoView({ block: 'nearest' });
+    setTimeout(() => target.classList.remove('pulse'), 1100);
+  }
+}
+
+const _oldLoadDataForDate = loadDataForDate;
+loadDataForDate = function(dateStr){
+  const iso = toIsoDate(parseDate(dateStr)); // 保持你原有逻辑
+  const url = `data/frontline-${iso}.json`;
+
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      if (currentLayer) map.removeLayer(currentLayer);
+      currentLayer = L.geoJSON(data, {
+        style: feature => {
+          const name = feature.properties.Name?.toLowerCase();
+          if (name === 'dpr') return { color: 'purple', fillOpacity: 0.25, weight: 2 };
+          if (name === 'red') return { color: '#E60000', fillOpacity: 0.2, weight: 1.5 };
+          if (name === 'lib') return { color: '#00A2E8', fillOpacity: 0.2, weight: 1.5 };
+          if (name === 'contested') return { color: 'white', fillOpacity: 0.25, weight: 0 };
+          return { color: 'black', fillOpacity: 0.3 };
+        }
+      }).addTo(map);
+
+      // ✨ 选中提示
+      markSelectedDate(dateStr, true);
+      showToast(`已切换到 ${dateStr}（有更新）`);
+    })
+    .catch(() => {
+      // 失败也给出状态提示
+      if (currentLayer) { map.removeLayer(currentLayer); currentLayer = null; }
+      markSelectedDate(dateStr, false);
+      showToast(`当日暂无更新：${dateStr}`);
+    });
+};
