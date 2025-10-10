@@ -59,7 +59,10 @@ function loadDataForDate(dateStr) {
   const url = `data/frontline-${dateStr}.json`;
 
   fetch(url)
-    .then(res => res.json())
+    .then(res => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    })
     .then(data => {
       if (currentLayer) map.removeLayer(currentLayer);
 
@@ -90,7 +93,7 @@ function loadAvailableDates() {
     .then(obj => {
       const [yyyy, mm, dd] = obj.date.split('-');
       latestDate = new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd)));
-      latestDate.setHours(0, 0, 0, 0); // 清除时分秒，确保对比的是日期
+      latestDate.setUTCHours(0, 0, 0, 0); // 清除时分秒，确保对比的是日期
       availableDates.push(latestDate); // 添加最新的日期
       datePicker.max = formatDate(latestDate);
       updateDate(latestDate);
