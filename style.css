@@ -303,7 +303,7 @@ body, html {
   right: 16px;
   width: min(520px, 92vw);
   /* 关键高度限制：视口高度减去顶部/底部留白 */
-  max-height: calc(100vh - 96px);
+  max-height: calc(100vh - (72px + 50px));
   background: #0b0c0f;
   color: #e6e8eb;
   border: 1px solid #2f3336;
@@ -353,4 +353,37 @@ body, html {
     width: auto;
     max-height: calc(100vh - 72px);
   }
+}
+
+/* 让滚动条别贴边，避免“盖住”容器圆角 */
+#update-list{
+  overflow-y: auto;
+  padding-right: 6px;            /* 给滚动条让出一点内边距 */
+  scrollbar-width: thin;         /* Firefox 细滚动条 */
+  scrollbar-color: #4a5056 transparent;
+}
+
+/* WebKit (Chrome/Edge/Safari) */
+#update-list::-webkit-scrollbar{
+  width: 6px;                    /* 更细 */
+}
+
+/* 轨道内凹 + 上下留白，显示圆角 */
+#update-list::-webkit-scrollbar-track{
+  background: transparent;       /* 让面板背景显出来 */
+  margin: 8px 0;                 /* 上下“留白”，看起来有圆角 */
+  border-radius: 999px;
+}
+
+#update-list::-webkit-scrollbar-thumb{
+  background: #4a5056;
+  border-radius: 999px;          /* 圆角滚动条 */
+}
+#update-list::-webkit-scrollbar-thumb:hover{
+  background: #697079;
+}
+
+/* 可选：避免打开/关闭时内容抖动 */
+#update-list{
+  scrollbar-gutter: stable;
 }
