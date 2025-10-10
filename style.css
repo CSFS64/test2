@@ -552,3 +552,68 @@ body, html {
   transform: scale(0.9);
   box-shadow: 0 0 0 2px #000;
 }
+
+
+
+
+
+
+/* 经纬度面板：与其它面板统一 */
+#geo-panel{
+  width: 306px;
+  max-height: calc(100vh - 160px - var(--update-bottom-gap, 24px));
+  overflow-y: auto;
+  position: absolute;
+  top: 160px;
+  left: 80px;
+  background: white;
+  border-radius: 10px;
+  padding: 6px 8px;
+  z-index: 1001;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+/* 表单行：输入+按钮 */
+.geo-form{
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+#geo-input{
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  padding: 0 10px;
+  font-size: 14px;
+  outline: none;
+}
+#geo-input:focus{
+  border-color: #999;
+  box-shadow: 0 0 0 2px rgba(0,0,0,.05);
+}
+
+.geo-go{
+  height: 34px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 8px;
+  background: #f2f2f2;
+  cursor: pointer;
+  font-size: 14px;
+  transition: transform .08s ease, box-shadow .08s ease, background .1s ease;
+}
+.geo-go:hover{ background: #e9e9e9; }
+.geo-go:active{ transform: scale(.97); box-shadow: 0 0 0 2px #000; }
+
+.geo-hint{
+  color: #666;
+  font-size: 12px;
+  padding: 0 2px 6px;
+}
