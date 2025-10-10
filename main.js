@@ -573,22 +573,16 @@ async function renderInfoPanel(dateStr){
 }
 
 /* ========== 打开/关闭信息面板：与当前日期联动 ========== */
-const infoIcon      = document.querySelector('.icon-group .icon:nth-child(4)'); // ℹ️
-const infoPanel     = document.getElementById('info-panel');
-const closeInfoBtn  = document.getElementById('close-info-panel');
-
-if (infoIcon && infoPanel){
-  infoIcon.onclick = () => {
-    infoPanel.classList.toggle('hidden');
-    if (!infoPanel.classList.contains('hidden')){
-      const dateStr = currentDateEl?.textContent?.trim();
-      if (dateStr) renderInfoPanel(dateStr);
-    }
-  };
-}
-if (closeInfoBtn && infoPanel){
-  closeInfoBtn.onclick = () => infoPanel.classList.add('hidden');
-}
+/* ========== 当日期变化时，若信息面板是打开的则刷新 ========== */
+const __oldUpdateDate = updateDate;
+updateDate = function(date){
+  __oldUpdateDate(date);
+  // 用前面已经声明过的 infoPanel / currentDateEl
+  if (infoPanel && !infoPanel.classList.contains('hidden')){
+    const dateStr = currentDateEl?.textContent?.trim();
+    if (dateStr) renderInfoPanel(dateStr);
+  }
+};
 
 /* ========== 当日期变化时，若信息面板是打开的则刷新 ========== */
 const __oldUpdateDate = updateDate;
