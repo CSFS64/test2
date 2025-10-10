@@ -668,7 +668,7 @@ function buildCoordPopup(latlng) {
   const wrap = document.createElement('div');
   wrap.className = 'coord-card';
   wrap.innerHTML = `
-    <div class="coord-title">COORDINATES</div>
+    <div class="coord-title">坐标（左键关闭）</div>
     <div class="coord-row">
       <div class="coord-label">WGS-84</div>
       <div class="coord-value">${wgs}</div>
