@@ -386,7 +386,7 @@ body, html {
   box-sizing: border-box;           /* 确保总宽度与普通条目一致 */
   border: 2px solid #000;           /* 黑框 */
   border-radius: 12px;              /* 与面板风格一致的圆角 */
-  padding: 6px;                     /* ← 这个就是“黑框与文本框之间的距离”，可调 4~8px */
+  padding: 2px;                     /* 黑框与文本框之间的距离*/
   /* 为了视觉对齐，保持与普通 .update-item 相同的外边距由列表控制 */
 }
 
