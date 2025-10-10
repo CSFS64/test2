@@ -724,3 +724,59 @@ body, html {
 .ruler-actions .mini:hover{ background:#e6e6e6; }
 .ruler-actions .mini:active{ transform:scale(.97); box-shadow:0 0 0 2px #000; }
 
+
+
+
+
+
+
+
+/* 绘图面板基础布局 */
+#draw-panel {
+  position: absolute;
+  top: 90px;
+  right: 16px;
+  width: 320px;            /* 和其它面板一致 */
+  max-width: calc(100vw - 32px);
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(0,0,0,.18);
+  overflow: hidden;
+  z-index: 600;            /* 比地图高，比日历等一致或略高 */
+}
+
+#draw-panel .update-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(0,0,0,.08);
+}
+
+#draw-panel .draw-actions button,
+#draw-panel .draw-toolbar .draw-tool {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+
+#draw-panel .draw-actions button:hover,
+#draw-panel .draw-toolbar .draw-tool:hover { background: rgba(0,0,0,.06); }
+
+#draw-panel .draw-toolbar { padding: 10px 12px 12px; }
+#draw-panel .tool-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+
+.draw-color-palette { display: grid; grid-template-columns: repeat(9, 1fr); gap: 6px; width: 100%; }
+.draw-color {
+  width: 22px; height: 22px; border-radius: 6px; border: 2px solid transparent;
+  box-sizing: border-box; cursor: pointer;
+}
+.draw-color.selected { border-color: #111; }
+
+#draw-weight { flex: 1; }
+#draw-weight-val { width: 26px; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* 与其它面板统一的关闭按钮按压态（你已有的样式会生效） */
