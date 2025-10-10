@@ -253,13 +253,6 @@ const closeGeoBtn = document.getElementById('close-geo-panel');
 const geoInput    = document.getElementById('geo-input');
 const geoGoBtn    = document.getElementById('geo-go');
 
-// 📏 图标与 Ruler 面板
-const rulerIcon = document.querySelector('.sidebar-section.middle .icon-group .icon:nth-child(2)'); // 📏
-const rulerPanel = document.getElementById('ruler-panel');
-const closeRulerBtn = document.getElementById('close-ruler-panel');
-const rulerDistanceEl = document.getElementById('ruler-distance');
-const rulerAreaEl = document.getElementById('ruler-area');
-
 // —— 公共函数：关闭所有面板 —— //
 function closeAllPanels() {
   if (updatePanel) updatePanel.classList.add('hidden');
