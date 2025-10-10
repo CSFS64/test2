@@ -526,6 +526,75 @@ let tempLayer  = null;         // 正在绘制中的图层
 let shapes     = [];           // 已完成图层
 let freehand   = null;         // pen 模式的折线
 
+function distPointToSeg(px, a, b){
+  // px, a, b 均为 layerPoint（像素）
+  const vx = b.x - a.x, vy = b.y - a.y;
+  const wx = px.x - a.x, wy = px.y - a.y;
+  const vv = vx*vx + vy*vy || 1;
+  let t = (vx*wx + vy*wy) / vv;
+  t = Math.max(0, Math.min(1, t));
+  const sx = a.x + t*vx, sy = a.y + t*vy;
+  const dx = px.x - sx, dy = px.y - sy;
+  return Math.hypot(dx, dy);
+}
+function hitPolyline(layer, ll, tolPx=8){
+  const p = map.latLngToLayerPoint(ll);
+  const latlngs = layer.getLatLngs();
+  for (let i=0;i<latlngs.length-1;i++){
+    const a = map.latLngToLayerPoint(latlngs[i]);
+    const b = map.latLngToLayerPoint(latlngs[i+1]);
+    if (distPointToSeg(p,a,b) <= tolPx) return true;
+  }
+  return false;
+}
+function pointInPolygon(ll, poly){ // 简单射线法
+  const pts = poly.getLatLngs()[0] || [];
+  const x = ll.lng, y = ll.lat;
+  let inside = false;
+  for (let i=0,j=pts.length-1;i<pts.length;j=i++){
+    const xi=pts[i].lng, yi=pts[i].lat;
+    const xj=pts[j].lng, yj=pts[j].lat;
+    const intersect = ((yi>y)!==(yj>y)) && (x < (xj-xi)*(y-yi)/(yj-yi)+xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+function hitLayer(layer, ll){
+  if (layer instanceof L.Polyline && !(layer instanceof L.Polygon)){
+    return hitPolyline(layer, ll, Math.max(8, (layer.options.weight||3)));
+  }
+  if (layer instanceof L.Polygon){
+    return pointInPolygon(ll, layer);
+  }
+  if (layer instanceof L.Rectangle){
+    return layer.getBounds().contains(ll);
+  }
+  if (layer instanceof L.Circle){
+    return map.distance(layer.getLatLng(), ll) <= layer.getRadius();
+  }
+  return false;
+}
+function eraseAt(ll){
+  // 从后往前删（视觉上“最上层”优先）
+  for (let i=shapes.length-1;i>=0;i--){
+    const s = shapes[i];
+    if (s.parts){ // 箭头组合
+      if (hitLayer(s.parts[0], ll) || hitLayer(s.parts[1], ll)){
+        s.parts.forEach(p => map.removeLayer(p));
+        shapes.splice(i,1);
+        return true;
+      }
+    }else{
+      if (hitLayer(s, ll)){
+        map.removeLayer(s);
+        shapes.splice(i,1);
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 // —— 面板开关 —— //
 if (drawIcon) {
   drawIcon.onclick = () => {
@@ -594,16 +663,84 @@ if (drawShareBtn)  drawShareBtn.onclick  = shareGeoJSON;
 function enableDraw(){
   if (drawActive) return;
   drawActive = true;
-  // 鼠标事件
-  map.on('mousedown', onDown);
-  map.on('mousemove', onMove);
-  map.on('mouseup', onUp);
-  // 触摸事件（简化：当作鼠标）
-  map.on('touchstart', touchAsMouse(onDown));
-  map.on('touchmove',  touchAsMouse(onMove));
-  map.on('touchend',   touchAsMouse(onUp));
-  // 关闭 Geo 搜索 pin 的默认“左键清除”
-  // （不改你的原逻辑：Draw 打开时也会照常移除 pin，因为你那段是全局 click）
+
+  // 只桌面鼠标：右键绘制
+  map.on('mousedown', onDownRight);
+  map.on('mousemove', onMoveRight);
+  map.on('mouseup',   onUpRight);
+  // 禁用长按坐标：在全局 contextmenu 钩子里判断 drawActive（见下）
+}
+
+function disableDraw(){
+  if (!drawActive) return;
+  drawActive = false;
+  drawing = false;
+  discardTemp();
+  map.off('mousedown', onDownRight);
+  map.off('mousemove', onMoveRight);
+  map.off('mouseup',   onUpRight);
+}
+
+function isRightButton(e){
+  const btn = e.originalEvent ? e.originalEvent.button : e.button;
+  return btn === 2;
+}
+
+function onDownRight(e){
+  // 橡皮也用左键点选删除，所以这里仅当右键或是箭头/线条等绘制工具才进入
+  if (!drawActive) return;
+  if (!isRightButton(e)){
+    // 左键在橡皮模式下走地图点击上面的 eraseAt
+    return;
+  }
+  drawing = true;
+  startLL = e.latlng;
+  map.dragging.disable();
+
+  if (drawMode === 'pen'){
+    freehand = L.polyline([startLL], { color: drawColor, weight: drawWeight, opacity: 1 }).addTo(map);
+    tempLayer = freehand;
+  } else if (drawMode === 'line' || drawMode === 'arrow'){
+    tempLayer = L.polyline([startLL, startLL], { color: drawColor, weight: drawWeight, opacity: 1 }).addTo(map);
+  } else if (drawMode === 'rect'){
+    tempLayer = L.rectangle([startLL, startLL], { color: drawColor, weight: drawWeight, fillOpacity: 0.08, fillColor: drawColor }).addTo(map);
+  } else if (drawMode === 'circle'){
+    tempLayer = L.circle(startLL, { radius: 1, color: drawColor, weight: drawWeight, fillOpacity: 0.08, fillColor: drawColor }).addTo(map);
+  }
+}
+
+function onMoveRight(e){
+  if (!drawActive || !drawing || !tempLayer) return;
+  const ll = e.latlng;
+  if (drawMode === 'pen'){
+    const pts = freehand.getLatLngs(); pts.push(ll); freehand.setLatLngs(pts);
+  } else if (drawMode === 'line' || drawMode === 'arrow'){
+    tempLayer.setLatLngs([startLL, ll]);
+  } else if (drawMode === 'rect'){
+    tempLayer.setBounds(L.latLngBounds(startLL, ll));
+  } else if (drawMode === 'circle'){
+    const r = map.distance(startLL, ll); tempLayer.setRadius(r);
+  }
+}
+
+function onUpRight(e){
+  if (!drawActive || !drawing) return;
+  drawing = false;
+  map.dragging.enable();
+
+  if (!tempLayer) return;
+
+  // 箭头（下面第 4 点还有“去掉多余线段&对齐中心”的修复）
+  if (drawMode === 'arrow'){
+    finalizeArrow(tempLayer);
+    tempLayer = null;
+    startLL = null;
+    return;
+  }
+
+  shapes.push(tempLayer);
+  tempLayer = null;
+  startLL = null;
 }
 
 function disableDraw(){
@@ -1261,10 +1398,22 @@ function dropMarkerAt(latlng) {
 }
 
 // —— 桌面：右键（Leaflet 会发 contextmenu 事件） —— //
+// 右键生成坐标
 map.on('contextmenu', (e) => {
+  if (drawActive) { // 绘图时禁用右键生成坐标
+    e.originalEvent?.preventDefault?.();
+    return;
+  }
   e.originalEvent?.preventDefault?.();
   dropMarkerAt(e.latlng);
 });
+
+// 屏蔽浏览器默认右键菜单：绘图时也屏蔽
+map.getContainer().addEventListener('contextmenu', (ev) => {
+  if (drawActive) { ev.preventDefault(); return; }
+  // 非绘图状态就按你原来的处理（你原来也是 preventDefault）
+  ev.preventDefault();
+}, { passive: false });
 
 // —— 移动端：长按 —— //
 let __lpTimer = null;
