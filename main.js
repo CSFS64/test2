@@ -119,6 +119,7 @@ function updateDate(date) {
   currentDateEl.textContent = formatted;
   datePicker.value = toIsoDate(date);
   loadDataForDate(formatted);
+  setSelectedUpdateItem(formatted);
 }
 
 // 初始化为 latest.json 日期
@@ -229,3 +230,43 @@ updates.forEach(item => {
   };
   updateList.appendChild(div);
 });
+
+syncSelectedToList();
+
+/* ===== 永久选中高亮 ===== */
+
+/** 让列表中对应日期的条目高亮，并在必要时滚动到可见 */
+function setSelectedUpdateItem(dateStr){
+  const list = document.getElementById('update-list') || document.querySelector('.update-list');
+  if (!list) return;
+
+  // 清除旧的选中
+  list.querySelectorAll('.update-item.selected').forEach(el => el.classList.remove('selected'));
+
+  // 找到“YYYY-MM-DD：”开头的那条
+  const item = Array.from(list.querySelectorAll('.update-item'))
+    .find(el => el.textContent.trim().startsWith(dateStr + '：'));
+
+  if (item){
+    item.classList.add('selected');
+
+    // 如果不在可视区，就滚到“尽量靠近中间”的位置
+    const top = item.offsetTop;
+    const bottom = top + item.offsetHeight;
+    const viewTop = list.scrollTop;
+    const viewBottom = viewTop + list.clientHeight;
+
+    if (top < viewTop || bottom > viewBottom){
+      list.scrollTo({
+        top: Math.max(0, top - (list.clientHeight - item.offsetHeight) / 2),
+        behavior: 'smooth'
+      });
+    }
+  }
+}
+
+/* 在面板首次打开或重新渲染时，把当前日期对应项设为选中 */
+function syncSelectedToList(){
+  const dateStr = document.getElementById('current-date')?.textContent?.trim();
+  if (dateStr) setSelectedUpdateItem(dateStr);
+}
