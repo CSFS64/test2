@@ -259,10 +259,6 @@ const rulerPanel = document.getElementById('ruler-panel');
 const closeRulerBtn = document.getElementById('close-ruler-panel');
 const rulerDistanceEl = document.getElementById('ruler-distance');
 const rulerAreaEl = document.getElementById('ruler-area');
-const rulerClearBtn = document.getElementById('ruler-clear');
-const rulerFinishBtn = document.getElementById('ruler-finish');
-
-window.rulerPanel = rulerPanel;
 
 // —— 公共函数：关闭所有面板 —— //
 function closeAllPanels() {
@@ -470,7 +466,7 @@ function onMapClickAddPoint(e){
 if (rulerIcon){
   rulerIcon.onclick = () => {
     const wantOpen = !rulerPanel || rulerPanel.classList.contains('hidden');
-    closeAllPanels();   // 先关其它
+    closeAllPanelsExtended();
     if (wantOpen) enableRuler();
   };
 }
