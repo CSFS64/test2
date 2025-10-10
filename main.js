@@ -371,6 +371,7 @@ document.querySelectorAll('.icon').forEach(makePressable);
 
 /** 设置：乌克兰不含克里米亚的总面积（m²）
  *  例：577_000 km² ≈ 577_000 * 1_000_000 m² = 577_000_000_000
+ */
  
 const UA_BASE_NO_CRIMEA_M2 = 576_628_000_000;
 
