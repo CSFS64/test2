@@ -106,23 +106,24 @@ function loadAvailableDates() {
   fetch("data/available-dates.json")
     .then(res => res.json())
     .then(dates => {
-      // 1) 把文件里的日期转为 UTC Date，再转回 YYYY-MM-DD 字符串
+      // 1) 文件里的日期 → UTC Date → YYYY-MM-DD
       const fromFile = dates.map(s => {
-        const [y,m,d] = s.split('-');
+        const [y, m, d] = s.split('-');
         return formatDate(new Date(Date.UTC(+y, +m - 1, +d)));
       });
 
-      // 2) 把 latestDate 也放进去（可能文件已包含，但这里做去重）
+      // 2) 把 latestDate 也并进去（去重）
       const addLatest = latestDate ? [formatDate(latestDate)] : [];
 
       // 3) 去重 + 升序
       availableDateStrs = Array.from(new Set([...fromFile, ...addLatest])).sort();
 
-      // 如果你仍想保留以前的 Date 数组
+      // 如需保留 Date 数组
       availableDates = availableDateStrs.map(s => parseDate(s));
+    })
     .catch(() => {
-    // 文件不可用时，退回到 updates + latestDate 兜底
-    ensureAvailableDateStrsReady();
+      // 文件不可用：退回 updates + latestDate 兜底
+      ensureAvailableDateStrsReady();
     });
 }
 
