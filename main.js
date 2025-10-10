@@ -266,6 +266,7 @@ const _oldCloseAllPanels = closeAllPanels;
 function closeAllPanelsExtended(){
   _oldCloseAllPanels();
   if (geoPanel) geoPanel.classList.add('hidden');
+  removeGeoMarker();
 }
 
 /* 🔔 更新概要 */
@@ -308,7 +309,10 @@ if (globeIcon && geoPanel){
   };
 }
 if (closeGeoBtn){
-  closeGeoBtn.onclick = () => geoPanel.classList.add('hidden');
+  closeGeoBtn.onclick = () => {
+    geoPanel.classList.add('hidden');
+    removeGeoMarker();     // ← 关闭面板时顺便移除 pin
+  };
 }
 
 /* ===================== Ruler 运行时状态与工具 ===================== */
@@ -584,9 +588,15 @@ function makePressable(el){
 // 左侧所有图标（若需要）
 document.querySelectorAll('.icon').forEach(makePressable);
 
-/* ===================== 经纬度搜索逻辑 ===================== */
-let geoMarker = null; // 复用同一个标记
+function removeGeoMarker(){
+  if (window.geoMarker){
+    try { window.geoMarker.remove(); } 
+    catch { map.removeLayer(window.geoMarker); }
+    window.geoMarker = null;
+  }
+}
 
+/* ===================== 经纬度搜索逻辑 ===================== */
 function parseLatLng(text){
   // 允许：纬度,经度 / 纬度 , 经度（带空格）
   const m = String(text).trim().match(/^\s*([-+]?\d+(?:\.\d+)?)\s*,\s*([-+]?\d+(?:\.\d+)?)\s*$/);
@@ -606,6 +616,15 @@ function goToLatLng(){
     showMessage('坐标格式不正确，请输入“纬度, 经度”，例如：48.25292, 37.22646');
     return;
   }
+
+  map.setView([ll.lat, ll.lng]);
+
+  if (!window.geoMarker){
+    window.geoMarker = L.marker([ll.lat, ll.lng]).addTo(map);
+  }else{
+    window.geoMarker.setLatLng([ll.lat, ll.lng]);
+  }
+}
 
   // 居中（如需固定缩放，改成 map.setView([ll.lat, ll.lng], 13)）
   map.setView([ll.lat, ll.lng]);
