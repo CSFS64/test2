@@ -345,3 +345,14 @@ body, html {
 .update-list::-webkit-scrollbar-thumb:hover{
   background: #a8a8a8;
 }
+
+
+
+
+//测试
+/* 永久高亮：当前选中日期 */
+.update-item.selected{
+  background: #e6e6e6;         /* 比 #f0f0f0 略深，仍保持灰色系 */
+  border-left-color: #222;     /* 比 #444 略深一点，强调选中 */
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.06) inset;
+}
