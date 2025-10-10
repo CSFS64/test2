@@ -451,12 +451,11 @@ body, html {
 
 /* 左侧色块：方形，带轻微圆角 */
 .info-dot {
-  width: 14px;
-  height: 6px;
-  border-radius: 1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
   grid-column: 1;
   grid-row: 1;
-  align-self: center;
 }
 
 /* 标题（自动换行、不撑爆） */
