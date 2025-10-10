@@ -498,7 +498,6 @@ async function renderInfoPanel(dateStr){
 
     const lab = document.createElement('div');
     label.className = 'info-label';
-    lab.style.minWidth = '120px';
     lab.textContent = label;
 
     const barWrap = document.createElement('div');
