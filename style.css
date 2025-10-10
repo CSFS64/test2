@@ -305,7 +305,7 @@ body, html {
 #update-panel{
   /* 顶部你原来就是 160px，不动 */
   /* 高度 = 视口高度 - 顶部160px - 底部预留 */
-  max-height: calc(100vh - 160px - var(--update-bottom-gap));
+  max-height: calc(100vh - 250px - var(--update-bottom-gap));
   overflow: hidden;                /* 外层不滚，避免圆角被滚动条“切掉” */
   display: flex;
   flex-direction: column;
