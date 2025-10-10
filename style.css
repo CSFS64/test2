@@ -404,236 +404,58 @@ body, html {
 
 
 
-/* 信息面板 */
+/* ───────── 信息面板容器 ───────── */
 #info-panel{
   width: 306px;
-  /* 若你已用新的自适应高度计算，请复制那条；此处给一个基础版： */
+  max-width: 306px;
   max-height: calc(100vh - 160px - var(--update-bottom-gap, 24px));
-  overflow-y: auto;
   position: absolute;
   top: 160px;
   left: 80px;
-  background: white;
+  background: #fff;
   border-radius: 10px;
   padding: 6px 8px;
-  z-index: 1001;
   box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+  z-index: 1001;
   display: flex;
   flex-direction: column;
   gap: 6px;
   font-size: 13px;
-}
-
-/* 信息面板里的条目（沿用你的灰色卡片风格） */
-.info-row{
-  background: #f0f0f0;
-  border-radius: 8px;
-  padding: 0.8em;
-  display: flex;
-  align-items: center;
-  gap: .6em;
-}
-
-/* 左侧色块 */
-.info-dot{
-  width: 10px;
-  height: 10px;
-  border-radius: 99px;
-  flex: 0 0 10px;
-}
-
-/* 进度条容器与条 */
-.info-bar-wrap{
-  flex: 1 1 auto;
-  background: #e6e6e6;
-  height: 6px;
-  border-radius: 99px;
-  overflow: hidden;
-}
-.info-bar{
-  height: 100%;
-  width: 0%;
-  border-radius: 99px;
-}
-
-/* 行右侧的数字 */
-.info-val{
-  flex: 0 0 auto;
-  min-width: 90px;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-/* 关闭按钮 */
-#close-info-panel{
-  background: none;
-  border: none;
-  font-size: 16px;
-  cursor: pointer;
-}
-
-/* 面板不再横向滚动，宽度受控 */
-#info-panel{
-  width: 306px;
-  max-width: 306px;
-  box-sizing: border-box;
   overflow-y: auto;
-  overflow-x: hidden;          /* 关键：禁止横向滚动 */
-}
-
-/* 一行用 Grid：上面是 dot + label + value，下面整行是进度条 */
-.info-row{
-  display: grid;
-  grid-template-columns: 14px 1fr auto; /* dot | label 自适应 | 右侧数值 */
-  grid-auto-rows: auto;
-  align-items: center;
-  gap: 6px 8px;
-  width: 100%;
+  overflow-x: hidden; /* 绝不横向滚动 */
   box-sizing: border-box;
 }
 
-/* 左侧小圆点 */
-.info-dot{
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  grid-column: 1;
-  grid-row: 1;
-}
+/* 列表更贴右（可选） */
+#info-content{ padding-right: 2px; }
 
-/* 标题不允许把容器撑爆 */
-.info-label{
-  grid-column: 2;
-  grid-row: 1;
-  min-width: 0;                /* 关键：允许在 Grid 里收缩 */
-  line-height: 1.25;
-  word-break: break-word;
-}
-
-/* 右侧数值始终一行，不换行溢出 */
-.info-val{
-  grid-column: 3;
-  grid-row: 1;
-  min-width: 0;
-  white-space: nowrap;         /* 关键：不换行避免撑宽 */
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-/* 进度条占整行（第2行） */
-.info-bar-wrap{
-  grid-column: 1 / 4;          /* 跨 3 列 */
-  grid-row: 2;
-  background: #e6e6e6;
-  height: 6px;
-  border-radius: 99px;
-  overflow: hidden;
-}
-
-.info-bar{
-  height: 100%;
-  width: 0%;
-  border-radius: 99px;
-}
-
-/* 面板本身别再横向滚动，也把右内边距收紧一点 */
-#info-panel{
-  width: 306px;
-  max-width: 306px;
-  box-sizing: border-box;
-  overflow-x: hidden;                 /* 防止出现横向滚动条 */
-  padding-right: 6px;                 /* 如需更靠右可降到 4 或 2 */
-}
-
-/* 列表容器更贴右边一点（可选） */
-#info-content{
-  padding-right: 2px;                 /* 让灰卡片更靠近右侧 */
-}
-
-/* 每行灰色卡片：确保不会因内边距导致溢出 */
-.info-row{
-  box-sizing: border-box;
-  padding: 10px 8px;                  /* 横向更紧一点 */
-  margin: 0 0 8px 0;                  /* 去掉右侧多余外边距 */
-  display: grid;
-  grid-template-columns: 14px 1fr auto; /* dot | label | value */
-  gap: 6px 8px;
-  width: 100%;
-}
-
-/* 左侧小圆点、标题不变 */
-.info-dot{ width:10px; height:10px; border-radius:999px; grid-column:1; grid-row:1; }
-.info-label{
-  grid-column:2; grid-row:1;
-  min-width:0;                        /* 允许收缩，避免撑爆 */
-  line-height:1.25;
-  word-break:break-word;
-}
-
-/* 右侧数值：允许换行，但第一行不换，避免横向撑出 */
-.info-val{
-  grid-column:3; grid-row:1;
-  min-width:0;
-  text-align:right;
-  font-variant-numeric:tabular-nums;
-  white-space: normal;                /* 允许换行 */
-}
-
-.info-val .top{                       /* 第一行：总量不换行，始终在一行 */
-  white-space: nowrap;
-  display:inline-block;
-}
-
-.info-val .meta{                      /* 第二行：Δ 和 百分比可换行，避免超宽 */
-  white-space: normal;
-  opacity:.7;
-}
-
-/* 进度条跨整行（第二行），不会溢出 */
-.info-bar-wrap{
-  grid-column: 1 / 4;
-  grid-row: 2;
-  background:#e6e6e6;
-  height:6px;
-  border-radius:99px;
-  overflow:hidden;
-  box-sizing:border-box;
-}
-.info-bar{ height:100%; border-radius:99px; }
-
-/* 面板本身：不横向滚动，数字不会把容器撑爆 */
-#info-panel{
-  width: 306px;
-  max-width: 306px;
-  overflow-x: hidden;
-  box-sizing: border-box;
-  padding-right: 6px;
-}
-
-/* 每条信息用 3 行 Grid：
+/* ───────── 每条信息卡片（3 行 Grid） ─────────
    Row1: dot | label | (空)
-   Row2: 进度条（跨三列）
-   Row3: （空）| 面积+Δ | 百分比(右对齐)
+   Row2: (空) | 进度条 | (空)       ← 注意：从第2列开始
+   Row3: (空) | 面积+Δ | 百分比
 */
 .info-row{
   display: grid;
-  grid-template-columns: 14px 1fr auto;
+  grid-template-columns: 14px 1fr auto;  /* dot | 自适应 | 右侧 */
   grid-template-rows: auto 8px auto;
   align-items: center;
   gap: 6px 8px;
   width: 100%;
   box-sizing: border-box;
+
   background: #f0f0f0;
   border-radius: 8px;
   padding: 10px 8px;
   margin: 0 0 8px 0;
 }
 
+/* 小圆点 */
 .info-dot{
   grid-column: 1; grid-row: 1;
   width: 10px; height: 10px; border-radius: 999px;
 }
 
+/* 标题（自动换行、不撑爆） */
 .info-label{
   grid-column: 2; grid-row: 1;
   min-width: 0;
@@ -641,26 +463,33 @@ body, html {
   word-break: break-word;
 }
 
-/* 进度条占整行（第2行） */
+/* 进度条：从第2列开始，这样与“面积数据”左对齐 */
 .info-bar-wrap{
-  grid-column: 1 / 4;
+  grid-column: 2 / 4;  /* 关键：2 到 3 列 */
   grid-row: 2;
   background: #e6e6e6;
   height: 6px;
   border-radius: 99px;
   overflow: hidden;
+  box-sizing: border-box;
 }
-.info-bar{ height: 100%; border-radius: 99px; }
+.info-bar{
+  height: 100%;
+  width: 0%;
+  border-radius: 99px;
+}
 
-/* 第3行：左侧（面积+Δ），右侧（百分比） */
+/* 第3行 左：面积 + Δ */
 .info-val-left{
   grid-column: 2; grid-row: 3;
   min-width: 0;
-  white-space: nowrap;                /* 不换行，不挤到下一行 */
-  font-variant-numeric: tabular-nums; /* 等宽数字，排版更稳 */
+  white-space: nowrap;                 /* 同行显示 */
+  font-variant-numeric: tabular-nums;  /* 等宽数字 */
 }
-.info-val-left .val{ margin-right: 10px; }   /* 面积 和 Δ 之间留空 */
+.info-val-left .val{  margin-right: 10px; }
+.info-val-left .delta{ opacity: .7; }
 
+/* 第3行 右：百分比 */
 .info-pct{
   grid-column: 3; grid-row: 3;
   white-space: nowrap;
@@ -668,5 +497,11 @@ body, html {
   font-variant-numeric: tabular-nums;
 }
 
-/* 让列表更贴右侧（可选） */
-#info-content{ padding-right: 2px; }
+/* 关闭按钮（保持原样） */
+#close-info-panel{
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+}
+
