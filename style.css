@@ -600,3 +600,73 @@ body, html {
   box-sizing:border-box;
 }
 .info-bar{ height:100%; border-radius:99px; }
+
+/* 面板本身：不横向滚动，数字不会把容器撑爆 */
+#info-panel{
+  width: 306px;
+  max-width: 306px;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  padding-right: 6px;
+}
+
+/* 每条信息用 3 行 Grid：
+   Row1: dot | label | (空)
+   Row2: 进度条（跨三列）
+   Row3: （空）| 面积+Δ | 百分比(右对齐)
+*/
+.info-row{
+  display: grid;
+  grid-template-columns: 14px 1fr auto;
+  grid-template-rows: auto 8px auto;
+  align-items: center;
+  gap: 6px 8px;
+  width: 100%;
+  box-sizing: border-box;
+  background: #f0f0f0;
+  border-radius: 8px;
+  padding: 10px 8px;
+  margin: 0 0 8px 0;
+}
+
+.info-dot{
+  grid-column: 1; grid-row: 1;
+  width: 10px; height: 10px; border-radius: 999px;
+}
+
+.info-label{
+  grid-column: 2; grid-row: 1;
+  min-width: 0;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+/* 进度条占整行（第2行） */
+.info-bar-wrap{
+  grid-column: 1 / 4;
+  grid-row: 2;
+  background: #e6e6e6;
+  height: 6px;
+  border-radius: 99px;
+  overflow: hidden;
+}
+.info-bar{ height: 100%; border-radius: 99px; }
+
+/* 第3行：左侧（面积+Δ），右侧（百分比） */
+.info-val-left{
+  grid-column: 2; grid-row: 3;
+  min-width: 0;
+  white-space: nowrap;                /* 不换行，不挤到下一行 */
+  font-variant-numeric: tabular-nums; /* 等宽数字，排版更稳 */
+}
+.info-val-left .val{ margin-right: 10px; }   /* 面积 和 Δ 之间留空 */
+
+.info-pct{
+  grid-column: 3; grid-row: 3;
+  white-space: nowrap;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 让列表更贴右侧（可选） */
+#info-content{ padding-right: 2px; }
