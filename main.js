@@ -269,7 +269,7 @@ function closeAllPanels() {
   if (updatePanel) updatePanel.classList.add('hidden');
   if (infoPanel)   infoPanel.classList.add('hidden');
   if (calendarPopup) calendarPopup.classList.add('hidden');
-  if (window.rulerPanel) window.rulerPanel.classList.add('hidden');
+  if (typeof disableRuler === 'function') disableRuler();
 }
 
 // 扩展：把 🌐 面板也纳入
