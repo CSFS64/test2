@@ -235,29 +235,42 @@ if (jumpLatestBtn) {
   };
 }
 
-// 📦 绑定 🔔按钮逻辑
-const bellButton = document.querySelector('.icon-group .icon:nth-child(3)');
-const updatePanel = document.getElementById('update-panel');
-const closeUpdatePanel = document.getElementById('close-update-panel');
-const updateList = document.getElementById('update-list');
+/* ===================== 更新面板（打开/关闭） ===================== */
+const bellButton        = document.querySelector('.icon-group .icon:nth-child(3)');
+const updatePanel       = document.getElementById('update-panel');
+const closeUpdatePanel  = document.getElementById('close-update-panel');
+const updateList        = document.getElementById('update-list');
 
 // ℹ️ 信息按钮
-const infoIcon = document.querySelector('.icon-group .icon:nth-child(4)');
-const infoPanel = document.getElementById('info-panel');
-const closeInfoBtn = document.getElementById('close-info-panel');
+const infoIcon    = document.querySelector('.icon-group .icon:nth-child(4)');
+const infoPanel   = document.getElementById('info-panel');
+const closeInfoBtn= document.getElementById('close-info-panel');
+
+// 🌐 经纬度搜索按钮与面板
+const globeIcon   = document.querySelector('.icon-group .icon:nth-child(2)');
+const geoPanel    = document.getElementById('geo-panel');
+const closeGeoBtn = document.getElementById('close-geo-panel');
+const geoInput    = document.getElementById('geo-input');
+const geoGoBtn    = document.getElementById('geo-go');
 
 // —— 公共函数：关闭所有面板 —— //
 function closeAllPanels() {
   if (updatePanel) updatePanel.classList.add('hidden');
-  if (infoPanel) infoPanel.classList.add('hidden');
+  if (infoPanel)   infoPanel.classList.add('hidden');
   if (calendarPopup) calendarPopup.classList.add('hidden');
 }
+// 扩展：把 🌐 面板也纳入
+const _oldCloseAllPanels = closeAllPanels;
+function closeAllPanelsExtended(){
+  _oldCloseAllPanels();
+  if (geoPanel) geoPanel.classList.add('hidden');
+}
 
-// 🔔 更新概要
+/* 🔔 更新概要 */
 if (bellButton && updatePanel) {
   bellButton.onclick = () => {
     const isHidden = updatePanel.classList.contains('hidden');
-    closeAllPanels();                // 先关掉别的
+    closeAllPanelsExtended();         // 先关掉别的
     if (isHidden) updatePanel.classList.remove('hidden');
   };
   if (closeUpdatePanel) {
@@ -265,11 +278,11 @@ if (bellButton && updatePanel) {
   }
 }
 
-// ℹ️ 信息面板
+/* ℹ️ 信息面板 */
 if (infoIcon && infoPanel) {
   infoIcon.onclick = () => {
     const isHidden = infoPanel.classList.contains('hidden');
-    closeAllPanels();                // 先关掉别的
+    closeAllPanelsExtended();         // 先关掉别的
     if (isHidden) {
       infoPanel.classList.remove('hidden');
       const dateStr = currentDateEl?.textContent?.trim();
@@ -279,6 +292,21 @@ if (infoIcon && infoPanel) {
   if (closeInfoBtn) {
     closeInfoBtn.onclick = () => infoPanel.classList.add('hidden');
   }
+}
+
+/* 🌐 经纬度搜索面板开关 */
+if (globeIcon && geoPanel){
+  globeIcon.onclick = () => {
+    const isHidden = geoPanel.classList.contains('hidden');
+    closeAllPanelsExtended();         // 先关掉别的
+    if (isHidden){
+      geoPanel.classList.remove('hidden');
+      setTimeout(() => geoInput?.focus(), 0);
+    }
+  };
+}
+if (closeGeoBtn){
+  closeGeoBtn.onclick = () => geoPanel.classList.add('hidden');
 }
 
 /* ===================== 更新列表（静态示例数据） ===================== */
@@ -382,31 +410,64 @@ function makePressable(el){
   });
 }
 
-// 把按压效果应用到固定按钮与图标
+// 把按压效果应用到固定按钮与图标（含新加的 🌐 面板控件）
 [
   prevBtn, nextBtn, openCalBtn, todayBtn, closeCalBtn, jumpLatestBtn,
   bellButton, closeUpdatePanel,
-  closeInfoBtn
+  infoIcon, closeInfoBtn,
+  globeIcon, closeGeoBtn, geoGoBtn
 ].forEach(makePressable);
 
 // 左侧所有图标（若需要）
 document.querySelectorAll('.icon').forEach(makePressable);
 
-/* ===================== 可选：键盘方向键也支持切换 ===================== */
-// window.addEventListener('keydown', (e) => {
-//   if (e.key === 'ArrowLeft') { prevBtn?.click(); }
-//   if (e.key === 'ArrowRight'){ nextBtn?.click(); }
-// });
+/* ===================== 经纬度搜索逻辑 ===================== */
+let geoMarker = null; // 复用同一个标记
 
+function parseLatLng(text){
+  // 允许：纬度,经度 / 纬度 , 经度（带空格）
+  const m = String(text).trim().match(/^\s*([-+]?\d+(?:\.\d+)?)\s*,\s*([-+]?\d+(?:\.\d+)?)\s*$/);
+  if (!m) return null;
+  const lat = parseFloat(m[1]);
+  const lng = parseFloat(m[2]);
+  if (isNaN(lat) || isNaN(lng)) return null;
+  if (lat < -90 || lat > 90)   return null;
+  if (lng < -180 || lng > 180) return null;
+  return { lat, lng };
+}
 
+function goToLatLng(){
+  const v = geoInput?.value || '';
+  const ll = parseLatLng(v);
+  if (!ll){
+    showMessage('坐标格式不正确，请输入“纬度, 经度”，例如：48.25292, 37.22646');
+    return;
+  }
 
+  // 居中（如需固定缩放，改成 map.setView([ll.lat, ll.lng], 13)）
+  map.setView([ll.lat, ll.lng]);
 
-//信息面板（测试）
+  // 放置/移动标记
+  if (!geoMarker){
+    geoMarker = L.marker([ll.lat, ll.lng]).addTo(map);
+  }else{
+    geoMarker.setLatLng([ll.lat, ll.lng]);
+  }
+}
+
+// 点击按钮或按回车触发定位
+if (geoGoBtn) geoGoBtn.onclick = goToLatLng;
+if (geoInput){
+  geoInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') goToLatLng();
+  });
+}
+
+/* ===================== 信息面板（计算与渲染） ===================== */
 
 /** 设置：乌克兰不含克里米亚的总面积（m²）
  *  例：577_000 km² ≈ 577_000 * 1_000_000 m² = 577_000_000_000
  */
- 
 const UA_BASE_NO_CRIMEA_M2 = 576_628_000_000;
 
 /* Name → 内部类型键 */
@@ -421,8 +482,8 @@ const TYPE_MAP = {
 const INFO_META = {
   occupied_after:  { label: '全面入侵后被占', color: '#E60000' },
   occupied_before: { label: '全面入侵前被占', color: '#6f2dbd' },
-  liberated:       { label: '已解放',                    color: '#12b886' },
-  gray:            { label: '交战区',                    color: '#9e9e9e' }
+  liberated:       { label: '已解放',         color: '#12b886' },
+  gray:            { label: '交战区',         color: '#9e9e9e' }
 };
 
 /* 汇总：按类型求面积（m²） */
@@ -534,6 +595,7 @@ async function renderInfoPanel(dateStr){
     ? UA_BASE_NO_CRIMEA_M2
     : (A + B + L || 1);
 
+  // 百分比口径
   const denomAfter = Math.max(BASE - B, 1);
   const pctAfter   = A / denomAfter;
 
@@ -545,22 +607,22 @@ async function renderInfoPanel(dateStr){
   const denomLib   = Math.max(T, 1);
   const pctLib     = L / denomLib;
 
+  // 变化量
   const dA = A - A_prev;
   const dB = B - B_prev;
   const dT = T - (A_prev + B_prev);
   const dL = L - L_prev;
 
+  // 渲染
   const wrap = document.getElementById('info-content');
   if (!wrap) return;
   wrap.innerHTML = '';
 
-  // 你的中文标签（按需替换）
   const LBL_AFTER  = '全面入侵后被占';
   const LBL_BEFORE = '全面入侵前被占';
   const LBL_LIB    = '已解放';
   const LBL_TOTAL  = '总暂时被占';
 
-  // 颜色（与你地图一致）
   const C_AFTER  = '#E60000';
   const C_BEFORE = '#6f2dbd';
   const C_LIB    = '#12b886';
@@ -569,7 +631,7 @@ async function renderInfoPanel(dateStr){
   addRow(wrap, LBL_AFTER,  C_AFTER,  A, pctAfter, dA);
   addRow(wrap, LBL_BEFORE, C_BEFORE, B, pctBefore, dB);
   addRow(wrap, LBL_LIB,    C_LIB,    L, pctLib,   dL);
-  addRow(wrap, LBL_TOTAL,  C_TOTAL,  T, pctTotal, dT);   // ← 不再单独写，样式统一
+  addRow(wrap, LBL_TOTAL,  C_TOTAL,  T, pctTotal, dT);   // 样式统一
 }
 
 /* ========== 当日期变化时，若信息面板是打开的则刷新 ========== */
