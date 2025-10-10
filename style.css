@@ -733,16 +733,21 @@ body, html {
 
 /* 绘图面板基础布局 */
 #draw-panel {
+  width: 306px;
+  max-height: calc(100vh - 160px - var(--update-bottom-gap, 24px));
+  overflow-y: auto;
   position: absolute;
-  top: 90px;
-  right: 16px;
-  width: 320px;            /* 和其它面板一致 */
-  max-width: calc(100vw - 32px);
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 6px 24px rgba(0,0,0,.18);
-  overflow: hidden;
-  z-index: 600;            /* 比地图高，比日历等一致或略高 */
+  top: 160px;
+  left: 80px;
+  background: white;
+  border-radius: 10px;
+  padding: 6px 8px;
+  z-index: 1001;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
 }
 
 #draw-panel .update-header {
