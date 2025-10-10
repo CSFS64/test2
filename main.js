@@ -572,18 +572,6 @@ async function renderInfoPanel(dateStr){
   addRow(wrap, LBL_TOTAL,  C_TOTAL,  T, pctTotal, dT);   // ← 不再单独写，样式统一
 }
 
-/* ========== 打开/关闭信息面板：与当前日期联动 ========== */
-/* ========== 当日期变化时，若信息面板是打开的则刷新 ========== */
-const __oldUpdateDate = updateDate;
-updateDate = function(date){
-  __oldUpdateDate(date);
-  // 用前面已经声明过的 infoPanel / currentDateEl
-  if (infoPanel && !infoPanel.classList.contains('hidden')){
-    const dateStr = currentDateEl?.textContent?.trim();
-    if (dateStr) renderInfoPanel(dateStr);
-  }
-};
-
 /* ========== 当日期变化时，若信息面板是打开的则刷新 ========== */
 const __oldUpdateDate = updateDate;
 updateDate = function(date){
