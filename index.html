@@ -133,6 +133,42 @@
     </div>
   </div>
 
+  <!-- 绘图面板 -->
+  <div id="draw-panel" class="hidden">
+    <div class="update-header">
+      <strong>Draw</strong>
+      <div class="draw-actions">
+        <button id="draw-undo" title="Undo">↩</button>
+        <button id="draw-clear" title="Clear">🗑</button>
+        <button id="draw-export" title="Export GeoJSON">⬇</button>
+        <button id="draw-share" title="Share GeoJSON">🔗</button>
+        <button id="close-draw-panel" class="close-btn">✕</button>
+      </div>
+    </div>
+  
+    <div class="draw-toolbar">
+      <div class="tool-row">
+        <button class="draw-tool" data-tool="pen"   title="Pen">✏️</button>
+        <button class="draw-tool" data-tool="erase" title="Eraser">🧽</button>
+        <button class="draw-tool" data-tool="line"  title="Line">／</button>
+        <button class="draw-tool" data-tool="arrow" title="Arrow">➚</button>
+        <button class="draw-tool" data-tool="rect"  title="Rectangle">▭</button>
+        <button class="draw-tool" data-tool="circle" title="Circle">◯</button>
+      </div>
+  
+      <div class="tool-row">
+        <div class="draw-color-palette" id="draw-colors">
+          <!-- 会由 JS 注入颜色块 -->
+        </div>
+      </div>
+  
+      <div class="tool-row">
+        <input id="draw-weight" type="range" min="1" max="12" value="3" />
+        <span id="draw-weight-val">3</span>
+      </div>
+    </div>
+  </div>
+
   <!-- 地图容器 -->
   <div id="map"></div>
 
