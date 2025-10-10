@@ -429,6 +429,29 @@ function addRulerPoint(latlng){
     fillOpacity: 1
   }).addTo(map);
 
+  // 允许拖动
+  mk.dragging = true;
+  mk.on('mousedown', function (e) {
+    if (!rulerActive) return;
+    map.dragging.disable();
+  
+    const move = (ev) => {
+      const newLatLng = ev.latlng;
+      mk.setLatLng(newLatLng);
+      const idx = rulerMarkers.indexOf(mk);
+      if (idx !== -1) rulerPts[idx] = newLatLng;
+      redrawRuler();
+    };
+    const up = () => {
+      map.dragging.enable();
+      map.off('mousemove', move);
+      map.off('mouseup', up);
+    };
+  
+    map.on('mousemove', move);
+    map.on('mouseup', up);
+  });
+
   // 点击第一个点也能闭合（用户更直觉）
   mk.on('click', () => {
     if (rulerPts.length >= 3 && mk === rulerMarkers[0] && !rulerClosed){
