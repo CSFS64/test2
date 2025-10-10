@@ -1,18 +1,16 @@
+/* ===================== 基础引用与状态 ===================== */
 const currentDateEl = document.getElementById('current-date');
-const datePicker = document.getElementById('date-picker');
-const calendarPopup = document.getElementById('calendar-popup');
+const datePicker     = document.getElementById('date-picker');
+const calendarPopup  = document.getElementById('calendar-popup');
 
-let latestDate = null; // 🔹 记录最新可用日期
-let currentLayer = null; // 当前图层
-let availableDates = []; // 用于记录所有有更新的日期
-let availableDateStrs = [];
+let latestDate = null;          // 最新可用日期（UTC 零点）
+let currentLayer = null;        // 当前地图图层
+let availableDates = [];        // Date[]（保留用）
+let availableDateStrs = [];     // "YYYY-MM-DD" 字符串数组（用于相邻跳转）
 
-// 初始化地图
-const map = L.map('map', {
-  zoomControl: false
-}).setView([48.6, 37.9], 10);
+/* ===================== 地图初始化 ===================== */
+const map = L.map('map', { zoomControl: false }).setView([48.6, 37.9], 10);
 
-// 比例尺
 L.control.scale({
   position: 'bottomleft',
   imperial: true,
@@ -32,30 +30,27 @@ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/Worl
   pane: 'overlayPane'
 }).addTo(map);
 
-// 日期格式工具 (使用 UTC 时间格式)
+/* ===================== 日期工具（统一使用 UTC） ===================== */
 function formatDate(date) {
   const dd = String(date.getUTCDate()).padStart(2, '0');
   const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
   const yyyy = date.getUTCFullYear();
-  return `${yyyy}-${mm}-${dd}`; // 改为 YYYY-MM-DD 格式
+  return `${yyyy}-${mm}-${dd}`; // YYYY-MM-DD
 }
-
 function parseDate(str) {
   const [yyyy, mm, dd] = str.split('-');
-  return new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd))); // 使用 UTC 解析
+  return new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd)));
 }
-
 function toIsoDate(date){
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth()+1).padStart(2,'0')}-${String(date.getUTCDate()).padStart(2,'0')}`;
-  // 或者：return formatDate(date);
 }
 
-// 显示提醒
+/* ===================== 轻提示 ===================== */
 function showMessage(msg) {
   alert(msg);
 }
 
-// 加载图层
+/* ===================== 加载某天前线图层 ===================== */
 function loadDataForDate(dateStr) {
   const url = `data/frontline-${dateStr}.json`;
 
@@ -70,11 +65,11 @@ function loadDataForDate(dateStr) {
       currentLayer = L.geoJSON(data, {
         style: feature => {
           const name = feature.properties.Name?.toLowerCase();
-          if (name === 'dpr') return { color: 'purple', fillOpacity: 0.25, weight: 2 };
-          if (name === 'red') return { color: '#E60000', fillOpacity: 0.2, weight: 1.5 };
-          if (name === 'lib') return { color: '#00A2E8', fillOpacity: 0.2, weight: 1.5 };
-          if (name === 'contested') return { color: 'white', fillOpacity: 0.25, weight: 0 };
-          return { color: 'black', fillOpacity: 0.3 };
+          if (name === 'dpr')       return { color: 'purple',   fillOpacity: 0.25, weight: 2   };
+          if (name === 'red')       return { color: '#E60000',  fillOpacity: 0.2,  weight: 1.5 };
+          if (name === 'lib')       return { color: '#00A2E8',  fillOpacity: 0.2,  weight: 1.5 };
+          if (name === 'contested') return { color: 'white',    fillOpacity: 0.25, weight: 0   };
+          return { color: 'black',  fillOpacity: 0.3 };
         }
       }).addTo(map);
     })
@@ -87,7 +82,9 @@ function loadDataForDate(dateStr) {
     });
 }
 
+/* ===================== 加载可用日期（latest + 列表） ===================== */
 function loadAvailableDates() {
+  // latest.json
   fetch("data/latest.json")
     .then(res => res.json())
     .then(obj => {
@@ -95,30 +92,26 @@ function loadAvailableDates() {
       latestDate = new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd)));
       latestDate.setUTCHours(0, 0, 0, 0);
       availableDates.push(latestDate);
-      datePicker.max = formatDate(latestDate);
+      if (datePicker) datePicker.max = formatDate(latestDate);
       updateDate(latestDate);
     })
     .catch(() => {
+      // 退回今天（UTC 当地零点），只用于首次初始化展示
       latestDate = new Date();
       updateDate(latestDate);
     });
 
+  // available-dates.json
   fetch("data/available-dates.json")
     .then(res => res.json())
     .then(dates => {
-      // 1) 文件里的日期 → UTC Date → YYYY-MM-DD
+      // 文件里的日期 → UTC Date → YYYY-MM-DD
       const fromFile = dates.map(s => {
         const [y, m, d] = s.split('-');
         return formatDate(new Date(Date.UTC(+y, +m - 1, +d)));
       });
-
-      // 2) 把 latestDate 也并进去（去重）
       const addLatest = latestDate ? [formatDate(latestDate)] : [];
-
-      // 3) 去重 + 升序
       availableDateStrs = Array.from(new Set([...fromFile, ...addLatest])).sort();
-
-      // 如需保留 Date 数组
       availableDates = availableDateStrs.map(s => parseDate(s));
     })
     .catch(() => {
@@ -127,104 +120,135 @@ function loadAvailableDates() {
     });
 }
 
-// 设置并更新日期
+/* ===================== 更新日期（驱动 UI + 地图） ===================== */
 function updateDate(date) {
   const formatted = formatDate(date);
-  currentDateEl.textContent = formatted;
-  datePicker.value = formatted;
+  if (currentDateEl) currentDateEl.textContent = formatted;
+  if (datePicker) datePicker.value = formatted;
   loadDataForDate(formatted);
   setSelectedUpdateItem(formatted);
 }
 
-// 初始化为 latest.json 日期
+/* ===================== 初始化 ===================== */
 loadAvailableDates();
 
-// ⬅️ 前一个“有更新”的日期
-document.getElementById('prev-day').onclick = () => {
-  ensureAvailableDateStrsReady();           // ← 新增
-  const cur = currentDateEl.textContent.trim();
+/* ===================== 相邻“有更新”的日期跳转 ===================== */
+function ensureAvailableDateStrsReady(){
+  if (availableDateStrs && availableDateStrs.length) return;
+  const fromUpdates = (Array.isArray(updates) ? updates.map(u => u.date) : []);
+  const addLatest   = latestDate ? [formatDate(latestDate)] : [];
+  availableDateStrs = Array.from(new Set([...fromUpdates, ...addLatest])).sort();
+}
+function findAdjacentDate(currentStr, direction /* -1=前一天, +1=后一天 */){
+  if (!availableDateStrs || availableDateStrs.length === 0) return null;
+
+  const idx = availableDateStrs.indexOf(currentStr);
+  if (idx !== -1) {
+    const nextIdx = idx + direction;
+    if (nextIdx >= 0 && nextIdx < availableDateStrs.length) {
+      return availableDateStrs[nextIdx];
+    }
+    return null; // 已到边界
+  }
+  // 当前日不在表里：就近查找
+  if (direction > 0) {
+    for (let i = 0; i < availableDateStrs.length; i++) {
+      if (availableDateStrs[i] > currentStr) return availableDateStrs[i];
+    }
+  } else {
+    for (let i = availableDateStrs.length - 1; i >= 0; i--) {
+      if (availableDateStrs[i] < currentStr) return availableDateStrs[i];
+    }
+  }
+  return null;
+}
+
+/* 左右箭头（仅在相邻有更新的日期间跳转） */
+const prevBtn = document.getElementById('prev-day');
+const nextBtn = document.getElementById('next-day');
+
+if (prevBtn) prevBtn.onclick = () => {
+  ensureAvailableDateStrsReady();
+  const cur  = currentDateEl.textContent.trim();
   const prev = findAdjacentDate(cur, -1);
   if (prev) updateDate(parseDate(prev));
   else showMessage('已经是最早一日');
 };
-
-// ➡️ 后一个“有更新”的日期
-document.getElementById('next-day').onclick = () => {
-  ensureAvailableDateStrsReady();           // ← 新增
-  const cur = currentDateEl.textContent.trim();
+if (nextBtn) nextBtn.onclick = () => {
+  ensureAvailableDateStrsReady();
+  const cur  = currentDateEl.textContent.trim();
   const next = findAdjacentDate(cur, +1);
   if (next) updateDate(parseDate(next));
   else showMessage('已经是最新一日');
 };
 
-// 📅 打开日历
-document.getElementById('open-calendar').onclick = () => {
-  calendarPopup.classList.toggle('hidden');
-};
+/* ===================== 日历/今天/关闭 ===================== */
+const openCalBtn   = document.getElementById('open-calendar');
+const todayBtn     = document.getElementById('today-button');
+const closeCalBtn  = document.getElementById('close-calendar');
+const jumpLatestBtn= document.getElementById('jump-latest');
 
-// 📅 选择日期
-datePicker.onchange = () => {
-  const [yyyy, mm, dd] = datePicker.value.split('-');
-  const selected = new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd)));
+if (openCalBtn && calendarPopup) {
+  openCalBtn.onclick = () => calendarPopup.classList.toggle('hidden');
+}
+if (datePicker) {
+  datePicker.onchange = () => {
+    const [yyyy, mm, dd] = datePicker.value.split('-');
+    const selected = new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd)));
+    if (latestDate && selected > latestDate) {
+      showMessage('当日暂未更新');
+      updateDate(latestDate);
+    } else {
+      updateDate(selected);
+    }
+    calendarPopup?.classList.add('hidden');
+  };
+}
+if (todayBtn) {
+  todayBtn.onclick = () => {
+    const today = new Date();
+    const selected = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
+    if (latestDate && selected > latestDate) {
+      showMessage('当日暂未更新');
+      updateDate(latestDate);
+    } else {
+      updateDate(selected);
+    }
+    calendarPopup?.classList.add('hidden');
+  };
+}
+if (closeCalBtn && calendarPopup) {
+  closeCalBtn.onclick = () => calendarPopup.classList.add('hidden');
+}
+if (jumpLatestBtn) {
+  jumpLatestBtn.onclick = () => {
+    fetch("data/latest.json")
+      .then(res => res.json())
+      .then(obj => {
+        const [yyyy, mm, dd] = obj.date.split('-');
+        const date = new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd)));
+        updateDate(date);
+      })
+      .catch(() => {
+        if (latestDate) updateDate(latestDate);
+      });
+  };
+}
 
-  if (latestDate && selected > latestDate) {
-    showMessage('当日暂未更新');
-    updateDate(latestDate);
-  } else {
-    updateDate(selected);
-  }
-  calendarPopup.classList.add('hidden');
-};
+/* ===================== 更新面板（打开/关闭） ===================== */
+const bellButton        = document.querySelector('.icon-group .icon:nth-child(3)');
+const updatePanel       = document.getElementById('update-panel');
+const updateList        = document.getElementById('update-list');
+const closeUpdatePanel  = document.getElementById('close-update-panel');
 
-// 📅 今天按钮
-document.getElementById('today-button').onclick = () => {
-  const today = new Date();
-  const selected = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
+if (bellButton && updatePanel) {
+  bellButton.onclick = () => updatePanel.classList.toggle('hidden');
+}
+if (closeUpdatePanel && updatePanel) {
+  closeUpdatePanel.onclick = () => updatePanel.classList.add('hidden');
+}
 
-  if (latestDate && selected > latestDate) {
-    showMessage('当日暂未更新');
-    updateDate(latestDate);
-  } else {
-    updateDate(selected);
-  }
-  calendarPopup.classList.add('hidden');
-};
-
-// ❌ 关闭日历
-document.getElementById('close-calendar').onclick = () => {
-  calendarPopup.classList.add('hidden');
-};
-
-// ⏩ 跳转最新
-document.getElementById('jump-latest').onclick = () => {
-  fetch("data/latest.json")
-    .then(res => res.json())
-    .then(obj => {
-      const [yyyy, mm, dd] = obj.date.split('-');
-      const date = new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd)));
-      updateDate(date);
-    })
-    .catch(() => {
-      if (latestDate) updateDate(latestDate);
-    });
-};
-
-// 📦 绑定 🔔按钮逻辑
-const bellButton = document.querySelector('.icon-group .icon:nth-child(3)');
-const updatePanel = document.getElementById('update-panel');
-const updateList = document.getElementById('update-list');
-const closeUpdatePanel = document.getElementById('close-update-panel');
-
-bellButton.onclick = () => {
-  updatePanel.classList.toggle('hidden');
-};
-
-// ❌ 关闭按钮
-closeUpdatePanel.onclick = () => {
-  updatePanel.classList.add('hidden');
-};
-
-// 📥 加载更新数据（你可以从 JSON 文件加载）
+/* ===================== 更新列表（静态示例数据） ===================== */
 const updates = [
   { date: "2025-10-09", summary: "利曼：俄军在Yampil方向取得了部分成功；俄军向Serebryanka西部渗透；西维尔斯克：乌克兰国防军在Verkhnokamyanske的反击取得了成功；澄清了Novoselivka附近的前线；俄军在Vyimka方向取得了部分成功；康斯坦丁尼夫卡：澄清了卡索夫亚尔的前线；俄军在Predtechyne方向取得了部分成功；澄清了Kleban-Byk附近的前线；波克罗夫斯克：乌克兰国防军在Novotoreske的反击取得了成功" },
   { date: "2025-10-03", summary: "乌克兰武装部队在Boikivka方向取得了成功；更新了波克罗夫斯克（第聂伯彼得罗夫斯克州）方向的前线" },
@@ -235,25 +259,26 @@ const updates = [
   { date: "2025-08-31", summary: "更新了苏梅至托列茨克方向的前线，剩余部分制作中..." }
 ];
 
-// 渲染更新列表
-updates.forEach(item => {
-  const div = document.createElement('div');
-  div.className = 'update-item';
-  div.textContent = `${item.date}：${item.summary}`;
-  div.onclick = () => {
-    const [yyyy, mm, dd] = item.date.split('-');
-    const date = new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd)));
-    updateDate(date);
-    updatePanel.classList.add('hidden');
-  };
-  updateList.appendChild(div);
-});
+// 渲染每日更新列表（并附加按压交互）
+if (updateList) {
+  updates.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'update-item';
+    div.textContent = `${item.date}：${item.summary}`;
+    makePressable(div); // ← 按压效果
+    div.onclick = () => {
+      const [yyyy, mm, dd] = item.date.split('-');
+      const date = new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd)));
+      updateDate(date);
+      updatePanel?.classList.add('hidden');
+    };
+    updateList.appendChild(div);
+  });
+  // 与当前日期同步一次“永久高亮”
+  syncSelectedToList();
+}
 
-syncSelectedToList();
-
-/* ===== 永久选中高亮 ===== */
-
-/** 让列表中对应日期的条目高亮，并在必要时滚动到可见 */
+/* ===================== 永久选中高亮（列表内） ===================== */
 function setSelectedUpdateItem(dateStr){
   const list = document.getElementById('update-list') || document.querySelector('.update-list');
   if (!list) return;
@@ -268,7 +293,7 @@ function setSelectedUpdateItem(dateStr){
   if (item){
     item.classList.add('selected');
 
-    // 如果不在可视区，就滚到“尽量靠近中间”的位置
+    // 滚动到“接近中间”的位置
     const top = item.offsetTop;
     const bottom = top + item.offsetHeight;
     const viewTop = list.scrollTop;
@@ -282,46 +307,42 @@ function setSelectedUpdateItem(dateStr){
     }
   }
 }
-
-/* 在面板首次打开或重新渲染时，把当前日期对应项设为选中 */
 function syncSelectedToList(){
-  const dateStr = document.getElementById('current-date')?.textContent?.trim();
+  const dateStr = currentDateEl?.textContent?.trim();
   if (dateStr) setSelectedUpdateItem(dateStr);
 }
 
-// 若 availableDateStrs 还没准备好，则从 updates + latestDate 兜底构建
-function ensureAvailableDateStrsReady(){
-  if (availableDateStrs && availableDateStrs.length) return;
-
-  const fromUpdates = (Array.isArray(updates) ? updates.map(u => u.date) : []);
-  const addLatest = latestDate ? [formatDate(latestDate)] : [];
-  availableDateStrs = Array.from(new Set([...fromUpdates, ...addLatest])).sort();
+/* ===================== 按压效果：缩小 + 黑色外框 ===================== */
+function makePressable(el){
+  if (!el) return;
+  el.classList.add('button-pressable');
+  // 指针按下/抬起
+  el.addEventListener('pointerdown', () => el.classList.add('is-pressed'));
+  const clear = () => el.classList.remove('is-pressed');
+  el.addEventListener('pointerup', clear);
+  el.addEventListener('pointerleave', clear);
+  el.addEventListener('pointercancel', clear);
+  el.addEventListener('blur', clear);
+  // 键盘
+  el.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' || e.code === 'Enter') el.classList.add('is-pressed');
+  });
+  el.addEventListener('keyup', (e) => {
+    if (e.code === 'Space' || e.code === 'Enter') el.classList.remove('is-pressed');
+  });
 }
 
-function findAdjacentDate(currentStr, direction /* -1=前一天, +1=后一天 */){
-  if (!availableDateStrs || availableDateStrs.length === 0) return null;
+// 把按压效果应用到固定按钮与图标
+[
+  prevBtn, nextBtn, openCalBtn, todayBtn, closeCalBtn, jumpLatestBtn,
+  bellButton, closeUpdatePanel
+].forEach(makePressable);
 
-  const idx = availableDateStrs.indexOf(currentStr);
-  if (idx !== -1) {
-    const nextIdx = idx + direction;
-    if (nextIdx >= 0 && nextIdx < availableDateStrs.length) {
-      return availableDateStrs[nextIdx];
-    }
-    return null; // 已到边界
-  }
+// 左侧所有图标（若需要）
+document.querySelectorAll('.icon').forEach(makePressable);
 
-  // 如果当前日期不在表里（比如手动选了无更新的日），找“最近的相邻有更新日”
-  if (direction > 0) {
-    // 向后找比 currentStr 大的第一个
-    for (let i = 0; i < availableDateStrs.length; i++) {
-      if (availableDateStrs[i] > currentStr) return availableDateStrs[i];
-    }
-  } else {
-    // 向前找比 currentStr 小的最后一个
-    for (let i = availableDateStrs.length - 1; i >= 0; i--) {
-      if (availableDateStrs[i] < currentStr) return availableDateStrs[i];
-    }
-  }
-  return null;
-}
-
+/* ===================== 可选：键盘方向键也支持切换 ===================== */
+// window.addEventListener('keydown', (e) => {
+//   if (e.key === 'ArrowLeft') { prevBtn?.click(); }
+//   if (e.key === 'ArrowRight'){ nextBtn?.click(); }
+// });
