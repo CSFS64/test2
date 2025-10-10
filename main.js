@@ -413,7 +413,7 @@ function getPrevAvailable(dateStr){
   return findAdjacentDate(dateStr, -1);
 }
 
-/* 工具：格式化 */
+// —— 数字格式化 —— //
 const toThsKm2 = v => (v / 1_000_000 / 1000);          // m² → 千平方公里
 const fmtThs   = v => `${toThsKm2(v).toFixed(3)} ths. km²`;
 const fmtPct   = v => `${(v * 100).toFixed(2)}%`;
@@ -423,72 +423,7 @@ const fmtDelta = v => {
 };
 
 /* 渲染信息面板 */
-async function renderInfoPanel(dateStr){
-  const curUrl  = `data/frontline-${dateStr}.json`;
-  const prevStr = getPrevAvailable(dateStr);
-  const prevUrl = prevStr ? `data/frontline-${prevStr}.json` : null;
-
-  let cur = null, prev = null;
-  try{
-    const r = await fetch(curUrl);
-    if (!r.ok) throw new Error();
-    cur = await r.json();
-  }catch{ cur = { type:'FeatureCollection', features:[] }; }
-
-  if (prevUrl){
-    try{
-      const r2 = await fetch(prevUrl);
-      if (!r2.ok) throw new Error();
-      prev = await r2.json();
-    }catch{ prev = { type:'FeatureCollection', features:[] }; }
-  }else{
-    prev = { type:'FeatureCollection', features:[] };
-  }
-
-  const curSum  = sumAreasByType(cur);
-  const prevSum = sumAreasByType(prev);
-
-  const A = curSum.occupied_after   || 0;  // after
-  const B = curSum.occupied_before  || 0;  // before
-  const L = curSum.liberated        || 0;  // liberated
-  const G = curSum.gray             || 0;  // gray
-
-  const A_prev = prevSum.occupied_after  || 0;
-  const B_prev = prevSum.occupied_before || 0;
-  const L_prev = prevSum.liberated       || 0;
-
-  // 基数：乌克兰不含克里米亚（m²）
-  const BASE = (UA_BASE_NO_CRIMEA_M2 && UA_BASE_NO_CRIMEA_M2 > 0)
-    ? UA_BASE_NO_CRIMEA_M2
-    : (A + B + L + G || 1);
-
-  // 口径 1：Occupied after 的百分数分母 = BASE - B
-  const denomAfter = Math.max(BASE - B, 1);           // 避免除零
-  const pctAfter   = A / denomAfter;
-
-  // 口径 2：Occupied before 的百分数分母 = BASE
-  const pctBefore  = B / BASE;
-
-  // 口径 3：Total temporarily occupied = A + B；百分数分母 = BASE
-  const T          = A + B;
-  const pctTotal   = T / BASE;
-
-  // 口径 4：Liberated 的百分数分母 = T（被占总量）
-  const denomLib   = Math.max(T, 1);
-  const pctLib     = L / denomLib;
-
-  // 变化量（面积，km²）
-  const dA = A - A_prev;
-  const dB = B - B_prev;               // 理论应恒为 0
-  const dT = T - (A_prev + B_prev);
-  const dL = L - L_prev;
-
-  // 渲染
-  const wrap = document.getElementById('info-content');
-  if (!wrap) return;
-  wrap.innerHTML = '';
-
-  function addRow(labelText, color, curVal, pct, delta){
+function addRow(wrap, labelText, color, curVal, pct, delta){
   const row = document.createElement('div');
   row.className = 'info-row';
 
@@ -514,20 +449,12 @@ async function renderInfoPanel(dateStr){
   // Row3 左：面积 + Δ
   const left = document.createElement('div');
   left.className = 'info-val-left';
-  const v = document.createElement('span');
-  v.className = 'val';
-  v.textContent = fmtThs(curVal);         // 例如 70.931 ths. km²
-  const d = document.createElement('span');
-  d.className = 'delta';
-  d.style.opacity = .7;
-  d.textContent = fmtDelta(delta);        // 例如 +15.4 km²
-  left.appendChild(v);
-  left.appendChild(d);
+  left.innerHTML = `<span class="val">${fmtThs(curVal)}</span><span class="delta">${fmtDelta(delta)}</span>`;
 
   // Row3 右：百分比
   const pctEl = document.createElement('div');
   pctEl.className = 'info-pct';
-  pctEl.textContent = fmtPct(pct);        // 例如 11.75%
+  pctEl.textContent = fmtPct(pct);
 
   row.appendChild(dot);
   row.appendChild(lab);
@@ -535,6 +462,80 @@ async function renderInfoPanel(dateStr){
   row.appendChild(left);
   row.appendChild(pctEl);
   wrap.appendChild(row);
+}
+
+// —— 主渲染：把 “总暂时被占” 也用 addRow —— //
+async function renderInfoPanel(dateStr){
+  const curUrl  = `data/frontline-${dateStr}.json`;
+  const prevStr = getPrevAvailable(dateStr);
+  const prevUrl = prevStr ? `data/frontline-${prevStr}.json` : null;
+
+  let cur = null, prev = null;
+  try{
+    const r = await fetch(curUrl); if (!r.ok) throw 0;
+    cur = await r.json();
+  }catch{ cur = { type:'FeatureCollection', features:[] }; }
+
+  if (prevUrl){
+    try{
+      const r2 = await fetch(prevUrl); if (!r2.ok) throw 0;
+      prev = await r2.json();
+    }catch{ prev = { type:'FeatureCollection', features:[] }; }
+  }else{
+    prev = { type:'FeatureCollection', features:[] };
+  }
+
+  const curSum  = sumAreasByType(cur);
+  const prevSum = sumAreasByType(prev);
+
+  const A = curSum.occupied_after   || 0;  // after
+  const B = curSum.occupied_before  || 0;  // before
+  const L = curSum.liberated        || 0;  // liberated
+
+  const A_prev = prevSum.occupied_after  || 0;
+  const B_prev = prevSum.occupied_before || 0;
+  const L_prev = prevSum.liberated       || 0;
+
+  const BASE = (UA_BASE_NO_CRIMEA_M2 && UA_BASE_NO_CRIMEA_M2 > 0)
+    ? UA_BASE_NO_CRIMEA_M2
+    : (A + B + L || 1);
+
+  const denomAfter = Math.max(BASE - B, 1);
+  const pctAfter   = A / denomAfter;
+
+  const pctBefore  = B / BASE;
+
+  const T          = A + B;
+  const pctTotal   = T / BASE;
+
+  const denomLib   = Math.max(T, 1);
+  const pctLib     = L / denomLib;
+
+  const dA = A - A_prev;
+  const dB = B - B_prev;
+  const dT = T - (A_prev + B_prev);
+  const dL = L - L_prev;
+
+  const wrap = document.getElementById('info-content');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+
+  // 你的中文标签（按需替换）
+  const LBL_AFTER  = '全面入侵后被占';
+  const LBL_BEFORE = '全面入侵前被占';
+  const LBL_LIB    = '已解放';
+  const LBL_TOTAL  = '总暂时被占';
+
+  // 颜色（与你地图一致）
+  const C_AFTER  = '#E60000';
+  const C_BEFORE = '#6f2dbd';
+  const C_LIB    = '#12b886';
+  const C_TOTAL  = '#ff3232';
+
+  addRow(wrap, LBL_AFTER,  C_AFTER,  A, pctAfter, dA);
+  addRow(wrap, LBL_BEFORE, C_BEFORE, B, pctBefore, dB);
+  addRow(wrap, LBL_LIB,    C_LIB,    L, pctLib,   dL);
+  addRow(wrap, LBL_TOTAL,  C_TOTAL,  T, pctTotal, dT);   // ← 不再单独写，样式统一
 }
 
   // 顺序与颜色
