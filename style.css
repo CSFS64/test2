@@ -449,10 +449,13 @@ body, html {
   margin: 0 0 8px 0;
 }
 
-/* 小圆点 */
-.info-dot{
-  grid-column: 1; grid-row: 1;
-  width: 10px; height: 10px; border-radius: 999px;
+/* 左侧色块：方形，带轻微圆角 */
+.info-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;   /* ← 原来是 999px，现在是轻微圆角方形 */
+  grid-column: 1;
+  grid-row: 1;
 }
 
 /* 标题（自动换行、不撑爆） */
