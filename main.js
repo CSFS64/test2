@@ -749,5 +749,17 @@ map.on('touchend touchcancel', () => {
   __lpLatLng = null;
 });
 
+// 左键单击地图：删除/隐藏当前定位标记
+map.on('click', () => {
+  if (window.geoMarker) {
+    try {
+      window.geoMarker.remove();  // Leaflet 1.9+ 推荐
+    } catch {
+      map.removeLayer(window.geoMarker);
+    }
+    window.geoMarker = null;
+  }
+});
+
 //（可选）屏蔽浏览器默认右键菜单
 map.getContainer().addEventListener('contextmenu', (ev) => ev.preventDefault(), { passive: false });
