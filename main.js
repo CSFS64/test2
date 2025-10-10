@@ -5,6 +5,7 @@ const calendarPopup = document.getElementById('calendar-popup');
 let latestDate = null; // 🔹 记录最新可用日期
 let currentLayer = null; // 当前图层
 let availableDates = []; // 用于记录所有有更新的日期
+let availableDateStrs = [];
 
 // 初始化地图
 const map = L.map('map', {
@@ -86,15 +87,14 @@ function loadDataForDate(dateStr) {
     });
 }
 
-// 加载所有可用的更新日期
 function loadAvailableDates() {
   fetch("data/latest.json")
     .then(res => res.json())
     .then(obj => {
       const [yyyy, mm, dd] = obj.date.split('-');
       latestDate = new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd)));
-      latestDate.setUTCHours(0, 0, 0, 0); // 清除时分秒，确保对比的是日期
-      availableDates.push(latestDate); // 添加最新的日期
+      latestDate.setUTCHours(0, 0, 0, 0);
+      availableDates.push(latestDate);
       datePicker.max = formatDate(latestDate);
       updateDate(latestDate);
     })
@@ -103,15 +103,23 @@ function loadAvailableDates() {
       updateDate(latestDate);
     });
 
-  // 加载其他所有的日期
   fetch("data/available-dates.json")
     .then(res => res.json())
     .then(dates => {
-      // 解析所有日期，并排序
-      availableDates = dates.map(dateStr => {
-        const [yyyy, mm, dd] = dateStr.split('-');
-        return new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd)));
-      }).sort((a, b) => a - b); // 升序排序
+      // 1) 把文件里的日期转为 UTC Date，再转回 YYYY-MM-DD 字符串
+      const fromFile = dates.map(s => {
+        const [y,m,d] = s.split('-');
+        return formatDate(new Date(Date.UTC(+y, +m - 1, +d)));
+      });
+
+      // 2) 把 latestDate 也放进去（可能文件已包含，但这里做去重）
+      const addLatest = latestDate ? [formatDate(latestDate)] : [];
+
+      // 3) 去重 + 升序
+      availableDateStrs = Array.from(new Set([...fromFile, ...addLatest])).sort();
+
+      // 如果你仍想保留以前的 Date 数组
+      availableDates = availableDateStrs.map(s => parseDate(s));
     });
 }
 
@@ -127,18 +135,26 @@ function updateDate(date) {
 // 初始化为 latest.json 日期
 loadAvailableDates();
 
-// ⬅️ 前一天
+// ⬅️ 前一个“有更新”的日期
 document.getElementById('prev-day').onclick = () => {
-  const date = parseDate(currentDateEl.textContent);
-  date.setUTCDate(date.getUTCDate() - 1);
-  updateDate(date);
+  const cur = currentDateEl.textContent.trim();   // "YYYY-MM-DD"
+  const prev = findAdjacentDate(cur, -1);
+  if (prev) {
+    updateDate(parseDate(prev));
+  } else {
+    showMessage('已经是最早一日');
+  }
 };
 
-// ➡️ 后一天（直接跳转到下一天，不管是否有更新）
+// ➡️ 后一个“有更新”的日期
 document.getElementById('next-day').onclick = () => {
-  const date = parseDate(currentDateEl.textContent);
-  date.setUTCDate(date.getUTCDate() + 1);
-  updateDate(date); // 直接跳转到下一天
+  const cur = currentDateEl.textContent.trim();
+  const next = findAdjacentDate(cur, +1);
+  if (next) {
+    updateDate(parseDate(next));
+  } else {
+    showMessage('已经是最新一日');
+  }
 };
 
 // 📅 打开日历
@@ -272,3 +288,31 @@ function syncSelectedToList(){
   const dateStr = document.getElementById('current-date')?.textContent?.trim();
   if (dateStr) setSelectedUpdateItem(dateStr);
 }
+
+function findAdjacentDate(currentStr, direction /* -1=前一天, +1=后一天 */){
+  if (!availableDateStrs || availableDateStrs.length === 0) return null;
+
+  const idx = availableDateStrs.indexOf(currentStr);
+  if (idx !== -1) {
+    const nextIdx = idx + direction;
+    if (nextIdx >= 0 && nextIdx < availableDateStrs.length) {
+      return availableDateStrs[nextIdx];
+    }
+    return null; // 已到边界
+  }
+
+  // 如果当前日期不在表里（比如手动选了无更新的日），找“最近的相邻有更新日”
+  if (direction > 0) {
+    // 向后找比 currentStr 大的第一个
+    for (let i = 0; i < availableDateStrs.length; i++) {
+      if (availableDateStrs[i] > currentStr) return availableDateStrs[i];
+    }
+  } else {
+    // 向前找比 currentStr 小的最后一个
+    for (let i = availableDateStrs.length - 1; i >= 0; i--) {
+      if (availableDateStrs[i] < currentStr) return availableDateStrs[i];
+    }
+  }
+  return null;
+}
+
