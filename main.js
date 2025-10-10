@@ -624,7 +624,6 @@ function goToLatLng(){
   }else{
     window.geoMarker.setLatLng([ll.lat, ll.lng]);
   }
-}
 
   // 居中（如需固定缩放，改成 map.setView([ll.lat, ll.lng], 13)）
   map.setView([ll.lat, ll.lng]);
