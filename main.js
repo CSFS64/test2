@@ -643,3 +643,111 @@ updateDate = function(date){
     if (dateStr) renderInfoPanel(dateStr);
   }
 };
+
+/* ===================== 右键 / 长按：在该点放置定位标记并显示坐标 ===================== */
+
+// 复用与 🌐 搜索同一个标记（如果你前面已有 geoMarker，就不会重复声明）
+window.geoMarker = window.geoMarker || null;
+
+// 小工具：WGS-84 显示、MGRS 转换（mgrs 库可选）
+function fmtWGS84(latlng) {
+  return `${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}`;
+}
+function toMGRS(latlng) {
+  try {
+    if (window.mgrs) return window.mgrs.forward([latlng.lng, latlng.lat], 5);
+  } catch (_) {}
+  return '—';
+}
+
+// 生成弹窗 DOM（带复制按钮）
+function buildCoordPopup(latlng) {
+  const wgs = fmtWGS84(latlng);
+  const mgrs = toMGRS(latlng);
+
+  const wrap = document.createElement('div');
+  wrap.className = 'coord-card';
+  wrap.innerHTML = `
+    <div class="coord-title">COORDINATES</div>
+    <div class="coord-row">
+      <div class="coord-label">WGS-84</div>
+      <div class="coord-value">${wgs}</div>
+      <button class="coord-copy" data-copy="${wgs}" title="复制">📋</button>
+    </div>
+    <div class="coord-row">
+      <div class="coord-label">MGRS</div>
+      <div class="coord-value">${mgrs}</div>
+      <button class="coord-copy" data-copy="${mgrs}" title="复制">📋</button>
+    </div>
+  `;
+  // 绑定复制
+  wrap.querySelectorAll('.coord-copy').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const txt = btn.getAttribute('data-copy') || '';
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(txt);
+      } else {
+        // 兜底
+        const ta = document.createElement('textarea');
+        ta.value = txt;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+      }
+    });
+  });
+  return wrap;
+}
+
+// 在指定点放置/移动标记并弹出坐标卡片
+function dropMarkerAt(latlng) {
+  if (!window.geoMarker) {
+    window.geoMarker = L.marker(latlng).addTo(map);
+  } else {
+    window.geoMarker.setLatLng(latlng);
+  }
+  const content = buildCoordPopup(latlng);
+  window.geoMarker.bindPopup(content, {
+    className: 'coord-popup',
+    closeButton: false,
+    autoPan: true,
+    maxWidth: 280
+  }).openPopup();
+}
+
+// —— 桌面：右键（Leaflet 会发 contextmenu 事件） —— //
+map.on('contextmenu', (e) => {
+  e.originalEvent?.preventDefault?.();
+  dropMarkerAt(e.latlng);
+});
+
+// —— 移动端：长按 —— //
+let __lpTimer = null;
+let __lpLatLng = null;
+
+map.on('touchstart', (e) => {
+  const touch = e.originalEvent.touches[0];
+  if (!touch) return;
+  __lpLatLng = map.mouseEventToLatLng(touch);
+  clearTimeout(__lpTimer);
+  __lpTimer = setTimeout(() => {
+    if (__lpLatLng) dropMarkerAt(__lpLatLng);
+    __lpTimer = null;
+  }, 600); // 长按 600ms 触发
+});
+
+map.on('touchmove', (e) => {
+  const touch = e.originalEvent.touches[0];
+  if (!touch) return;
+  __lpLatLng = map.mouseEventToLatLng(touch); // 跟随手指刷新候选点
+});
+
+map.on('touchend touchcancel', () => {
+  clearTimeout(__lpTimer);
+  __lpTimer = null;
+  __lpLatLng = null;
+});
+
+//（可选）屏蔽浏览器默认右键菜单
+map.getContainer().addEventListener('contextmenu', (ev) => ev.preventDefault(), { passive: false });
