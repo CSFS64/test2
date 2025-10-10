@@ -513,30 +513,42 @@ body, html {
 
 
 /* 统一关闭按钮样式 */
+/* 统一关闭按钮样式（id 和 class 都照顾到） */
 .close-btn,
 #close-update-panel,
-#close-info-panel {
+#close-info-panel,
+#close-calendar {
   background: none;
   border: none;
-  font-size: 16px;
+  font-family: "Inter", "Segoe UI", Arial, sans-serif; /* 统一字体 */
+  font-weight: 600;          /* 统一粗细 */
+  font-size: 18px;           /* 更清晰 */
+  line-height: 1;            /* 避免不同字体导致的上下不齐 */
   cursor: pointer;
   color: #222;
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
-  border-radius: 4px;
+  display: inline-flex;      /* 居中对齐 */
+  align-items: center;
+  justify-content: center;
+  width: 24px;               /* 一致的点击面积 */
+  height: 24px;
+  border-radius: 6px;
+  transition: transform 0.08s ease, box-shadow 0.08s ease, color 0.1s ease;
   user-select: none;
 }
 
-/* 鼠标悬停变深 */
+/* 悬停更深一点 */
 .close-btn:hover,
 #close-update-panel:hover,
-#close-info-panel:hover {
+#close-info-panel:hover,
+#close-calendar:hover {
   color: #000;
 }
 
-/* 按下缩小并加黑框 */
+/* 按下缩小并加外框 */
 .close-btn:active,
 #close-update-panel:active,
-#close-info-panel:active {
+#close-info-panel:active,
+#close-calendar:active {
   transform: scale(0.9);
   box-shadow: 0 0 0 2px #000;
 }
