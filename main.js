@@ -253,12 +253,25 @@ const closeGeoBtn = document.getElementById('close-geo-panel');
 const geoInput    = document.getElementById('geo-input');
 const geoGoBtn    = document.getElementById('geo-go');
 
+// 📏 图标与 Ruler 面板
+const rulerIcon = document.querySelector('.sidebar-section.middle .icon-group .icon:nth-child(2)'); // 📏
+const rulerPanel = document.getElementById('ruler-panel');
+const closeRulerBtn = document.getElementById('close-ruler-panel');
+const rulerDistanceEl = document.getElementById('ruler-distance');
+const rulerAreaEl = document.getElementById('ruler-area');
+const rulerClearBtn = document.getElementById('ruler-clear');
+const rulerFinishBtn = document.getElementById('ruler-finish');
+
+window.rulerPanel = rulerPanel;
+
 // —— 公共函数：关闭所有面板 —— //
 function closeAllPanels() {
   if (updatePanel) updatePanel.classList.add('hidden');
   if (infoPanel)   infoPanel.classList.add('hidden');
   if (calendarPopup) calendarPopup.classList.add('hidden');
+  if (window.rulerPanel) window.rulerPanel.classList.add('hidden');
 }
+
 // 扩展：把 🌐 面板也纳入
 const _oldCloseAllPanels = closeAllPanels;
 function closeAllPanelsExtended(){
@@ -307,6 +320,153 @@ if (globeIcon && geoPanel){
 }
 if (closeGeoBtn){
   closeGeoBtn.onclick = () => geoPanel.classList.add('hidden');
+}
+
+/* ===================== Ruler 运行时状态与工具 ===================== */
+let rulerActive = false;
+let rulerClosed = false;              // 是否闭合（形成多边形）
+let rulerMarkers = [];                // L.Marker[]
+let rulerLine = null;                 // L.Polyline
+let rulerPoly = null;                 // L.Polygon
+const CLOSE_PX = 12;                  // 认为点击到起点的像素阈值
+
+function km(v){ return (Math.round(v * 100) / 100).toFixed(2); }           // 保留两位
+function km2(v){ return (Math.round(v * 100) / 100).toFixed(2); }
+
+/* 刷新统计 */
+function updateRulerStats(){
+  const coords = rulerMarkers.map(m => [m.getLatLng().lng, m.getLatLng().lat]);
+  let distKm = 0, areaKm2 = null;
+
+  if (coords.length >= 2){
+    const line = turf.lineString(coords);
+    distKm = turf.length(line, {units: 'kilometers'}) || 0;
+  }
+
+  if (rulerClosed && coords.length >= 3){
+    // 闭合：用 polygon 计算面积
+    const poly = turf.polygon([[...coords, coords[0]]]);
+    const areaM2 = turf.area(poly) || 0;
+    areaKm2 = areaM2 / 1_000_000;
+  }
+
+  rulerDistanceEl.textContent = km(distKm);
+  rulerAreaEl.textContent = (areaKm2 != null) ? km2(areaKm2) : '—';
+}
+
+/* 把折线 / 多边形画出来 */
+function redrawRulerGeometry(){
+  const latlngs = rulerMarkers.map(m => m.getLatLng());
+
+  // 折线
+  if (!rulerLine){
+    rulerLine = L.polyline(latlngs, { color:'#1f2937', weight:3 }).addTo(map);
+  }else{
+    rulerLine.setLatLngs(latlngs);
+  }
+
+  // 多边形（闭合时）
+  if (rulerClosed && latlngs.length >= 3){
+    const closedLatlngs = [...latlngs, latlngs[0]];
+    if (!rulerPoly){
+      rulerPoly = L.polygon(closedLatlngs, { color:'#1f2937', weight:2, fillOpacity:.1 }).addTo(map);
+    }else{
+      rulerPoly.setLatLngs(closedLatlngs);
+    }
+  }else{
+    if (rulerPoly){
+      map.removeLayer(rulerPoly);
+      rulerPoly = null;
+    }
+  }
+
+  updateRulerStats();
+}
+
+/* 新增一个可拖拽点 */
+function addRulerPoint(latlng){
+  // 如果已闭合，点击不再添加
+  if (rulerClosed) return;
+
+  // 若点击到起点附近 -> 闭合
+  if (rulerMarkers.length >= 2){
+    const first = rulerMarkers[0].getLatLng();
+    const p1 = map.latLngToLayerPoint(first);
+    const p2 = map.latLngToLayerPoint(latlng);
+    if (p1.distanceTo(p2) <= CLOSE_PX){
+      rulerClosed = true;
+      redrawRulerGeometry();
+      return;
+    }
+  }
+
+  const marker = L.marker(latlng, { draggable:true }).addTo(map);
+  marker.on('drag', () => redrawRulerGeometry());
+  rulerMarkers.push(marker);
+  redrawRulerGeometry();
+}
+
+/* 清空 */
+function clearRuler(){
+  rulerMarkers.forEach(m => map.removeLayer(m));
+  rulerMarkers = [];
+  if (rulerLine){ map.removeLayer(rulerLine); rulerLine = null; }
+  if (rulerPoly){ map.removeLayer(rulerPoly); rulerPoly = null; }
+  rulerClosed = false;
+  rulerDistanceEl.textContent = '0.00';
+  rulerAreaEl.textContent = '—';
+}
+
+/* 开始/停止 */
+function startRuler(){
+  rulerActive = true;
+  map.getContainer().style.cursor = 'crosshair';
+  // 点击添加点
+  map.on('click', onMapClickForRuler, /* priority */ true);
+}
+function stopRuler(){
+  rulerActive = false;
+  map.getContainer().style.cursor = '';
+  map.off('click', onMapClickForRuler, /* priority */ true);
+}
+function onMapClickForRuler(e){
+  addRulerPoint(e.latlng);
+}
+
+/* Finish：手动闭合（若未闭合且 >=3 点） */
+function finishRuler(){
+  if (!rulerClosed && rulerMarkers.length >= 3){
+    rulerClosed = true;
+    redrawRulerGeometry();
+  }
+}
+
+/* 打开 Ruler 面板 */
+if (rulerIcon && rulerPanel){
+  // 让按压反馈样式也套用
+  makePressable(rulerIcon);
+  makePressable(closeRulerBtn);
+
+  rulerIcon.onclick = () => {
+    const isHidden = rulerPanel.classList.contains('hidden');
+    closeAllPanels();
+    if (isHidden){
+      rulerPanel.classList.remove('hidden');
+      startRuler();
+    }else{
+      rulerPanel.classList.add('hidden');
+      stopRuler();
+    }
+  };
+
+  closeRulerBtn.onclick = () => {
+    rulerPanel.classList.add('hidden');
+    stopRuler();
+  };
+
+  // 按钮
+  if (rulerClearBtn) rulerClearBtn.onclick = clearRuler;
+  if (rulerFinishBtn) rulerFinishBtn.onclick = finishRuler;
 }
 
 /* ===================== 更新列表（静态示例数据） ===================== */
@@ -757,6 +917,14 @@ map.on('click', () => {
     } catch {
       map.removeLayer(window.geoMarker);
     }
+    window.geoMarker = null;
+  }
+});
+
+map.on('click', (e) => {
+  if (rulerActive) return; // ← Ruler 模式下，click 被用来加点，不删 pin
+  if (window.geoMarker){
+    try{ window.geoMarker.remove(); }catch{ map.removeLayer(window.geoMarker); }
     window.geoMarker = null;
   }
 });
