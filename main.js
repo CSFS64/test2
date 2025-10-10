@@ -909,18 +909,6 @@ map.on('touchend touchcancel', () => {
   __lpLatLng = null;
 });
 
-// 左键单击地图：删除/隐藏当前定位标记
-map.on('click', () => {
-  if (window.geoMarker) {
-    try {
-      window.geoMarker.remove();  // Leaflet 1.9+ 推荐
-    } catch {
-      map.removeLayer(window.geoMarker);
-    }
-    window.geoMarker = null;
-  }
-});
-
 map.on('click', (e) => {
   if (rulerActive) return; // ← Ruler 模式下，click 被用来加点，不删 pin
   if (window.geoMarker){
