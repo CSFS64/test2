@@ -538,38 +538,6 @@ async function renderInfoPanel(dateStr){
   addRow(wrap, LBL_TOTAL,  C_TOTAL,  T, pctTotal, dT);   // ← 不再单独写，样式统一
 }
 
-  // 顺序与颜色
-  addRow(INFO_META.occupied_after.label,  INFO_META.occupied_after.color,  A, pctAfter, dA);
-  addRow(INFO_META.occupied_before.label, INFO_META.occupied_before.color, B, pctBefore, dB);
-  addRow(INFO_META.liberated.label,       INFO_META.liberated.color,       L, pctLib,   dL);
-
-  // 合计 Temporarily occupied
-  const totalColor = '#ff3232';
-  const totalRow = document.createElement('div');
-  totalRow.className = 'info-row';
-  const dot2 = document.createElement('span');
-  dot2.className = 'info-dot';
-  dot2.style.background = totalColor;
-  const lab2 = document.createElement('div');
-  lab2.style.minWidth = '120px';
-  lab2.textContent = '总暂时被占';
-  const barWrap2 = document.createElement('div');
-  barWrap2.className = 'info-bar-wrap';
-  const bar2 = document.createElement('div');
-  bar2.className  = 'info-bar';
-  bar2.style.background = totalColor;
-  bar2.style.width = `${(Math.min(Math.max(pctTotal, 0), 1) * 100).toFixed(2)}%`;
-  barWrap2.appendChild(bar2);
-  const val2 = document.createElement('div');
-  val2.className = 'info-val';
-  val2.innerHTML = `${fmtThs(T)}<br><span style="opacity:.7">${fmtDelta(dT)} · ${fmtPct(pctTotal)}</span>`;
-  totalRow.appendChild(dot2);
-  totalRow.appendChild(lab2);
-  totalRow.appendChild(barWrap2);
-  totalRow.appendChild(val2);
-  wrap.appendChild(totalRow);
-}
-
 /* ========== 打开/关闭信息面板：与当前日期联动 ========== */
 const infoIcon      = document.querySelector('.icon-group .icon:nth-child(4)'); // ℹ️
 const infoPanel     = document.getElementById('info-panel');
