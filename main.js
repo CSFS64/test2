@@ -385,10 +385,10 @@ const TYPE_MAP = {
 
 /* 展示信息（颜色等可调） */
 const INFO_META = {
-  occupied_after:  { label: 'Occupied after Feb 24, 2022', color: '#E60000' },
-  occupied_before: { label: 'Occupied before Feb 24, 2022', color: '#6f2dbd' },
-  liberated:       { label: 'Liberated',                    color: '#12b886' },
-  gray:            { label: 'Gray zone',                    color: '#9e9e9e' }
+  occupied_after:  { label: '全面入侵后被占', color: '#E60000' },
+  occupied_before: { label: '全面入侵前被占', color: '#6f2dbd' },
+  liberated:       { label: '已解放',                    color: '#12b886' },
+  gray:            { label: '交战区',                    color: '#9e9e9e' }
 };
 
 /* 汇总：按类型求面积（m²） */
