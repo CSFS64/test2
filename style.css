@@ -295,3 +295,53 @@ body, html {
     font-size: 13px;
   }
 }
+
+/* ====== A. 限制容器高度：在底部留出空隙 ====== */
+:root{
+  /* 想留多少空隙就改这个值（默认 24px） */
+  --update-bottom-gap: 24px;
+}
+
+#update-panel{
+  /* 顶部你原来就是 160px，不动 */
+  /* 高度 = 视口高度 - 顶部160px - 底部预留 */
+  max-height: calc(100vh - 160px - var(--update-bottom-gap));
+  overflow: hidden;                /* 外层不滚，避免圆角被滚动条“切掉” */
+  display: flex;
+  flex-direction: column;
+}
+
+/* 头部不伸缩，列表填满剩余空间 */
+.update-header{ flex: 0 0 auto; }
+#update-list,
+.update-list{                       /* 兼容你用 id 或 class 的两种写法 */
+  flex: 1 1 auto;
+  overflow-y: auto;                 /* 只在内部列表滚动 */
+  padding-right: 6px;               /* 给滚动条留一点“内凹”空间 */
+  scrollbar-gutter: stable;         /* 避免出现/隐藏滚动条引起抖动（支持的浏览器） */
+
+  /* Firefox 细滚动条（颜色选中性灰，不改你整体配色） */
+  scrollbar-width: thin;
+  scrollbar-color: #bdbdbd transparent;
+}
+
+/* WebKit 系列（Chrome/Edge/Safari）美化滚动条 */
+#update-list::-webkit-scrollbar,
+.update-list::-webkit-scrollbar{
+  width: 6px;                       /* 更细 */
+}
+#update-list::-webkit-scrollbar-track,
+.update-list::-webkit-scrollbar-track{
+  background: transparent;          /* 轨道透明，保持你的白色面板 */
+  margin: 8px 0;                    /* 上下留白，让两端呈现圆角效果 */
+  border-radius: 999px;
+}
+#update-list::-webkit-scrollbar-thumb,
+.update-list::-webkit-scrollbar-thumb{
+  background: #bdbdbd;              /* 中性灰，和现有灰阶一致 */
+  border-radius: 999px;             /* 圆角滚动条 */
+}
+#update-list::-webkit-scrollbar-thumb:hover,
+.update-list::-webkit-scrollbar-thumb:hover{
+  background: #a8a8a8;
+}
