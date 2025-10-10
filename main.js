@@ -266,6 +266,8 @@ const _oldCloseAllPanels = closeAllPanels;
 function closeAllPanelsExtended(){
   _oldCloseAllPanels();
   if (geoPanel) geoPanel.classList.add('hidden');
+  if (drawPanel) drawPanel.classList.add('hidden');
+  if (typeof disableDraw === 'function') disableDraw();
   removeGeoMarker();
 }
 
@@ -523,14 +525,6 @@ let startLL    = null;
 let tempLayer  = null;         // 正在绘制中的图层
 let shapes     = [];           // 已完成图层
 let freehand   = null;         // pen 模式的折线
-
-// —— 让关闭所有面板时也能关闭绘图 —— //
-const __closeAllPanels_draw = closeAllPanels;
-function closeAllPanels(){
-  __closeAllPanels_draw();
-  if (drawPanel) drawPanel.classList.add('hidden');
-  if (drawActive) disableDraw();
-}
 
 // —— 面板开关 —— //
 if (drawIcon) {
