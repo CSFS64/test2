@@ -488,36 +488,54 @@ async function renderInfoPanel(dateStr){
   if (!wrap) return;
   wrap.innerHTML = '';
 
-  function addRow(label, color, curVal, pct, delta){
-    const row = document.createElement('div');
-    row.className = 'info-row';
+  function addRow(labelText, color, curVal, pct, delta){
+  const row = document.createElement('div');
+  row.className = 'info-row';
 
-    const dot = document.createElement('span');
-    dot.className = 'info-dot';
-    dot.style.background = color;
+  // dot
+  const dot = document.createElement('span');
+  dot.className = 'info-dot';
+  dot.style.background = color;
 
-    const lab = document.createElement('div');
-    label.className = 'info-label';
-    lab.textContent = label;
+  // label
+  const lab = document.createElement('div');
+  lab.className = 'info-label';
+  lab.textContent = labelText;
 
-    const barWrap = document.createElement('div');
-    barWrap.className = 'info-bar-wrap';
-    const bar = document.createElement('div');
-    bar.className = 'info-bar';
-    bar.style.background = color;
-    bar.style.width = `${(Math.min(Math.max(pct, 0), 1) * 100).toFixed(2)}%`;
-    barWrap.appendChild(bar);
+  // bar
+  const barWrap = document.createElement('div');
+  barWrap.className = 'info-bar-wrap';
+  const bar = document.createElement('div');
+  bar.className = 'info-bar';
+  bar.style.background = color;
+  bar.style.width = `${(Math.min(Math.max(pct, 0), 1) * 100).toFixed(2)}%`;
+  barWrap.appendChild(bar);
 
-    const val = document.createElement('div');
-    val.className = 'info-val';
-    val.innerHTML = `<span class="top">${fmtThs(curVal)}</span><br><span class="meta">${fmtDelta(delta)} · ${fmtPct(pct)}</span>`;
+  // Row3 左：面积 + Δ
+  const left = document.createElement('div');
+  left.className = 'info-val-left';
+  const v = document.createElement('span');
+  v.className = 'val';
+  v.textContent = fmtThs(curVal);         // 例如 70.931 ths. km²
+  const d = document.createElement('span');
+  d.className = 'delta';
+  d.style.opacity = .7;
+  d.textContent = fmtDelta(delta);        // 例如 +15.4 km²
+  left.appendChild(v);
+  left.appendChild(d);
 
-    row.appendChild(dot);
-    row.appendChild(lab);
-    row.appendChild(barWrap);
-    row.appendChild(val);
-    wrap.appendChild(row);
-  }
+  // Row3 右：百分比
+  const pctEl = document.createElement('div');
+  pctEl.className = 'info-pct';
+  pctEl.textContent = fmtPct(pct);        // 例如 11.75%
+
+  row.appendChild(dot);
+  row.appendChild(lab);
+  row.appendChild(barWrap);
+  row.appendChild(left);
+  row.appendChild(pctEl);
+  wrap.appendChild(row);
+}
 
   // 顺序与颜色
   addRow(INFO_META.occupied_after.label,  INFO_META.occupied_after.color,  A, pctAfter, dA);
