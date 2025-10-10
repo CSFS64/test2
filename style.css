@@ -395,26 +395,7 @@ body, html {
   margin: 0;                        /* 内层不再产生额外外边距，避免影响黑框尺寸 */
 }
 
-/* 普通未选中项：左边的线条 */
-.update-item {
-  border-left: 4px solid #000;        /* 默认黑色竖线 */
-  border-radius: 8px;
-  background: #fff;
-  padding: 8px;
-  margin: 6px 0;
-  transition: transform .08s ease, box-shadow .08s ease, border-left-color .15s ease;
-}
-
-/* 被选中的条目外层黑框（上一步我们新增的 .selected-frame） */
-.selected-frame {
-  width: 100%;
-  box-sizing: border-box;
-  border: 2px solid #000;
-  border-radius: 12px;
-  padding: 6px;
-}
-
 /* ✅ 特殊：选中条目的左侧竖线改为绿色 */
 .selected-frame > .update-item {
-  border-left-color: #0f0; /* 明亮绿色，可换成 #4CAF50、#00C853 等更柔和的绿 */
+  border-left-color: #4CAF50; /* 明亮绿色，可换成 #4CAF50、#00C853 等更柔和的绿 */
 }
