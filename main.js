@@ -235,17 +235,49 @@ if (jumpLatestBtn) {
   };
 }
 
-/* ===================== 更新面板（打开/关闭） ===================== */
-const bellButton        = document.querySelector('.icon-group .icon:nth-child(3)');
-const updatePanel       = document.getElementById('update-panel');
-const updateList        = document.getElementById('update-list');
-const closeUpdatePanel  = document.getElementById('close-update-panel');
+// 📦 绑定 🔔按钮逻辑
+const bellButton = document.querySelector('.icon-group .icon:nth-child(3)');
+const updatePanel = document.getElementById('update-panel');
+const closeUpdatePanel = document.getElementById('close-update-panel');
 
-if (bellButton && updatePanel) {
-  bellButton.onclick = () => updatePanel.classList.toggle('hidden');
+// ℹ️ 信息按钮
+const infoIcon = document.querySelector('.icon-group .icon:nth-child(4)');
+const infoPanel = document.getElementById('info-panel');
+const closeInfoBtn = document.getElementById('close-info-panel');
+
+// —— 公共函数：关闭所有面板 —— //
+function closeAllPanels() {
+  if (updatePanel) updatePanel.classList.add('hidden');
+  if (infoPanel) infoPanel.classList.add('hidden');
+  if (calendarPopup) calendarPopup.classList.add('hidden');
 }
-if (closeUpdatePanel && updatePanel) {
-  closeUpdatePanel.onclick = () => updatePanel.classList.add('hidden');
+
+// 🔔 更新概要
+if (bellButton && updatePanel) {
+  bellButton.onclick = () => {
+    const isHidden = updatePanel.classList.contains('hidden');
+    closeAllPanels();                // 先关掉别的
+    if (isHidden) updatePanel.classList.remove('hidden');
+  };
+  if (closeUpdatePanel) {
+    closeUpdatePanel.onclick = () => updatePanel.classList.add('hidden');
+  }
+}
+
+// ℹ️ 信息面板
+if (infoIcon && infoPanel) {
+  infoIcon.onclick = () => {
+    const isHidden = infoPanel.classList.contains('hidden');
+    closeAllPanels();                // 先关掉别的
+    if (isHidden) {
+      infoPanel.classList.remove('hidden');
+      const dateStr = currentDateEl?.textContent?.trim();
+      if (dateStr) renderInfoPanel(dateStr);
+    }
+  };
+  if (closeInfoBtn) {
+    closeInfoBtn.onclick = () => infoPanel.classList.add('hidden');
+  }
 }
 
 /* ===================== 更新列表（静态示例数据） ===================== */
