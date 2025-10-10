@@ -368,14 +368,13 @@ document.querySelectorAll('.icon').forEach(makePressable);
 
 
 //信息面板（测试）
-/* ========== 类型映射（基于你的 Name 字段） ========== */
-/*
-  你目前样式里：
-  - 'red'       → 占领（“Occupied after Feb 24, 2022”）   用红色
-  - 'dpr'       → 2014 前已占领（“Occupied before...”）  用紫色
-  - 'lib'       → 解放（Liberated）                       用绿色
-  - 'contested' → 灰区（Gray zone）                       用灰色
-*/
+
+/** 设置：乌克兰不含克里米亚的总面积（m²）
+ *  例：577_000 km² ≈ 577_000 * 1_000_000 m² = 577_000_000_000
+ 
+const UA_BASE_NO_CRIMEA_M2 = 576_628_000_000;
+
+/* Name → 内部类型键 */
 const TYPE_MAP = {
   red: 'occupied_after',
   dpr: 'occupied_before',
@@ -383,7 +382,7 @@ const TYPE_MAP = {
   contested: 'gray'
 };
 
-// 展示顺序与颜色（可按需调整色值）
+/* 展示信息（颜色等可调） */
 const INFO_META = {
   occupied_after:  { label: 'Occupied after Feb 24, 2022', color: '#E60000' },
   occupied_before: { label: 'Occupied before Feb 24, 2022', color: '#6f2dbd' },
@@ -391,35 +390,38 @@ const INFO_META = {
   gray:            { label: 'Gray zone',                    color: '#9e9e9e' }
 };
 
-/* ========== 计算面积（m²）并聚合到各类型 ========== */
+/* 汇总：按类型求面积（m²） */
 function sumAreasByType(geojson){
   const acc = { occupied_after: 0, occupied_before: 0, liberated: 0, gray: 0 };
   if (!geojson || !geojson.features) return acc;
 
   for (const f of geojson.features){
-    // 只处理面状
     const g = f.geometry?.type;
-    if (!g || (g !== 'Polygon' && g !== 'MultiPolygon')) continue;
-
+    if (g !== 'Polygon' && g !== 'MultiPolygon') continue;
     const name = f.properties?.Name?.toLowerCase();
-    const key = TYPE_MAP[name];
+    const key  = TYPE_MAP[name];
     if (!key) continue;
-
-    try{
-      const area = turf.area(f); // m²（地球椭球面面积）
-      acc[key] += area;
-    }catch(e){ /* 忽略损坏要素 */ }
+    try{ acc[key] += turf.area(f); }catch{ /* ignore */ }
   }
   return acc;
 }
 
-/* ========== 查找上一天（有更新）的日期字符串 ========== */
+/* 找上一天（有更新）的日期字符串 */
 function getPrevAvailable(dateStr){
   ensureAvailableDateStrsReady();
   return findAdjacentDate(dateStr, -1);
 }
 
-/* ========== 拉取当日与上一日，计算并渲染 ========== */
+/* 工具：格式化 */
+const toThsKm2 = v => (v / 1_000_000 / 1000);          // m² → 千平方公里
+const fmtThs   = v => `${toThsKm2(v).toFixed(3)} ths. km²`;
+const fmtPct   = v => `${(v * 100).toFixed(2)}%`;
+const fmtDelta = v => {
+  const km2 = (v / 1_000_000).toFixed(1);               // km²
+  return (v === 0) ? '±0.0 km²' : (v > 0 ? `+${km2} km²` : `${km2} km²`);
+};
+
+/* 渲染信息面板（使用指定的百分比口径） */
 async function renderInfoPanel(dateStr){
   const curUrl  = `data/frontline-${dateStr}.json`;
   const prevStr = getPrevAvailable(dateStr);
@@ -445,90 +447,102 @@ async function renderInfoPanel(dateStr){
   const curSum  = sumAreasByType(cur);
   const prevSum = sumAreasByType(prev);
 
-  // 总量用于计算进度条百分比（以四类和为 100%）
-  const totalCur = Object.values(curSum).reduce((a,b)=>a+b,0) || 1;
+  const A = curSum.occupied_after   || 0;  // after
+  const B = curSum.occupied_before  || 0;  // before
+  const L = curSum.liberated        || 0;  // liberated
+  const G = curSum.gray             || 0;  // gray（此处不参与你的百分比定义，仅保留可选展示）
+
+  const A_prev = prevSum.occupied_after  || 0;
+  const B_prev = prevSum.occupied_before || 0;
+  const L_prev = prevSum.liberated       || 0;
+
+  // 基数：乌克兰不含克里米亚（m²）。若未设置，退化为四类之和。
+  const BASE = (UA_BASE_NO_CRIMEA_M2 && UA_BASE_NO_CRIMEA_M2 > 0)
+    ? UA_BASE_NO_CRIMEA_M2
+    : (A + B + L + G || 1);
+
+  // 口径 1：Occupied after 的百分数分母 = BASE - B
+  const denomAfter = Math.max(BASE - B, 1);           // 避免除零
+  const pctAfter   = A / denomAfter;
+
+  // 口径 2：Occupied before 的百分数分母 = BASE
+  const pctBefore  = B / BASE;
+
+  // 口径 3：Total temporarily occupied = A + B；百分数分母 = BASE
+  const T          = A + B;
+  const pctTotal   = T / BASE;
+
+  // 口径 4：Liberated 的百分数分母 = T（被占总量）
+  const denomLib   = Math.max(T, 1);
+  const pctLib     = L / denomLib;
+
+  // 变化量（面积，km²）
+  const dA = A - A_prev;
+  const dB = B - B_prev;               // 理论应恒为 0
+  const dT = T - (A_prev + B_prev);
+  const dL = L - L_prev;
 
   // 渲染
   const wrap = document.getElementById('info-content');
   if (!wrap) return;
-  wrap.innerHTML = ''; // 清空
+  wrap.innerHTML = '';
 
-  // 辅助：m² → 千平方公里（ths. km²）
-  const toThsKm2 = v => (v / 1_000_000 / 1000); // m² -> km² -> thousands of km²
-  const fmtThs   = v => `${toThsKm2(v).toFixed(3)} ths. km²`;
-  const fmtPct   = v => `${(v * 100).toFixed(2)}%`;
-  const fmtDelta = v => {
-    const km2 = (v / 1_000_000).toFixed(1); // km²
-    return (v === 0) ? '±0.0 km²' : (v > 0 ? `+${km2} km²` : `${km2} km²`);
-  };
-
-  // 行渲染函数
-  function addRow(typeKey){
-    const curV  = curSum[typeKey]  || 0;
-    const prevV = prevSum[typeKey] || 0;
-    const pct   = curV / totalCur;
-    const delta = curV - prevV;
-
+  function addRow(label, color, curVal, pct, delta){
     const row = document.createElement('div');
     row.className = 'info-row';
 
     const dot = document.createElement('span');
     dot.className = 'info-dot';
-    dot.style.background = INFO_META[typeKey].color;
+    dot.style.background = color;
 
-    const label = document.createElement('div');
-    label.style.minWidth = '120px';
-    label.textContent = INFO_META[typeKey].label;
+    const lab = document.createElement('div');
+    lab.style.minWidth = '120px';
+    lab.textContent = label;
 
     const barWrap = document.createElement('div');
     barWrap.className = 'info-bar-wrap';
     const bar = document.createElement('div');
     bar.className = 'info-bar';
-    bar.style.background = INFO_META[typeKey].color;
-    bar.style.width = `${(pct*100).toFixed(2)}%`;
+    bar.style.background = color;
+    bar.style.width = `${(Math.min(Math.max(pct, 0), 1) * 100).toFixed(2)}%`;
     barWrap.appendChild(bar);
 
     const val = document.createElement('div');
     val.className = 'info-val';
-    val.innerHTML = `${fmtThs(curV)}<br><span style="opacity:.7">${fmtDelta(delta)} · ${fmtPct(pct)}</span>`;
+    val.innerHTML = `${fmtThs(curVal)}<br><span style="opacity:.7">${fmtDelta(delta)} · ${fmtPct(pct)}</span>`;
 
     row.appendChild(dot);
-    row.appendChild(label);
+    row.appendChild(lab);
     row.appendChild(barWrap);
     row.appendChild(val);
-
     wrap.appendChild(row);
   }
 
-  // 展示顺序
-  addRow('occupied_after');
-  addRow('occupied_before');
-  addRow('liberated');
-  addRow('gray');
+  // 顺序与颜色
+  addRow(INFO_META.occupied_after.label,  INFO_META.occupied_after.color,  A, pctAfter, dA);
+  addRow(INFO_META.occupied_before.label, INFO_META.occupied_before.color, B, pctBefore, dB);
+  addRow(INFO_META.liberated.label,       INFO_META.liberated.color,       L, pctLib,   dL);
 
-  // 额外：总占领（after + before）
-  const totalOcc = (curSum.occupied_after || 0) + (curSum.occupied_before || 0);
-  const totalOccPrev = (prevSum.occupied_after || 0) + (prevSum.occupied_before || 0);
-  const totalDelta = totalOcc - totalOccPrev;
-
+  // 合计 Temporarily occupied
+  const totalColor = '#ff3232';
   const totalRow = document.createElement('div');
   totalRow.className = 'info-row';
   const dot2 = document.createElement('span');
   dot2.className = 'info-dot';
-  dot2.style.background = '#ff3232';
+  dot2.style.background = totalColor;
   const lab2 = document.createElement('div');
   lab2.style.minWidth = '120px';
   lab2.textContent = 'Total temporarily occupied';
   const barWrap2 = document.createElement('div');
   barWrap2.className = 'info-bar-wrap';
   const bar2 = document.createElement('div');
-  bar2.className = 'info-bar';
-  bar2.style.background = '#ff3232';
-  bar2.style.width = `${(totalOcc / totalCur * 100).toFixed(2)}%`;
+  bar2.className  = 'info-bar';
+  bar2.style.background = totalColor;
+  bar2.style.width = `${(Math.min(Math.max(pctTotal, 0), 1) * 100).toFixed(2)}%`;
   barWrap2.appendChild(bar2);
   const val2 = document.createElement('div');
   val2.className = 'info-val';
-  val2.innerHTML = `${fmtThs(totalOcc)}<br><span style="opacity:.7">${fmtDelta(totalDelta)}</span>`;
+  val2.innerHTML = `${fmtThs(T)}<br><span style="opacity:.7">${fmtDelta(dT)} · ${fmtPct(pctTotal)}</span>`;
   totalRow.appendChild(dot2);
   totalRow.appendChild(lab2);
   totalRow.appendChild(barWrap2);
@@ -536,7 +550,7 @@ async function renderInfoPanel(dateStr){
   wrap.appendChild(totalRow);
 }
 
-/* ========== 打开/关闭信息面板，并在打开时计算当前日期 ========== */
+/* ========== 打开/关闭信息面板：与当前日期联动 ========== */
 const infoIcon      = document.querySelector('.icon-group .icon:nth-child(4)'); // ℹ️
 const infoPanel     = document.getElementById('info-panel');
 const closeInfoBtn  = document.getElementById('close-info-panel');
@@ -545,7 +559,6 @@ if (infoIcon && infoPanel){
   infoIcon.onclick = () => {
     infoPanel.classList.toggle('hidden');
     if (!infoPanel.classList.contains('hidden')){
-      // 面板打开：用当前日期计算
       const dateStr = currentDateEl?.textContent?.trim();
       if (dateStr) renderInfoPanel(dateStr);
     }
@@ -555,10 +568,10 @@ if (closeInfoBtn && infoPanel){
   closeInfoBtn.onclick = () => infoPanel.classList.add('hidden');
 }
 
-/* ========== 当日期变化时，如果信息面板是打开的就刷新 ========== */
-const _oldUpdateDate = updateDate;
+/* ========== 当日期变化时，若信息面板是打开的则刷新 ========== */
+const __oldUpdateDate = updateDate;
 updateDate = function(date){
-  _oldUpdateDate(date);
+  __oldUpdateDate(date);
   if (infoPanel && !infoPanel.classList.contains('hidden')){
     const dateStr = currentDateEl?.textContent?.trim();
     if (dateStr) renderInfoPanel(dateStr);
