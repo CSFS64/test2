@@ -120,6 +120,9 @@ function loadAvailableDates() {
 
       // 如果你仍想保留以前的 Date 数组
       availableDates = availableDateStrs.map(s => parseDate(s));
+    .catch(() => {
+    // 文件不可用时，退回到 updates + latestDate 兜底
+    ensureAvailableDateStrsReady();
     });
 }
 
@@ -137,24 +140,20 @@ loadAvailableDates();
 
 // ⬅️ 前一个“有更新”的日期
 document.getElementById('prev-day').onclick = () => {
-  const cur = currentDateEl.textContent.trim();   // "YYYY-MM-DD"
+  ensureAvailableDateStrsReady();           // ← 新增
+  const cur = currentDateEl.textContent.trim();
   const prev = findAdjacentDate(cur, -1);
-  if (prev) {
-    updateDate(parseDate(prev));
-  } else {
-    showMessage('已经是最早一日');
-  }
+  if (prev) updateDate(parseDate(prev));
+  else showMessage('已经是最早一日');
 };
 
 // ➡️ 后一个“有更新”的日期
 document.getElementById('next-day').onclick = () => {
+  ensureAvailableDateStrsReady();           // ← 新增
   const cur = currentDateEl.textContent.trim();
   const next = findAdjacentDate(cur, +1);
-  if (next) {
-    updateDate(parseDate(next));
-  } else {
-    showMessage('已经是最新一日');
-  }
+  if (next) updateDate(parseDate(next));
+  else showMessage('已经是最新一日');
 };
 
 // 📅 打开日历
@@ -205,7 +204,7 @@ document.getElementById('jump-latest').onclick = () => {
       updateDate(date);
     })
     .catch(() => {
-      updateDate(new Date());
+      if (latestDate) updateDate(latestDate);
     });
 };
 
@@ -287,6 +286,15 @@ function setSelectedUpdateItem(dateStr){
 function syncSelectedToList(){
   const dateStr = document.getElementById('current-date')?.textContent?.trim();
   if (dateStr) setSelectedUpdateItem(dateStr);
+}
+
+// 若 availableDateStrs 还没准备好，则从 updates + latestDate 兜底构建
+function ensureAvailableDateStrsReady(){
+  if (availableDateStrs && availableDateStrs.length) return;
+
+  const fromUpdates = (Array.isArray(updates) ? updates.map(u => u.date) : []);
+  const addLatest = latestDate ? [formatDate(latestDate)] : [];
+  availableDateStrs = Array.from(new Set([...fromUpdates, ...addLatest])).sort();
 }
 
 function findAdjacentDate(currentStr, direction /* -1=前一天, +1=后一天 */){
