@@ -399,3 +399,76 @@ body, html {
 .selected-frame > .update-item {
   border-left-color: #4CAF50; /* 明亮绿色，可换成 #4CAF50、#00C853 等更柔和的绿 */
 }
+
+
+
+
+
+/* 信息面板 */
+#info-panel{
+  width: 306px;
+  /* 若你已用新的自适应高度计算，请复制那条；此处给一个基础版： */
+  max-height: calc(100vh - 160px - var(--update-bottom-gap, 24px));
+  overflow-y: auto;
+  position: absolute;
+  top: 160px;
+  left: 80px;
+  background: white;
+  border-radius: 10px;
+  padding: 6px 8px;
+  z-index: 1001;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+
+/* 信息面板里的条目（沿用你的灰色卡片风格） */
+.info-row{
+  background: #f0f0f0;
+  border-radius: 8px;
+  padding: 0.8em;
+  display: flex;
+  align-items: center;
+  gap: .6em;
+}
+
+/* 左侧色块 */
+.info-dot{
+  width: 10px;
+  height: 10px;
+  border-radius: 99px;
+  flex: 0 0 10px;
+}
+
+/* 进度条容器与条 */
+.info-bar-wrap{
+  flex: 1 1 auto;
+  background: #e6e6e6;
+  height: 6px;
+  border-radius: 99px;
+  overflow: hidden;
+}
+.info-bar{
+  height: 100%;
+  width: 0%;
+  border-radius: 99px;
+}
+
+/* 行右侧的数字 */
+.info-val{
+  flex: 0 0 auto;
+  min-width: 90px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 关闭按钮 */
+#close-info-panel{
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+}
+
