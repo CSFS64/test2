@@ -112,6 +112,31 @@
     <div class="geo-hint">输入坐标，前往指定区域</div>
   </div>
 
+  <!-- Ruler 面板 -->
+  <div id="ruler-panel" class="hidden">
+    <div class="update-header">
+      <strong>Ruler</strong>
+      <button id="close-ruler-panel">✕</button>
+    </div>
+    <div class="ruler-body">
+      <p class="hint">Keep clicking to add more points. Points are draggable.</p>
+      <div class="ruler-stats">
+        <div class="stat">
+          <div class="num" id="ruler-distance">0.00</div>
+          <div class="label">Distance, km</div>
+        </div>
+        <div class="stat">
+          <div class="num" id="ruler-area">—</div>
+          <div class="label">Area, km²</div>
+        </div>
+      </div>
+      <div class="ruler-actions">
+        <button id="ruler-clear" class="mini">Clear</button>
+        <button id="ruler-finish" class="mini">Finish</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 地图容器 -->
   <div id="map"></div>
 
