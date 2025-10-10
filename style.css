@@ -472,3 +472,66 @@ body, html {
   cursor: pointer;
 }
 
+/* 面板不再横向滚动，宽度受控 */
+#info-panel{
+  width: 306px;
+  max-width: 306px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;          /* 关键：禁止横向滚动 */
+}
+
+/* 一行用 Grid：上面是 dot + label + value，下面整行是进度条 */
+.info-row{
+  display: grid;
+  grid-template-columns: 14px 1fr auto; /* dot | label 自适应 | 右侧数值 */
+  grid-auto-rows: auto;
+  align-items: center;
+  gap: 6px 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 左侧小圆点 */
+.info-dot{
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  grid-column: 1;
+  grid-row: 1;
+}
+
+/* 标题不允许把容器撑爆 */
+.info-label{
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;                /* 关键：允许在 Grid 里收缩 */
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+/* 右侧数值始终一行，不换行溢出 */
+.info-val{
+  grid-column: 3;
+  grid-row: 1;
+  min-width: 0;
+  white-space: nowrap;         /* 关键：不换行避免撑宽 */
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 进度条占整行（第2行） */
+.info-bar-wrap{
+  grid-column: 1 / 4;          /* 跨 3 列 */
+  grid-row: 2;
+  background: #e6e6e6;
+  height: 6px;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.info-bar{
+  height: 100%;
+  width: 0%;
+  border-radius: 99px;
+}
