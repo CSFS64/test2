@@ -499,6 +499,352 @@ if (closeRulerBtn){
   closeRulerBtn.onclick = () => disableRuler();
 }
 
+/* ===================== ✏️ 绘图工具 ===================== */
+/* 绑定元素 */
+const drawIcon        = document.querySelector('.sidebar-section.middle .icon-group .icon:nth-child(3)'); // ✏️
+const drawPanel       = document.getElementById('draw-panel');
+const closeDrawBtn    = document.getElementById('close-draw-panel');
+const drawUndoBtn     = document.getElementById('draw-undo');
+const drawClearBtn    = document.getElementById('draw-clear');
+const drawExportBtn   = document.getElementById('draw-export');
+const drawShareBtn    = document.getElementById('draw-share');
+const drawWeightInput = document.getElementById('draw-weight');
+const drawWeightVal   = document.getElementById('draw-weight-val');
+const drawColorsWrap  = document.getElementById('draw-colors');
+
+const DRAW_COLORS = ['#ff1a1a','#ff7a7a','#5aa8ff','#79c7ff','#22c55e','#6b7280','#f59e0b','#fde047','#ffffff'];
+let drawActive  = false;
+let drawMode    = 'pen';       // pen | erase | line | arrow | rect | circle
+let drawColor   = DRAW_COLORS[0];
+let drawWeight  = 3;
+
+let drawing    = false;
+let startLL    = null;
+let tempLayer  = null;         // 正在绘制中的图层
+let shapes     = [];           // 已完成图层
+let freehand   = null;         // pen 模式的折线
+
+// —— 让关闭所有面板时也能关闭绘图 —— //
+const __closeAllPanels_draw = closeAllPanels;
+function closeAllPanels(){
+  __closeAllPanels_draw();
+  if (drawPanel) drawPanel.classList.add('hidden');
+  if (drawActive) disableDraw();
+}
+
+// —— 面板开关 —— //
+if (drawIcon) {
+  drawIcon.onclick = () => {
+    const wantOpen = !drawPanel || drawPanel.classList.contains('hidden');
+    closeAllPanels();     // 关掉其它
+    if (wantOpen) {
+      enableDraw();
+      drawPanel && drawPanel.classList.remove('hidden');
+    }
+  };
+}
+if (closeDrawBtn) closeDrawBtn.onclick = () => { drawPanel.classList.add('hidden'); disableDraw(); };
+
+// —— 初始化调色板 —— //
+if (drawColorsWrap) {
+  DRAW_COLORS.forEach((c, i) => {
+    const sw = document.createElement('div');
+    sw.className = 'draw-color' + (i === 0 ? ' selected' : '');
+    sw.style.background = c;
+    sw.dataset.color = c;
+    sw.onclick = () => {
+      drawColor = c;
+      [...drawColorsWrap.children].forEach(el => el.classList.remove('selected'));
+      sw.classList.add('selected');
+      // 更新进行中的临时图层颜色
+      if (tempLayer && tempLayer.setStyle) tempLayer.setStyle({ color: drawColor, fillColor: drawColor });
+      if (freehand && freehand.setStyle)  freehand.setStyle({ color: drawColor });
+    };
+    drawColorsWrap.appendChild(sw);
+  });
+}
+
+// —— 粗细 —— //
+if (drawWeightInput && drawWeightVal) {
+  drawWeightVal.textContent = String(drawWeightInput.value);
+  drawWeightInput.addEventListener('input', () => {
+    drawWeight = +drawWeightInput.value || 3;
+    drawWeightVal.textContent = String(drawWeight);
+    if (tempLayer && tempLayer.setStyle) tempLayer.setStyle({ weight: drawWeight });
+    if (freehand && freehand.setStyle)  freehand.setStyle({ weight: drawWeight });
+  });
+}
+
+// —— 工具按钮 —— //
+document.querySelectorAll('#draw-panel .draw-tool').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const m = btn.dataset.tool;
+    drawMode = m;
+    // 视觉选中
+    document.querySelectorAll('#draw-panel .draw-tool').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    // 切换工具时清除正在绘制的临时层
+    discardTemp();
+  });
+});
+// 默认选中画笔
+document.querySelector('#draw-panel .draw-tool[data-tool="pen"]')?.classList.add('selected');
+
+// —— 导出/分享/撤销/清空 —— //
+if (drawUndoBtn)  drawUndoBtn.onclick  = undoLastShape;
+if (drawClearBtn) drawClearBtn.onclick = clearAllShapes;
+if (drawExportBtn) drawExportBtn.onclick = exportGeoJSON;
+if (drawShareBtn)  drawShareBtn.onclick  = shareGeoJSON;
+
+// —— 开启/关闭绘图模式 —— //
+function enableDraw(){
+  if (drawActive) return;
+  drawActive = true;
+  // 鼠标事件
+  map.on('mousedown', onDown);
+  map.on('mousemove', onMove);
+  map.on('mouseup', onUp);
+  // 触摸事件（简化：当作鼠标）
+  map.on('touchstart', touchAsMouse(onDown));
+  map.on('touchmove',  touchAsMouse(onMove));
+  map.on('touchend',   touchAsMouse(onUp));
+  // 关闭 Geo 搜索 pin 的默认“左键清除”
+  // （不改你的原逻辑：Draw 打开时也会照常移除 pin，因为你那段是全局 click）
+}
+
+function disableDraw(){
+  if (!drawActive) return;
+  drawActive = false;
+  drawing = false;
+  discardTemp();
+  // 解绑事件
+  map.off('mousedown', onDown);
+  map.off('mousemove', onMove);
+  map.off('mouseup', onUp);
+  map.off('touchstart', touchAsMouse(onDown));
+  map.off('touchmove',  touchAsMouse(onMove));
+  map.off('touchend',   touchAsMouse(onUp));
+}
+
+// —— 事件处理 —— //
+function onDown(e){
+  if (!drawActive) return;
+  drawing = true;
+  startLL = e.latlng;
+
+  if (drawMode === 'pen'){
+    freehand = L.polyline([startLL], { color: drawColor, weight: drawWeight, opacity: 1 }).addTo(map);
+    tempLayer = freehand;
+    // 支持“点删”橡皮：图层设置可点中
+    freehand.on('click', tryEraseShape);
+  } else if (drawMode === 'line' || drawMode === 'arrow'){
+    tempLayer = L.polyline([startLL, startLL], { color: drawColor, weight: drawWeight, opacity: 1 }).addTo(map);
+    tempLayer.on('click', tryEraseShape);
+  } else if (drawMode === 'rect'){
+    tempLayer = L.rectangle([startLL, startLL], { color: drawColor, weight: drawWeight, fillOpacity: 0.08, fillColor: drawColor }).addTo(map);
+    tempLayer.on('click', tryEraseShape);
+  } else if (drawMode === 'circle'){
+    tempLayer = L.circle(startLL, { radius: 1, color: drawColor, weight: drawWeight, fillOpacity: 0.08, fillColor: drawColor }).addTo(map);
+    tempLayer.on('click', tryEraseShape);
+  }
+}
+
+function onMove(e){
+  if (!drawActive || !drawing || !tempLayer) return;
+  const ll = e.latlng;
+
+  if (drawMode === 'pen'){
+    const pts = freehand.getLatLngs();
+    pts.push(ll);
+    freehand.setLatLngs(pts);
+  } else if (drawMode === 'line' || drawMode === 'arrow'){
+    tempLayer.setLatLngs([startLL, ll]);
+  } else if (drawMode === 'rect'){
+    tempLayer.setBounds(L.latLngBounds(startLL, ll));
+  } else if (drawMode === 'circle'){
+    const r = map.distance(startLL, ll);
+    tempLayer.setRadius(r);
+  }
+}
+
+function onUp(e){
+  if (!drawActive || !drawing) return;
+  drawing = false;
+
+  if (!tempLayer){
+    // 橡皮模式：点击一个图层可直接删除
+    if (drawMode === 'erase') return;
+    return;
+  }
+
+  // 箭头：在直线基础上加箭头头部
+  if (drawMode === 'arrow'){
+    const pts = tempLayer.getLatLngs();
+    if (pts.length === 2){
+      const head = makeArrowHead(pts[0], pts[1], 12, 28); // px, deg
+      if (head){
+        const headPoly = L.polygon(head, { color: drawColor, weight: 1, fillColor: drawColor, fillOpacity: 1, interactive: true }).addTo(map);
+        headPoly.on('click', tryEraseShape);
+        // 保存为组合（主线 + 箭头）
+        shapes.push({ type:'arrow', parts:[tempLayer, headPoly] });
+        tempLayer = null;
+        startLL = null;
+        return;
+      }
+    }
+  }
+
+  // 非箭头：直接归档
+  shapes.push(tempLayer);
+  tempLayer = null;
+  startLL = null;
+}
+
+// 点击删除（仅在橡皮模式下生效）
+function tryEraseShape(){
+  if (drawMode !== 'erase') return;
+
+  // 形状可能是“组合”（箭头），也可能是单层
+  const idxCombo = shapes.findIndex(s => s && s.parts && s.parts.includes(this));
+  if (idxCombo !== -1){
+    shapes[idxCombo].parts.forEach(p => map.removeLayer(p));
+    shapes.splice(idxCombo, 1);
+    return;
+  }
+  const idx = shapes.indexOf(this);
+  if (idx !== -1){
+    map.removeLayer(this);
+    shapes.splice(idx, 1);
+  }
+}
+
+/* —— 工具函数 —— */
+function discardTemp(){
+  if (tempLayer){ map.removeLayer(tempLayer); tempLayer = null; }
+  freehand = null;
+  startLL = null;
+}
+function undoLastShape(){
+  // 优先取消正在画的
+  if (tempLayer){ discardTemp(); return; }
+  const last = shapes.pop();
+  if (!last) return;
+  if (last.parts) last.parts.forEach(p => map.removeLayer(p));
+  else map.removeLayer(last);
+}
+function clearAllShapes(){
+  discardTemp();
+  shapes.forEach(s => {
+    if (s.parts) s.parts.forEach(p => map.removeLayer(p));
+    else map.removeLayer(s);
+  });
+  shapes = [];
+}
+function exportGeoJSON(){
+  const fc = toGeoJSONFeatureCollection();
+  const blob = new Blob([JSON.stringify(fc, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `drawings-${new Date().toISOString().replace(/[:.]/g,'-')}.geojson`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+async function shareGeoJSON(){
+  const fc = toGeoJSONFeatureCollection();
+  const text = JSON.stringify(fc);
+  try{
+    await navigator.clipboard.writeText(text);
+    showMessage('GeoJSON 已复制到剪贴板');
+  }catch{
+    showMessage('复制失败，可尝试导出文件');
+  }
+}
+function toGeoJSONFeatureCollection(){
+  const feats = [];
+
+  const pushLayer = (layer, typeOverride) => {
+    if (layer instanceof L.Polyline && !(layer instanceof L.Polygon)){
+      const coords = layer.getLatLngs().map(ll => [ll.lng, ll.lat]);
+      feats.push({
+        type:'Feature',
+        geometry:{ type:'LineString', coordinates: coords },
+        properties:{ color: layer.options.color, weight: layer.options.weight, mode: typeOverride || 'line' }
+      });
+    } else if (layer instanceof L.Polygon){
+      const rings = layer.getLatLngs()[0].map(ll => [ll.lng, ll.lat]);
+      rings.push([rings[0][0], rings[0][1]]);
+      feats.push({
+        type:'Feature',
+        geometry:{ type:'Polygon', coordinates: [rings] },
+        properties:{ color: layer.options.color, weight: layer.options.weight, mode: typeOverride || 'polygon' }
+      });
+    } else if (layer instanceof L.Circle){
+      feats.push({
+        type:'Feature',
+        geometry:{ type:'Point', coordinates: [layer.getLatLng().lng, layer.getLatLng().lat] },
+        properties:{ color: layer.options.color, weight: layer.options.weight, radius: layer.getRadius(), mode:'circle' }
+      });
+    } else if (layer instanceof L.Rectangle){
+      const b = layer.getBounds();
+      const ring = [
+        [b.getWest(), b.getSouth()],
+        [b.getEast(), b.getSouth()],
+        [b.getEast(), b.getNorth()],
+        [b.getWest(), b.getNorth()],
+        [b.getWest(), b.getSouth()],
+      ];
+      feats.push({
+        type:'Feature',
+        geometry:{ type:'Polygon', coordinates:[ring] },
+        properties:{ color: layer.options.color, weight: layer.options.weight, mode:'rect' }
+      });
+    }
+  };
+
+  shapes.forEach(s => {
+    if (s.parts){ // 箭头组合
+      pushLayer(s.parts[0], 'arrow');
+      pushLayer(s.parts[1], 'arrowhead');
+    } else {
+      pushLayer(s);
+    }
+  });
+  return { type:'FeatureCollection', features: feats };
+}
+
+// 构造箭头三角形（用像素空间计算，最后反投影回经纬度）
+function makeArrowHead(a, b, sizePx=12, deg=28){
+  const pA = map.latLngToLayerPoint(a);
+  const pB = map.latLngToLayerPoint(b);
+  const v  = pB.subtract(pA);
+  const len = Math.max(1, Math.hypot(v.x, v.y));
+  const ux = v.x / len, uy = v.y / len;            // 单位向量
+  const back = sizePx;
+  const half = Math.tan(deg * Math.PI/180) * sizePx;
+
+  const tip   = pB;
+  const base  = L.point(pB.x - ux*back, pB.y - uy*back);
+  const left  = L.point(base.x + (-uy)*half, base.y + (ux)*half);
+  const right = L.point(base.x - (-uy)*half, base.y - (ux)*half);
+
+  return [ map.layerPointToLatLng(left), map.layerPointToLatLng(tip), map.layerPointToLatLng(right) ];
+}
+
+/* —— 触摸事件转鼠标 —— */
+function touchAsMouse(handler){
+  return function(e){
+    const t = e.originalEvent?.touches?.[0] || e.originalEvent?.changedTouches?.[0];
+    if (!t) return;
+    const ll = map.mouseEventToLatLng(t);
+    handler({ latlng: ll });
+  };
+}
+
+/* 面板按钮也有按压效果 */
+[drawUndoBtn, drawClearBtn, drawExportBtn, drawShareBtn, closeDrawBtn].forEach(makePressable);
+document.querySelectorAll('#draw-panel .draw-tool').forEach(makePressable);
+
+
 /* ===================== 更新列表（静态示例数据） ===================== */
 const updates = [
   { date: "2025-10-09", summary: "利曼：俄军在Yampil方向取得了部分成功；俄军向Serebryanka西部渗透；西维尔斯克：乌克兰国防军在Verkhnokamyanske的反击取得了成功；澄清了Novoselivka附近的前线；俄军在Vyimka方向取得了部分成功；康斯坦丁尼夫卡：澄清了卡索夫亚尔的前线；俄军在Predtechyne方向取得了部分成功；澄清了Kleban-Byk附近的前线；波克罗夫斯克：乌克兰国防军在Novotoreske的反击取得了成功" },
