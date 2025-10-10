@@ -96,6 +96,22 @@
     <div id="info-content" class="update-list"></div>
   </div>
 
+  <!-- 经纬度搜索面板 -->
+  <div id="geo-panel" class="hidden">
+    <div class="update-header">
+      <span>经纬度定位</span>
+      <button id="close-geo-panel" class="close-btn">×</button>
+    </div>
+  
+    <div class="geo-form">
+      <input id="geo-input" type="text" inputmode="decimal"
+             placeholder="例如：48.25292, 37.22646" />
+      <button id="geo-go" class="geo-go">定位</button>
+    </div>
+  
+    <div class="geo-hint">格式：纬度, 经度（支持空格）</div>
+  </div>
+
   <!-- 地图容器 -->
   <div id="map"></div>
 
