@@ -510,7 +510,7 @@ async function renderInfoPanel(dateStr){
 
     const val = document.createElement('div');
     val.className = 'info-val';
-    val.innerHTML = `${fmtThs(curVal)}<br><span style="opacity:.7">${fmtDelta(delta)} · ${fmtPct(pct)}</span>`;
+    val.innerHTML = `<span class="top">${fmtThs(curVal)}</span><br><span class="meta">${fmtDelta(delta)} · ${fmtPct(pct)}</span>`;
 
     row.appendChild(dot);
     row.appendChild(lab);
