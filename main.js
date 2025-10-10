@@ -44,9 +44,9 @@ function parseDate(str) {
   return new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd))); // 使用 UTC 解析
 }
 
-// 转换为ISO格式的 UTC 日期
-function toIsoDate(date) {
-  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())).toISOString().split('T')[0];
+function toIsoDate(date){
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth()+1).padStart(2,'0')}-${String(date.getUTCDate()).padStart(2,'0')}`;
+  // 或者：return formatDate(date);
 }
 
 // 显示提醒
@@ -56,8 +56,7 @@ function showMessage(msg) {
 
 // 加载图层
 function loadDataForDate(dateStr) {
-  const iso = toIsoDate(parseDate(dateStr));
-  const url = `data/frontline-${iso}.json`;
+  const url = `data/frontline-${dateStr}.json`;
 
   fetch(url)
     .then(res => res.json())
@@ -93,7 +92,7 @@ function loadAvailableDates() {
       latestDate = new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd)));
       latestDate.setHours(0, 0, 0, 0); // 清除时分秒，确保对比的是日期
       availableDates.push(latestDate); // 添加最新的日期
-      datePicker.max = toIsoDate(latestDate); // 限制日历最大值
+      datePicker.max = formatDate(latestDate);
       updateDate(latestDate);
     })
     .catch(() => {
@@ -117,7 +116,7 @@ function loadAvailableDates() {
 function updateDate(date) {
   const formatted = formatDate(date);
   currentDateEl.textContent = formatted;
-  datePicker.value = toIsoDate(date);
+  datePicker.value = formatted;
   loadDataForDate(formatted);
   setSelectedUpdateItem(formatted);
 }
