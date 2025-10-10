@@ -323,150 +323,161 @@ if (closeGeoBtn){
 }
 
 /* ===================== Ruler 运行时状态与工具 ===================== */
-let rulerActive = false;
-let rulerClosed = false;              // 是否闭合（形成多边形）
-let rulerMarkers = [];                // L.Marker[]
-let rulerLine = null;                 // L.Polyline
-let rulerPoly = null;                 // L.Polygon
-const CLOSE_PX = 12;                  // 认为点击到起点的像素阈值
+const rulerIcon      = document.querySelector('.sidebar-section.middle .icon-group .icon:nth-child(2)'); // 📏
+const rulerPanel     = document.getElementById('ruler-panel');          // 你已有的面板
+const closeRulerBtn  = document.getElementById('close-ruler-panel');    // 面板右上角 ✕
+const rulerDistEl    = document.getElementById('ruler-distance');       // 距离数值
+const rulerAreaEl    = document.getElementById('ruler-area');           // 面积数值
 
-function km(v){ return (Math.round(v * 100) / 100).toFixed(2); }           // 保留两位
-function km2(v){ return (Math.round(v * 100) / 100).toFixed(2); }
+let rulerActive  = false;
+let rulerClosed  = false;          // 是否已闭合
+let rulerPts     = [];             // Leaflet LatLng[]
+let rulerMarkers = [];             // circleMarker[]
+let rulerLine    = null;           // Polyline（白色虚线）
+let rulerPoly    = null;           // Polygon（半透明白填充）
 
-/* 刷新统计 */
-function updateRulerStats(){
-  const coords = rulerMarkers.map(m => [m.getLatLng().lng, m.getLatLng().lat]);
-  let distKm = 0, areaKm2 = null;
+// —— 工具函数 —— //
+function km(n){ return (Math.round(n * 100) / 100).toFixed(2); }     // 保留 2 位
+function km2(n){ return (Math.round(n * 100) / 100).toFixed(2); }
 
-  if (coords.length >= 2){
-    const line = turf.lineString(coords);
-    distKm = turf.length(line, {units: 'kilometers'}) || 0;
-  }
-
-  if (rulerClosed && coords.length >= 3){
-    // 闭合：用 polygon 计算面积
-    const poly = turf.polygon([[...coords, coords[0]]]);
-    const areaM2 = turf.area(poly) || 0;
-    areaKm2 = areaM2 / 1_000_000;
-  }
-
-  rulerDistanceEl.textContent = km(distKm);
-  rulerAreaEl.textContent = (areaKm2 != null) ? km2(areaKm2) : '—';
+function latLngsToLngLatArray(latlngs){
+  return latlngs.map(ll => [ll.lng, ll.lat]);
 }
 
-/* 把折线 / 多边形画出来 */
-function redrawRulerGeometry(){
-  const latlngs = rulerMarkers.map(m => m.getLatLng());
+function updateRulerStats(){
+  // 距离：沿折线的总长度（km）
+  let distKm = 0;
+  if (rulerPts.length > 1){
+    const line = turf.lineString(latLngsToLngLatArray(rulerPts));
+    distKm = turf.length(line, {units:'kilometers'});
+  }
+  rulerDistEl && (rulerDistEl.textContent = km(distKm));
 
-  // 折线
+  // 面积：闭合后才计算（km²）
+  let areaKm2 = 0;
+  if (rulerClosed && rulerPts.length >= 3){
+    const poly = turf.polygon([latLngsToLngLatArray([...rulerPts, rulerPts[0]])]);
+    areaKm2 = turf.area(poly) / 1_000_000; // m² → km²
+  }
+  rulerAreaEl && (rulerAreaEl.textContent = km2(areaKm2));
+}
+
+function redrawRuler(){
+  // 线：白色虚线
   if (!rulerLine){
-    rulerLine = L.polyline(latlngs, { color:'#1f2937', weight:3 }).addTo(map);
+    rulerLine = L.polyline(rulerPts, {
+      color: '#ffffff',
+      weight: 2,
+      opacity: 0.95,
+      dashArray: '6 6'
+    }).addTo(map);
   }else{
-    rulerLine.setLatLngs(latlngs);
+    rulerLine.setLatLngs(rulerPts);
   }
 
-  // 多边形（闭合时）
-  if (rulerClosed && latlngs.length >= 3){
-    const closedLatlngs = [...latlngs, latlngs[0]];
+  // 面：闭合后显示半透明白色面
+  if (rulerClosed && rulerPts.length >= 3){
+    const closed = [...rulerPts, rulerPts[0]];
     if (!rulerPoly){
-      rulerPoly = L.polygon(closedLatlngs, { color:'#1f2937', weight:2, fillOpacity:.1 }).addTo(map);
+      rulerPoly = L.polygon(closed, {
+        fillColor: '#ffffff',
+        fillOpacity: 0.08,
+        color: '#ffffff',
+        weight: 1,
+        opacity: 0.6
+      }).addTo(map);
     }else{
-      rulerPoly.setLatLngs(closedLatlngs);
+      rulerPoly.setLatLngs(closed);
     }
-  }else{
-    if (rulerPoly){
-      map.removeLayer(rulerPoly);
-      rulerPoly = null;
-    }
+  }else if (rulerPoly){
+    map.removeLayer(rulerPoly);
+    rulerPoly = null;
   }
 
   updateRulerStats();
 }
 
-/* 新增一个可拖拽点 */
-function addRulerPoint(latlng){
-  // 如果已闭合，点击不再添加
-  if (rulerClosed) return;
-
-  // 若点击到起点附近 -> 闭合
-  if (rulerMarkers.length >= 2){
-    const first = rulerMarkers[0].getLatLng();
-    const p1 = map.latLngToLayerPoint(first);
-    const p2 = map.latLngToLayerPoint(latlng);
-    if (p1.distanceTo(p2) <= CLOSE_PX){
-      rulerClosed = true;
-      redrawRulerGeometry();
-      return;
-    }
-  }
-
-  const marker = L.marker(latlng, { draggable:true }).addTo(map);
-  marker.on('drag', () => redrawRulerGeometry());
-  rulerMarkers.push(marker);
-  redrawRulerGeometry();
-}
-
-/* 清空 */
 function clearRuler(){
+  rulerClosed = false;
+  rulerPts = [];
   rulerMarkers.forEach(m => map.removeLayer(m));
   rulerMarkers = [];
   if (rulerLine){ map.removeLayer(rulerLine); rulerLine = null; }
   if (rulerPoly){ map.removeLayer(rulerPoly); rulerPoly = null; }
-  rulerClosed = false;
-  rulerDistanceEl.textContent = '0.00';
-  rulerAreaEl.textContent = '—';
+  updateRulerStats();
 }
 
-/* 开始/停止 */
-function startRuler(){
+function addRulerPoint(latlng){
+  if (rulerClosed) return; // 已闭合不再加点
+
+  // 如果点击的是第一个点，并且已有≥3个点，则闭合
+  if (rulerPts.length >= 3){
+    const first = rulerPts[0];
+    const dx = map.latLngToLayerPoint(first).distanceTo(map.latLngToLayerPoint(latlng));
+    // 允许一点点“误差”点击：像素半径 10
+    if (dx <= 10){
+      rulerClosed = true;
+      redrawRuler();
+      return;
+    }
+  }
+
+  rulerPts.push(latlng);
+
+  // 小白点
+  const mk = L.circleMarker(latlng, {
+    radius: 5,
+    color: '#ffffff',
+    weight: 2,
+    fillColor: '#ffffff',
+    fillOpacity: 1
+  }).addTo(map);
+
+  // 点击第一个点也能闭合（用户更直觉）
+  mk.on('click', () => {
+    if (rulerPts.length >= 3 && mk === rulerMarkers[0] && !rulerClosed){
+      rulerClosed = true;
+      redrawRuler();
+    }
+  });
+
+  rulerMarkers.push(mk);
+  redrawRuler();
+}
+
+/* ===================== 绑定 📏 图标与面板按钮 ===================== */
+function enableRuler(){
+  if (rulerActive) return;
   rulerActive = true;
-  map.getContainer().style.cursor = 'crosshair';
-  // 点击添加点
-  map.on('click', onMapClickForRuler, /* priority */ true);
+  clearRuler();
+  rulerPanel && rulerPanel.classList.remove('hidden');
+
+  // 地图左键：加点
+  map.on('click', onMapClickAddPoint);
 }
-function stopRuler(){
+function disableRuler(){
+  if (!rulerActive) return;
   rulerActive = false;
-  map.getContainer().style.cursor = '';
-  map.off('click', onMapClickForRuler, /* priority */ true);
+  map.off('click', onMapClickAddPoint);
+  clearRuler();
+  rulerPanel && rulerPanel.classList.add('hidden');
 }
-function onMapClickForRuler(e){
+function onMapClickAddPoint(e){
   addRulerPoint(e.latlng);
 }
 
-/* Finish：手动闭合（若未闭合且 >=3 点） */
-function finishRuler(){
-  if (!rulerClosed && rulerMarkers.length >= 3){
-    rulerClosed = true;
-    redrawRulerGeometry();
-  }
+// 图标开关
+if (rulerIcon){
+  rulerIcon.onclick = () => {
+    const wantOpen = !rulerPanel || rulerPanel.classList.contains('hidden');
+    closeAllPanels();   // 先关其它
+    if (wantOpen) enableRuler();
+  };
 }
 
-/* 打开 Ruler 面板 */
-if (rulerIcon && rulerPanel){
-  // 让按压反馈样式也套用
-  makePressable(rulerIcon);
-  makePressable(closeRulerBtn);
-
-  rulerIcon.onclick = () => {
-    const isHidden = rulerPanel.classList.contains('hidden');
-    closeAllPanels();
-    if (isHidden){
-      rulerPanel.classList.remove('hidden');
-      startRuler();
-    }else{
-      rulerPanel.classList.add('hidden');
-      stopRuler();
-    }
-  };
-
-  closeRulerBtn.onclick = () => {
-    rulerPanel.classList.add('hidden');
-    stopRuler();
-  };
-
-  // 按钮
-  if (rulerClearBtn) rulerClearBtn.onclick = clearRuler;
-  if (rulerFinishBtn) rulerFinishBtn.onclick = finishRuler;
+// 关闭按钮：关闭即清空（无 Clear/Finish 按钮）
+if (closeRulerBtn){
+  closeRulerBtn.onclick = () => disableRuler();
 }
 
 /* ===================== 更新列表（静态示例数据） ===================== */
