@@ -352,28 +352,31 @@ function updateRulerStats(){
 }
 
 function redrawRuler(){
-  // 线：白色虚线
+  // 1) 折线点集：未闭合用 rulerPts；闭合后用 [...rulerPts, rulerPts[0]]
+  const linePts = (rulerClosed && rulerPts.length >= 2)
+    ? [...rulerPts, rulerPts[0]]
+    : rulerPts;
+
+  // 虚线：始终用同一条 polyline
   if (!rulerLine){
-    rulerLine = L.polyline(rulerPts, {
+    rulerLine = L.polyline(linePts, {
       color: '#ffffff',
       weight: 2,
       opacity: 0.95,
       dashArray: '6 6'
     }).addTo(map);
   }else{
-    rulerLine.setLatLngs(rulerPts);
+    rulerLine.setLatLngs(linePts); // ← 更新为闭合或未闭合的点集
   }
 
-  // 面：闭合后显示半透明白色面
+  // 2) 面：只填充，不描边（stroke: false）
   if (rulerClosed && rulerPts.length >= 3){
     const closed = [...rulerPts, rulerPts[0]];
     if (!rulerPoly){
       rulerPoly = L.polygon(closed, {
         fillColor: '#ffffff',
         fillOpacity: 0.08,
-        color: '#ffffff',
-        weight: 1,
-        opacity: 0.6
+        stroke: false                // ← 关键：关闭描边，避免盖住虚线
       }).addTo(map);
     }else{
       rulerPoly.setLatLngs(closed);
