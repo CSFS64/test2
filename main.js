@@ -363,3 +363,204 @@ document.querySelectorAll('.icon').forEach(makePressable);
 //   if (e.key === 'ArrowLeft') { prevBtn?.click(); }
 //   if (e.key === 'ArrowRight'){ nextBtn?.click(); }
 // });
+
+
+
+
+//信息面板（测试）
+/* ========== 类型映射（基于你的 Name 字段） ========== */
+/*
+  你目前样式里：
+  - 'red'       → 占领（“Occupied after Feb 24, 2022”）   用红色
+  - 'dpr'       → 2014 前已占领（“Occupied before...”）  用紫色
+  - 'lib'       → 解放（Liberated）                       用绿色
+  - 'contested' → 灰区（Gray zone）                       用灰色
+*/
+const TYPE_MAP = {
+  red: 'occupied_after',
+  dpr: 'occupied_before',
+  lib: 'liberated',
+  contested: 'gray'
+};
+
+// 展示顺序与颜色（可按需调整色值）
+const INFO_META = {
+  occupied_after:  { label: 'Occupied after Feb 24, 2022', color: '#E60000' },
+  occupied_before: { label: 'Occupied before Feb 24, 2022', color: '#6f2dbd' },
+  liberated:       { label: 'Liberated',                    color: '#12b886' },
+  gray:            { label: 'Gray zone',                    color: '#9e9e9e' }
+};
+
+/* ========== 计算面积（m²）并聚合到各类型 ========== */
+function sumAreasByType(geojson){
+  const acc = { occupied_after: 0, occupied_before: 0, liberated: 0, gray: 0 };
+  if (!geojson || !geojson.features) return acc;
+
+  for (const f of geojson.features){
+    // 只处理面状
+    const g = f.geometry?.type;
+    if (!g || (g !== 'Polygon' && g !== 'MultiPolygon')) continue;
+
+    const name = f.properties?.Name?.toLowerCase();
+    const key = TYPE_MAP[name];
+    if (!key) continue;
+
+    try{
+      const area = turf.area(f); // m²（地球椭球面面积）
+      acc[key] += area;
+    }catch(e){ /* 忽略损坏要素 */ }
+  }
+  return acc;
+}
+
+/* ========== 查找上一天（有更新）的日期字符串 ========== */
+function getPrevAvailable(dateStr){
+  ensureAvailableDateStrsReady();
+  return findAdjacentDate(dateStr, -1);
+}
+
+/* ========== 拉取当日与上一日，计算并渲染 ========== */
+async function renderInfoPanel(dateStr){
+  const curUrl  = `data/frontline-${dateStr}.json`;
+  const prevStr = getPrevAvailable(dateStr);
+  const prevUrl = prevStr ? `data/frontline-${prevStr}.json` : null;
+
+  let cur = null, prev = null;
+  try{
+    const r = await fetch(curUrl);
+    if (!r.ok) throw new Error();
+    cur = await r.json();
+  }catch{ cur = { type:'FeatureCollection', features:[] }; }
+
+  if (prevUrl){
+    try{
+      const r2 = await fetch(prevUrl);
+      if (!r2.ok) throw new Error();
+      prev = await r2.json();
+    }catch{ prev = { type:'FeatureCollection', features:[] }; }
+  }else{
+    prev = { type:'FeatureCollection', features:[] };
+  }
+
+  const curSum  = sumAreasByType(cur);
+  const prevSum = sumAreasByType(prev);
+
+  // 总量用于计算进度条百分比（以四类和为 100%）
+  const totalCur = Object.values(curSum).reduce((a,b)=>a+b,0) || 1;
+
+  // 渲染
+  const wrap = document.getElementById('info-content');
+  if (!wrap) return;
+  wrap.innerHTML = ''; // 清空
+
+  // 辅助：m² → 千平方公里（ths. km²）
+  const toThsKm2 = v => (v / 1_000_000 / 1000); // m² -> km² -> thousands of km²
+  const fmtThs   = v => `${toThsKm2(v).toFixed(3)} ths. km²`;
+  const fmtPct   = v => `${(v * 100).toFixed(2)}%`;
+  const fmtDelta = v => {
+    const km2 = (v / 1_000_000).toFixed(1); // km²
+    return (v === 0) ? '±0.0 km²' : (v > 0 ? `+${km2} km²` : `${km2} km²`);
+  };
+
+  // 行渲染函数
+  function addRow(typeKey){
+    const curV  = curSum[typeKey]  || 0;
+    const prevV = prevSum[typeKey] || 0;
+    const pct   = curV / totalCur;
+    const delta = curV - prevV;
+
+    const row = document.createElement('div');
+    row.className = 'info-row';
+
+    const dot = document.createElement('span');
+    dot.className = 'info-dot';
+    dot.style.background = INFO_META[typeKey].color;
+
+    const label = document.createElement('div');
+    label.style.minWidth = '120px';
+    label.textContent = INFO_META[typeKey].label;
+
+    const barWrap = document.createElement('div');
+    barWrap.className = 'info-bar-wrap';
+    const bar = document.createElement('div');
+    bar.className = 'info-bar';
+    bar.style.background = INFO_META[typeKey].color;
+    bar.style.width = `${(pct*100).toFixed(2)}%`;
+    barWrap.appendChild(bar);
+
+    const val = document.createElement('div');
+    val.className = 'info-val';
+    val.innerHTML = `${fmtThs(curV)}<br><span style="opacity:.7">${fmtDelta(delta)} · ${fmtPct(pct)}</span>`;
+
+    row.appendChild(dot);
+    row.appendChild(label);
+    row.appendChild(barWrap);
+    row.appendChild(val);
+
+    wrap.appendChild(row);
+  }
+
+  // 展示顺序
+  addRow('occupied_after');
+  addRow('occupied_before');
+  addRow('liberated');
+  addRow('gray');
+
+  // 额外：总占领（after + before）
+  const totalOcc = (curSum.occupied_after || 0) + (curSum.occupied_before || 0);
+  const totalOccPrev = (prevSum.occupied_after || 0) + (prevSum.occupied_before || 0);
+  const totalDelta = totalOcc - totalOccPrev;
+
+  const totalRow = document.createElement('div');
+  totalRow.className = 'info-row';
+  const dot2 = document.createElement('span');
+  dot2.className = 'info-dot';
+  dot2.style.background = '#ff3232';
+  const lab2 = document.createElement('div');
+  lab2.style.minWidth = '120px';
+  lab2.textContent = 'Total temporarily occupied';
+  const barWrap2 = document.createElement('div');
+  barWrap2.className = 'info-bar-wrap';
+  const bar2 = document.createElement('div');
+  bar2.className = 'info-bar';
+  bar2.style.background = '#ff3232';
+  bar2.style.width = `${(totalOcc / totalCur * 100).toFixed(2)}%`;
+  barWrap2.appendChild(bar2);
+  const val2 = document.createElement('div');
+  val2.className = 'info-val';
+  val2.innerHTML = `${fmtThs(totalOcc)}<br><span style="opacity:.7">${fmtDelta(totalDelta)}</span>`;
+  totalRow.appendChild(dot2);
+  totalRow.appendChild(lab2);
+  totalRow.appendChild(barWrap2);
+  totalRow.appendChild(val2);
+  wrap.appendChild(totalRow);
+}
+
+/* ========== 打开/关闭信息面板，并在打开时计算当前日期 ========== */
+const infoIcon      = document.querySelector('.icon-group .icon:nth-child(4)'); // ℹ️
+const infoPanel     = document.getElementById('info-panel');
+const closeInfoBtn  = document.getElementById('close-info-panel');
+
+if (infoIcon && infoPanel){
+  infoIcon.onclick = () => {
+    infoPanel.classList.toggle('hidden');
+    if (!infoPanel.classList.contains('hidden')){
+      // 面板打开：用当前日期计算
+      const dateStr = currentDateEl?.textContent?.trim();
+      if (dateStr) renderInfoPanel(dateStr);
+    }
+  };
+}
+if (closeInfoBtn && infoPanel){
+  closeInfoBtn.onclick = () => infoPanel.classList.add('hidden');
+}
+
+/* ========== 当日期变化时，如果信息面板是打开的就刷新 ========== */
+const _oldUpdateDate = updateDate;
+updateDate = function(date){
+  _oldUpdateDate(date);
+  if (infoPanel && !infoPanel.classList.contains('hidden')){
+    const dateStr = currentDateEl?.textContent?.trim();
+    if (dateStr) renderInfoPanel(dateStr);
+  }
+};
