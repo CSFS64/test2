@@ -118,7 +118,6 @@ if (toolIcon){
 /* 你可以加一些极简的缩略图背景（不改全局 CSS，只在面板内生效的内联 <style>） */
 const bmStyle = document.createElement('style');
 bmStyle.textContent = `
-bmStyle.textContent = `
 /* —— 面板的基础定位与层级 —— */
 #basemap-panel{ 
   position: absolute;
