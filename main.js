@@ -11,23 +11,28 @@ let availableDateStrs = [];     // "YYYY-MM-DD" 字符串数组（用于相邻�
 /* ===================== 地图初始化 ===================== */
 const map = L.map('map', { zoomControl: false, preferCanvas: true }).setView([48.6, 37.9], 10);
 
+// 共享 Canvas 渲染器
+const vecRenderer = L.canvas({ padding: 0.5 });
+
+// 卫星底图
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+  attribution: 'Tiles © Esri',
+  crossOrigin: true
+}).addTo(map);
+
+// 地名注记
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+  attribution: 'Labels © Esri',
+  pane: 'overlayPane',
+  crossOrigin: true
+}).addTo(map);
+
 L.control.scale({
   position: 'bottomleft',
   imperial: true,
   metric: true,
   maxWidth: 100,
   updateWhenIdle: false
-}).addTo(map);
-
-// 卫星底图
-L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-  attribution: 'Tiles © Esri'
-}).addTo(map);
-
-// 地名注记
-L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-  attribution: 'Tiles © Esri',
-  crossOrigin: true
 }).addTo(map);
 
 /* ===================== 日期工具（统一使用 UTC） ===================== */
@@ -63,6 +68,7 @@ function loadDataForDate(dateStr) {
       if (currentLayer) map.removeLayer(currentLayer);
 
       currentLayer = L.geoJSON(data, {
+        renderer: vecRenderer,
         style: feature => {
           const name = feature.properties.Name?.toLowerCase();
           if (name === 'dpr')       return { color: 'purple',   fillOpacity: 0.25, weight: 2   };
@@ -608,14 +614,14 @@ function onDownRight(e){
   map.dragging.disable();
 
   if (drawMode === 'pen'){
-    freehand = L.polyline([startLL], { color: drawColor, weight: drawWeight, opacity: 1 }).addTo(map);
+    freehand = L.polyline([startLL], {renderer: vecRenderer, color: drawColor, weight: drawWeight, opacity: 1 }).addTo(map);
     tempLayer = freehand;
   } else if (drawMode === 'line' || drawMode === 'arrow'){
-    tempLayer = L.polyline([startLL, startLL], { color: drawColor, weight: drawWeight, opacity: 1 }).addTo(map);
+    tempLayer = L.polyline([startLL, startLL], { renderer: vecRenderer, color: drawColor, weight: drawWeight, opacity: 1 }).addTo(map);
   } else if (drawMode === 'rect'){
-    tempLayer = L.rectangle([startLL, startLL], { color: drawColor, weight: drawWeight, fillOpacity: 0.08, fillColor: drawColor }).addTo(map);
+    tempLayer = L.rectangle([startLL, startLL], { renderer: vecRenderer, color: drawColor, weight: drawWeight, fillOpacity: 0.08, fillColor: drawColor }).addTo(map);
   } else if (drawMode === 'circle'){
-    tempLayer = L.circle(startLL, { radius: 1, color: drawColor, weight: drawWeight, fillOpacity: 0.08, fillColor: drawColor }).addTo(map);
+    tempLayer = L.circle(startLL, { renderer: vecRenderer, radius: 1, color: drawColor, weight: drawWeight, fillOpacity: 0.08, fillColor: drawColor }).addTo(map);
   }
 }
 
@@ -928,6 +934,7 @@ function finalizeArrow(lineLayer){
 
   // 2) 画头（三角形）—— 填充与描边随线宽变化，并放到顶层
   const head = L.polygon([leftLL, tipLL, rightLL], {
+    renderer: vecRenderer,
     color: drawColor,                // 描边颜色
     weight: headStroke,              // 描边粗细随线宽
     fillColor: drawColor, 
