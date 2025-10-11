@@ -784,4 +784,6 @@ body, html {
 #draw-weight { flex: 1; }
 #draw-weight-val { width: 26px; text-align: right; font-variant-numeric: tabular-nums; }
 
-/* 与其它面板统一的关闭按钮按压态（你已有的样式会生效） */
+.leaflet-interactive {
+  cursor: crosshair !important;
+}
