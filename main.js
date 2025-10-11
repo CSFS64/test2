@@ -596,16 +596,20 @@ function eraseAt(ll){
 }
 
 // —— 面板开关 —— //
-if (drawIcon) {
+if (drawIcon){
   drawIcon.onclick = () => {
-    const wantOpen = !drawPanel || drawPanel.classList.contains('hidden');
-    closeAllPanels();     // 关掉其它
+    const wantOpen = drawPanel.classList.contains('hidden');
+    closeAllPanelsExtended();     // 关闭所有面板（包括 ruler / geo / info / update）
     if (wantOpen) {
       enableDraw();
-      drawPanel && drawPanel.classList.remove('hidden');
+      drawPanel.classList.remove('hidden');
+    } else {
+      disableDraw();
+      drawPanel.classList.add('hidden');
     }
   };
 }
+
 if (closeDrawBtn) closeDrawBtn.onclick = () => { drawPanel.classList.add('hidden'); disableDraw(); };
 
 // —— 初始化调色板 —— //
@@ -664,11 +668,15 @@ function enableDraw(){
   if (drawActive) return;
   drawActive = true;
 
-  // 只桌面鼠标：右键绘制
+  // 右键绘制
   map.on('mousedown', onDownRight);
   map.on('mousemove', onMoveRight);
   map.on('mouseup',   onUpRight);
-  // 禁用长按坐标：在全局 contextmenu 钩子里判断 drawActive（见下）
+
+  // 左键点击橡皮擦
+  map.on('click', (e) => {
+    if (drawMode === 'erase' && drawActive) eraseAt(e.latlng);
+  });
 }
 
 function disableDraw(){
@@ -676,13 +684,11 @@ function disableDraw(){
   drawActive = false;
   drawing = false;
   discardTemp();
-  // 解绑事件
-  map.off('mousedown', onDown);
-  map.off('mousemove', onMove);
-  map.off('mouseup', onUp);
-  map.off('touchstart', touchAsMouse(onDown));
-  map.off('touchmove',  touchAsMouse(onMove));
-  map.off('touchend',   touchAsMouse(onUp));
+
+  map.off('mousedown', onDownRight);
+  map.off('mousemove', onMoveRight);
+  map.off('mouseup',   onUpRight);
+  map.off('click'); // 移除橡皮点击
 }
 
 // —— 事件处理 —— //
