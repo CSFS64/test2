@@ -1074,43 +1074,49 @@ function freezeLeafletTransforms() {
 }
 
 async function exportMapAsPNGNoUI() {
-  // 保留按钮样式：这里只换点击逻辑，不改 DOM 文案
-  let restoreCursor = null;
   try {
-    // 停止交互与动画，防抖动
-    const wasDraw = !!drawActive;
+    const wasDraw  = !!drawActive;
     const wasRuler = !!rulerActive;
-    if (wasDraw) disableDraw();
+    if (wasDraw)  disableDraw();
     if (wasRuler) disableRuler();
 
-    // 临时关闭地图交互（不改你的全局设置，完了再恢复）
-    const toDisable = [
-      map.dragging, map.touchZoom, map.doubleClickZoom,
-      map.scrollWheelZoom, map.boxZoom, map.keyboard
-    ].filter(Boolean);
-    const reEnable = [];
-    toDisable.forEach(api => { if (api.enabled && api.enabled()) { api.disable(); reEnable.push(api); } });
+    // 临时禁用交互，避免抖动
+    const inter = [map.dragging, map.touchZoom, map.doubleClickZoom, map.scrollWheelZoom, map.boxZoom, map.keyboard].filter(Boolean);
+    const reEn  = [];
+    inter.forEach(api => { if (api.enabled && api.enabled()) { api.disable(); reEn.push(api); } });
 
     installExportCss();
     document.documentElement.classList.add('__exporting');
 
-    // 等 UI 隐藏生效
-    await new Promise(r => requestAnimationFrame(() => setTimeout(r, 30)));
+    // 等隐藏生效
+    await new Promise(r => requestAnimationFrame(() => setTimeout(r, 20)));
 
-    // 等瓦片就绪
-    await waitVisibleTiles();
-
-    // 冻结 transform，避免右偏/缺块
+    // 锁尺寸 & 冻结 transform
     const unfreeze = freezeLeafletTransforms();
 
+    // —— 等“视窗内”瓦片全部加载 —— //
+    await waitTilesInView();
+
+    // 取当前 map 容器的屏幕矩形（含滚动补偿）
+    const mapEl = map.getContainer();
+    const rect  = mapEl.getBoundingClientRect();
+    const clip  = {
+      x: Math.round(rect.left + window.scrollX),
+      y: Math.round(rect.top  + window.scrollY),
+      width:  Math.round(rect.width),
+      height: Math.round(rect.height)
+    };
+
     const h2c = await ensureHtml2Canvas();
-    const mapEl = document.getElementById('map');
-    const canvas = await h2c(mapEl, {
+    const canvas = await h2c(document.documentElement, {
       useCORS: true,
       backgroundColor: null,
+      scrollX: 0,                 // 关键：归零页面滚动
+      scrollY: 0,
+      x: clip.x, y: clip.y,       // 关键：精确裁剪区域
+      width: clip.width, height: clip.height,
       scale: Math.max(1, Math.floor(window.devicePixelRatio || 1)),
-      windowWidth: document.documentElement.clientWidth,
-      windowHeight: document.documentElement.clientHeight
+      removeContainer: true
     });
 
     // 下载
@@ -1123,8 +1129,8 @@ async function exportMapAsPNGNoUI() {
     unfreeze();
     document.documentElement.classList.remove('__exporting');
     uninstallExportCss();
-    reEnable.forEach(api => api.enable());
-    if (wasDraw) enableDraw();
+    reEn.forEach(api => api.enable());
+    if (wasDraw)  enableDraw();
     if (wasRuler) enableRuler();
   } catch (err) {
     document.documentElement.classList.remove('__exporting');
@@ -1133,10 +1139,41 @@ async function exportMapAsPNGNoUI() {
   }
 }
 
-/* 用 PNG 导出替换原按钮的点击逻辑（不改样式/文字） */
+/* 更严格地等待可见瓦片 */
+function waitTilesInView() {
+  return new Promise(resolve => {
+    const mapEl = map.getContainer();
+    const viewRect = mapEl.getBoundingClientRect();
+
+    function inView(img) {
+      const r = img.getBoundingClientRect();
+      // 与地图容器有交集就算在视窗内
+      return !(r.right < viewRect.left || r.left > viewRect.right || r.bottom < viewRect.top || r.top > viewRect.bottom);
+    }
+
+    function ready() {
+      const tiles = Array.from(mapEl.querySelectorAll('.leaflet-tile'));
+      // 只看视窗内的瓦片
+      const vis = tiles.filter(inView);
+      return vis.length > 0 && vis.every(img => img.complete && img.naturalWidth > 0);
+    }
+
+    // 小循环直到就绪，再延时一帧稳定
+    (function tick() {
+      if (ready()) {
+        requestAnimationFrame(() => setTimeout(resolve, 30));
+      } else {
+        requestAnimationFrame(tick);
+      }
+    })();
+  });
+}
+
+// 按钮样式不变，只换绑定
 if (drawExportBtn) {
   drawExportBtn.onclick = exportMapAsPNGNoUI;
 }
+
 
 /* ===================== 更新列表（静态示例数据） ===================== */
 const updates = [
