@@ -97,6 +97,7 @@ if (!basemapPanel) {
     </div>
   `;
   document.body.appendChild(basemapPanel);
+  setBasemap('satellite');
 
   // 简单交互绑定
   basemapPanel.querySelector('#close-basemap').onclick = () => basemapPanel.classList.add('hidden');
