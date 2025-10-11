@@ -783,3 +783,93 @@ body, html {
 
 #draw-weight { flex: 1; }
 #draw-weight-val { width: 26px; text-align: right; font-variant-numeric: tabular-nums; }
+
+
+
+
+
+
+
+/* === 底图面板 === */
+#basemap-panel{
+  width: 306px;
+  max-height: calc(100vh - 160px - var(--update-bottom-gap, 24px));
+  overflow-y: auto;
+
+  position: absolute;
+  top: 160px;
+  left: 80px;
+
+  background: #fff;
+  border-radius: 10px;
+  padding: 6px 8px;
+  z-index: 1001;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+#basemap-panel.hidden { display: none; }
+
+/* 头部 */
+#basemap-panel .panel-header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+#basemap-panel .panel-title{
+  font-weight: 600;
+  font-size: 15px;
+}
+
+/* 网格与项 */
+#basemap-panel .bm-grid{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+#basemap-panel .bm-item{
+  border-radius: 12px;
+  padding: 8px;
+  cursor: pointer;
+  user-select: none;
+  border: 2px solid transparent;
+  transition: transform .06s ease, border-color .06s ease;
+}
+#basemap-panel .bm-item:active{
+  transform: scale(0.98);
+}
+#basemap-panel .bm-item.selected{
+  border-color: #000;
+}
+#basemap-panel .bm-thumb{
+  width: 100%;
+  aspect-ratio: 1/1;
+  border-radius: 10px;
+  background-size: cover;
+  background-position: center;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
+}
+#basemap-panel .bm-label{
+  text-align: center;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #444;
+}
+
+/* 三个缩略图（用已编码的内联 SVG，注意 %23 代表 #） */
+#basemap-panel .bm-thumb-standard{
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><rect width='120' height='120' fill='%23f4f2e9'/><path d='M0 60 H120' stroke='%23cfc7b0' stroke-width='3'/><path d='M0 30 H120' stroke='%23e0dac8'/><path d='M0 90 H120' stroke='%23e0dac8'/><path d='M30 0 V120' stroke='%23e0dac8'/><path d='M60 0 V120' stroke='%23cfc7b0' stroke-width='3'/><path d='M90 0 V120' stroke='%23e0dac8'/></svg>");
+}
+#basemap-panel .bm-thumb-topo{
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><rect width='120' height='120' fill='%23eef3e8'/><path d='M10 100 C30 80, 50 90, 70 70 S110 60 120 40' fill='none' stroke='%239bb27a' stroke-width='2'/><path d='M0 80 C20 60, 40 70, 60 50 S90 40 110 20' fill='none' stroke='%23c5d5ab' stroke-width='2'/></svg>");
+}
+#basemap-panel .bm-thumb-sat{
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23253b24'/><stop offset='1' stop-color='%234c5a2e'/></linearGradient></defs><rect width='120' height='120' fill='url(%23g)'/><circle cx='40' cy='40' r='14' fill='%236a7b37'/><rect x='70' y='65' width='28' height='18' fill='%2338461f'/></svg>");
+}
+
