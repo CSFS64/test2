@@ -723,6 +723,7 @@ if (drawShareBtn)  drawShareBtn.onclick  = shareGeoJSON;
 function enableDraw(){
   if (drawActive) return;
   drawActive = true;
+  map.getContainer().style.cursor = 'crosshair';
   // 右键绘制
   map.on('mousedown', onDownRight);
   map.on('mousemove', onMoveRight);
@@ -736,6 +737,7 @@ function disableDraw(){
   drawActive = false;
   drawing = false;
   discardTemp();
+  map.getContainer().style.cursor = '';
   map.off('mousedown', onDownRight);
   map.off('mousemove', onMoveRight);
   map.off('mouseup',   onUpRight);
@@ -889,17 +891,30 @@ function finalizeArrow(lineLayer){
   if (pts.length !== 2) { shapes.push(lineLayer); return; }
   const a = pts[0], b = pts[1];
 
-  const { tipLL, baseLL, leftLL, rightLL } = makeArrowGeometry(a, b, 12, 28);
+  // 根据当前线宽自适应箭头大小（可按口味微调系数）
+  const sizePx    = Math.max(10, drawWeight * 3.2);          // 三角形“长度”
+  const headAngle = 28;                                      // 三角张角（度）
+  const headStroke= Math.max(1, Math.round(drawWeight * 0.6)); // 三角描边粗细（可选）
+  
+  const { tipLL, baseLL, leftLL, rightLL } = makeArrowGeometry(a, b, sizePx, headAngle);
 
-  // 1) 截断主线到“基底中心”
+  // 1) 截断主线到“基底中心”，保持主线很粗时三角也不会被盖住
   lineLayer.setLatLngs([a, baseLL]);
+  lineLayer.setStyle({ weight: drawWeight, color: drawColor });
 
-  // 2) 画头（三角形）
+  // 2) 画头（三角形）—— 填充与描边随线宽变化，并放到顶层
   const head = L.polygon([leftLL, tipLL, rightLL], {
-    color: drawColor, weight: 1, fillColor: drawColor, fillOpacity: 1, interactive: true
-  }).addTo(map);
+    color: drawColor,                // 描边颜色
+    weight: headStroke,              // 描边粗细随线宽
+    fillColor: drawColor, 
+    fillOpacity: 1,
+    interactive: true
+  }).addTo(map).bringToFront();
 
-  // 3) 存为组合
+  // 点击橡皮时可删
+  head.on('click', tryEraseShape);
+
+  // 3) 存为组合（主线 + 箭头）
   shapes.push({ type:'arrow', parts:[lineLayer, head] });
 }
 
@@ -916,6 +931,18 @@ function touchAsMouse(handler){
 /* 面板按钮也有按压效果 */
 [drawUndoBtn, drawClearBtn, drawExportBtn, drawShareBtn, closeDrawBtn].forEach(makePressable);
 document.querySelectorAll('#draw-panel .draw-tool').forEach(makePressable);
+
+(function ensureSelectedToolStyle(){
+  const css = `
+  #draw-panel .draw-tool.selected {
+    outline: 2px solid #000;
+    outline-offset: -2px; 
+    border-radius: 6px;
+  }`;
+  const style = document.createElement('style');
+  style.textContent = css;
+  document.head.appendChild(style);
+})();
 
 
 /* ===================== 更新列表（静态示例数据） ===================== */
