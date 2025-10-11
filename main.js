@@ -135,10 +135,11 @@ loadAvailableDates();
 /* ===================== 相邻“有更新”的日期跳转 ===================== */
 function ensureAvailableDateStrsReady(){
   if (availableDateStrs && availableDateStrs.length) return;
-  const fromUpdates = (Array.isArray(updates) ? updates.map(u => u.date) : []);
+  const fromUpdates = (typeof updates !== 'undefined' && Array.isArray(updates)) ? updates.map(u => u.date) : [];
   const addLatest   = latestDate ? [formatDate(latestDate)] : [];
   availableDateStrs = Array.from(new Set([...fromUpdates, ...addLatest])).sort();
 }
+
 function findAdjacentDate(currentStr, direction /* -1=前一天, +1=后一天 */){
   if (!availableDateStrs || availableDateStrs.length === 0) return null;
 
@@ -595,17 +596,73 @@ function eraseAt(ll){
   return false;
 }
 
+// —— 右键绘制：事件处理 —— //
+function isRightButton(e){
+  const btn = e.originalEvent ? e.originalEvent.button : e.button;
+  return btn === 2;
+}
+
+function onDownRight(e){
+  if (!drawActive || !isRightButton(e)) return; // 左键不进入绘制
+  drawing = true;
+  startLL = e.latlng;
+  map.dragging.disable();
+
+  if (drawMode === 'pen'){
+    freehand = L.polyline([startLL], { color: drawColor, weight: drawWeight, opacity: 1 }).addTo(map);
+    tempLayer = freehand;
+  } else if (drawMode === 'line' || drawMode === 'arrow'){
+    tempLayer = L.polyline([startLL, startLL], { color: drawColor, weight: drawWeight, opacity: 1 }).addTo(map);
+  } else if (drawMode === 'rect'){
+    tempLayer = L.rectangle([startLL, startLL], { color: drawColor, weight: drawWeight, fillOpacity: 0.08, fillColor: drawColor }).addTo(map);
+  } else if (drawMode === 'circle'){
+    tempLayer = L.circle(startLL, { radius: 1, color: drawColor, weight: drawWeight, fillOpacity: 0.08, fillColor: drawColor }).addTo(map);
+  }
+}
+
+function onMoveRight(e){
+  if (!drawActive || !drawing || !tempLayer) return;
+  const ll = e.latlng;
+  if (drawMode === 'pen'){
+    const pts = freehand.getLatLngs(); pts.push(ll); freehand.setLatLngs(pts);
+  } else if (drawMode === 'line' || drawMode === 'arrow'){
+    tempLayer.setLatLngs([startLL, ll]);
+  } else if (drawMode === 'rect'){
+    tempLayer.setBounds(L.latLngBounds(startLL, ll));
+  } else if (drawMode === 'circle'){
+    const r = map.distance(startLL, ll); tempLayer.setRadius(r);
+  }
+}
+
+function onUpRight(e){
+  if (!drawActive || !drawing) return;
+  drawing = false;
+  map.dragging.enable();
+  if (!tempLayer) return;
+
+  if (drawMode === 'arrow'){
+    finalizeArrow(tempLayer);   // 会自动截断主线并画三角形
+  } else {
+    shapes.push(tempLayer);
+  }
+  tempLayer = null;
+  startLL = null;
+}
+
 // —— 面板开关 —— //
 if (drawIcon){
   drawIcon.onclick = () => {
-    const wantOpen = drawPanel.classList.contains('hidden');
-    closeAllPanelsExtended();     // 关闭所有面板（包括 ruler / geo / info / update）
+    const wantOpen = !drawPanel || drawPanel.classList.contains('hidden');
+    // 统一关闭别的面板（含 ruler/geo/info/update），也会把 draw 关掉
+    closeAllPanelsExtended();
     if (wantOpen) {
+      // 重新开启绘图并显示面板
       enableDraw();
-      drawPanel.classList.remove('hidden');
+      drawPanel && drawPanel.classList.remove('hidden');
     } else {
+      // 如果本来就是开的，这里相当于“点击关闭”
       disableDraw();
-      drawPanel.classList.add('hidden');
+      drawPanel && drawPanel.classList.add('hidden');
     }
   };
 }
@@ -667,16 +724,12 @@ if (drawShareBtn)  drawShareBtn.onclick  = shareGeoJSON;
 function enableDraw(){
   if (drawActive) return;
   drawActive = true;
-
   // 右键绘制
   map.on('mousedown', onDownRight);
   map.on('mousemove', onMoveRight);
   map.on('mouseup',   onUpRight);
-
-  // 左键点击橡皮擦
-  map.on('click', (e) => {
-    if (drawMode === 'erase' && drawActive) eraseAt(e.latlng);
-  });
+  // 左键“点擦除”
+  map.on('click', onEraseIfNeeded);
 }
 
 function disableDraw(){
@@ -684,85 +737,16 @@ function disableDraw(){
   drawActive = false;
   drawing = false;
   discardTemp();
-
   map.off('mousedown', onDownRight);
   map.off('mousemove', onMoveRight);
   map.off('mouseup',   onUpRight);
-  map.off('click'); // 移除橡皮点击
+  map.off('click', onEraseIfNeeded);
 }
 
-// —— 事件处理 —— //
-function onDown(e){
-  if (!drawActive) return;
-  drawing = true;
-  startLL = e.latlng;
-
-  if (drawMode === 'pen'){
-    freehand = L.polyline([startLL], { color: drawColor, weight: drawWeight, opacity: 1 }).addTo(map);
-    tempLayer = freehand;
-    // 支持“点删”橡皮：图层设置可点中
-    freehand.on('click', tryEraseShape);
-  } else if (drawMode === 'line' || drawMode === 'arrow'){
-    tempLayer = L.polyline([startLL, startLL], { color: drawColor, weight: drawWeight, opacity: 1 }).addTo(map);
-    tempLayer.on('click', tryEraseShape);
-  } else if (drawMode === 'rect'){
-    tempLayer = L.rectangle([startLL, startLL], { color: drawColor, weight: drawWeight, fillOpacity: 0.08, fillColor: drawColor }).addTo(map);
-    tempLayer.on('click', tryEraseShape);
-  } else if (drawMode === 'circle'){
-    tempLayer = L.circle(startLL, { radius: 1, color: drawColor, weight: drawWeight, fillOpacity: 0.08, fillColor: drawColor }).addTo(map);
-    tempLayer.on('click', tryEraseShape);
+function onEraseIfNeeded(e){
+  if (drawActive && drawMode === 'erase'){
+    eraseAt(e.latlng);
   }
-}
-
-function onMove(e){
-  if (!drawActive || !drawing || !tempLayer) return;
-  const ll = e.latlng;
-
-  if (drawMode === 'pen'){
-    const pts = freehand.getLatLngs();
-    pts.push(ll);
-    freehand.setLatLngs(pts);
-  } else if (drawMode === 'line' || drawMode === 'arrow'){
-    tempLayer.setLatLngs([startLL, ll]);
-  } else if (drawMode === 'rect'){
-    tempLayer.setBounds(L.latLngBounds(startLL, ll));
-  } else if (drawMode === 'circle'){
-    const r = map.distance(startLL, ll);
-    tempLayer.setRadius(r);
-  }
-}
-
-function onUp(e){
-  if (!drawActive || !drawing) return;
-  drawing = false;
-
-  if (!tempLayer){
-    // 橡皮模式：点击一个图层可直接删除
-    if (drawMode === 'erase') return;
-    return;
-  }
-
-  // 箭头：在直线基础上加箭头头部
-  if (drawMode === 'arrow'){
-    const pts = tempLayer.getLatLngs();
-    if (pts.length === 2){
-      const head = makeArrowHead(pts[0], pts[1], 12, 28); // px, deg
-      if (head){
-        const headPoly = L.polygon(head, { color: drawColor, weight: 1, fillColor: drawColor, fillOpacity: 1, interactive: true }).addTo(map);
-        headPoly.on('click', tryEraseShape);
-        // 保存为组合（主线 + 箭头）
-        shapes.push({ type:'arrow', parts:[tempLayer, headPoly] });
-        tempLayer = null;
-        startLL = null;
-        return;
-      }
-    }
-  }
-
-  // 非箭头：直接归档
-  shapes.push(tempLayer);
-  tempLayer = null;
-  startLL = null;
 }
 
 // 点击删除（仅在橡皮模式下生效）
@@ -1076,22 +1060,12 @@ function goToLatLng(){
     return;
   }
 
-  map.setView([ll.lat, ll.lng]);
+  map.setView([ll.lat, ll.lng]); // 如果需要固定缩放：, 13
 
   if (!window.geoMarker){
     window.geoMarker = L.marker([ll.lat, ll.lng]).addTo(map);
-  }else{
+  } else {
     window.geoMarker.setLatLng([ll.lat, ll.lng]);
-  }
-
-  // 居中（如需固定缩放，改成 map.setView([ll.lat, ll.lng], 13)）
-  map.setView([ll.lat, ll.lng]);
-
-  // 放置/移动标记
-  if (!geoMarker){
-    geoMarker = L.marker([ll.lat, ll.lng]).addTo(map);
-  }else{
-    geoMarker.setLatLng([ll.lat, ll.lng]);
   }
 }
 
@@ -1377,6 +1351,14 @@ map.getContainer().addEventListener('contextmenu', (ev) => {
 // —— 移动端：长按 —— //
 let __lpTimer = null;
 let __lpLatLng = null;
+
+map.on('touchstart', (e) => {
+  if (drawActive) return; // 绘图时禁用长按生成坐标
+  const touch = e.originalEvent.touches[0];
+  if (!touch) return;
+  __lpLatLng = map.mouseEventToLatLng(touch);
+  ...
+});
 
 map.on('touchstart', (e) => {
   const touch = e.originalEvent.touches[0];
