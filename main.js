@@ -377,6 +377,8 @@ function closeAllPanelsExtended(){
   if (drawPanel) drawPanel.classList.add('hidden');
   if (typeof disableDraw === 'function') disableDraw();
   removeGeoMarker();
+  const basemapPanel = document.getElementById('basemap-panel');
+  if (basemapPanel) basemapPanel.classList.add('hidden');
 }
 
 /* 🔔 更新概要 */
