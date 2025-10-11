@@ -716,7 +716,6 @@ document.querySelector('#draw-panel .draw-tool[data-tool="pen"]')?.classList.add
 // —— 导出/分享/撤销/清空 —— //
 if (drawUndoBtn)  drawUndoBtn.onclick  = undoLastShape;
 if (drawClearBtn) drawClearBtn.onclick = clearAllShapes;
-if (drawExportBtn) drawExportBtn.onclick = exportGeoJSON;
 if (drawShareBtn)  drawShareBtn.onclick  = shareGeoJSON;
 
 // ====== 绘图模式十字光标（无闪烁）======
@@ -968,6 +967,104 @@ document.querySelectorAll('#draw-panel .draw-tool').forEach(makePressable);
   style.textContent = css;
   document.head.appendChild(style);
 })();
+
+/* ========= 导出：隐藏全部 UI → 保存为 PNG（按需加载 html2canvas） ========= */
+let _exportCssEl = null;
+
+function installExportCss() {
+  if (_exportCssEl) return;
+  const id = map.getContainer().id || 'map';
+  const esc = (window.CSS && CSS.escape) ? CSS.escape(id) : id.replace(/[^a-zA-Z0-9_-]/g, "\\$&");
+  // 需要隐藏的 UI 选择器可按你页面实际补充
+  const css = `
+    /* 进入导出态时隐藏除地图外的所有 UI（你可按需增删） */
+    .__exporting .topbar,
+    .__exporting .sidebar,
+    .__exporting .icon-group,
+    .__exporting #update-panel,
+    .__exporting #info-panel,
+    .__exporting #calendar-popup,
+    .__exporting #geo-panel,
+    .__exporting #draw-panel,
+    .__exporting #ruler-panel,
+    .__exporting .leaflet-control-container,
+    .__exporting .leaflet-popup-pane { display: none !important; }
+
+    /* 强制地图与其子元素光标为默认，避免十字或手型进入截图 */
+    .__exporting #${esc}, .__exporting #${esc} * { cursor: default !important; }
+  `;
+  _exportCssEl = document.createElement('style');
+  _exportCssEl.setAttribute('data-export-css', '1');
+  _exportCssEl.textContent = css;
+  document.head.appendChild(_exportCssEl);
+}
+
+function uninstallExportCss() {
+  if (_exportCssEl) { _exportCssEl.remove(); _exportCssEl = null; }
+}
+
+/* 动态加载 html2canvas（只在首次导出时触发） */
+function ensureHtml2Canvas() {
+  return new Promise((resolve, reject) => {
+    if (window.html2canvas) return resolve(window.html2canvas);
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+    s.async = true;
+    s.onload = () => resolve(window.html2canvas);
+    s.onerror = () => reject(new Error('html2canvas 加载失败'));
+    document.head.appendChild(s);
+  });
+}
+
+/* 真正的导出函数：隐藏 UI → 截图 → 下载 → 还原 UI */
+async function exportMapAsPNGNoUI() {
+  try {
+    // 若在绘图/测距中，先把交互停掉，避免截到交互点；随后再恢复
+    const wasDraw = !!drawActive;
+    const wasRuler = !!rulerActive;
+    if (wasDraw) disableDraw();
+    if (wasRuler) disableRuler();
+
+    installExportCss();
+    document.documentElement.classList.add('__exporting');
+
+    // 等一帧让隐藏生效并确保瓦片渲染完成
+    await new Promise(r => requestAnimationFrame(() => setTimeout(r, 30)));
+
+    const h2c = await ensureHtml2Canvas();
+    // 为了最清晰，按设备像素比放大；如果文件太大可把 scale 调小
+    const canvas = await h2c(document.getElementById('map'), {
+      useCORS: true,
+      backgroundColor: null,
+      scale: Math.max(1, Math.floor(window.devicePixelRatio || 1))
+    });
+
+    const dataURL = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    const ts = new Date().toISOString().replace(/[:.]/g, '-');
+    a.href = dataURL;
+    a.download = `map-${ts}.png`;
+    a.click();
+
+    // 还原
+    document.documentElement.classList.remove('__exporting');
+    uninstallExportCss();
+
+    if (wasDraw) enableDraw();
+    if (wasRuler) enableRuler();
+  } catch (err) {
+    document.documentElement.classList.remove('__exporting');
+    uninstallExportCss();
+    showMessage('导出 PNG 失败：' + (err?.message || err));
+  }
+}
+
+/* ——— 把“导出”按钮切换为导出 PNG ——— */
+if (drawExportBtn) {
+  // 可选：顺便把按钮文字改一下
+  try { drawExportBtn.textContent = '保存 PNG'; } catch {}
+  drawExportBtn.onclick = exportMapAsPNGNoUI;
+}
 
 
 /* ===================== 更新列表（静态示例数据） ===================== */
