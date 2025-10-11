@@ -719,45 +719,27 @@ if (drawClearBtn) drawClearBtn.onclick = clearAllShapes;
 if (drawExportBtn) drawExportBtn.onclick = exportGeoJSON;
 if (drawShareBtn)  drawShareBtn.onclick  = shareGeoJSON;
 
-// ====== 全局光标修正（绘图时强制十字）======
-let _cursorFix = { onOver: null, onOut: null };
+// ====== 绘图模式十字光标（无闪烁）======
+let _drawCursorStyleEl = null;
 
-function installCrosshairCursor() {
-  const container = map.getContainer();
-  // 1) 整个地图容器先用十字
-  container.style.cursor = 'crosshair';
-
-  // 2) 捕获阶段拦截所有悬浮到 Leaflet 图形元素上的事件，
-  //    给这些子元素设置 inline style 覆盖掉 .leaflet-interactive 的 pointer
-  _cursorFix.onOver = (e) => {
-    const el = e.target;
-    if (el && el.classList && el.classList.contains('leaflet-interactive')) {
-      el.style.cursor = 'crosshair';
-    }
-  };
-  _cursorFix.onOut = (e) => {
-    const el = e.target;
-    if (el && el.classList && el.classList.contains('leaflet-interactive')) {
-      el.style.cursor = ''; // 还原
-    }
-  };
-
-  // 用 capture=true，这样不受事件冒泡阶段干扰
-  container.addEventListener('mouseover', _cursorFix.onOver, true);
-  container.addEventListener('mouseout',  _cursorFix.onOut,  true);
+function installDrawCursor() {
+  if (_drawCursorStyleEl) return;
+  const id = map.getContainer().id || 'map';
+  const esc = (window.CSS && CSS.escape) ? CSS.escape(id) : id.replace(/[^a-zA-Z0-9_-]/g, "\\$&");
+  const css = `
+    #${esc}, #${esc} * { cursor: crosshair !important; }
+  `;
+  _drawCursorStyleEl = document.createElement('style');
+  _drawCursorStyleEl.setAttribute('data-draw-cursor', '1');
+  _drawCursorStyleEl.textContent = css;
+  document.head.appendChild(_drawCursorStyleEl);
 }
 
-function uninstallCrosshairCursor() {
-  const container = map.getContainer();
-  container.style.cursor = '';
-
-  if (_cursorFix.onOver) {
-    container.removeEventListener('mouseover', _cursorFix.onOver, true);
-    container.removeEventListener('mouseout',  _cursorFix.onOut,  true);
-    _cursorFix.onOver = _cursorFix.onOut = null;
+function uninstallDrawCursor() {
+  if (_drawCursorStyleEl) {
+    _drawCursorStyleEl.remove();
+    _drawCursorStyleEl = null;
   }
-  // 彻底清掉可能留在子元素上的 inline cursor
-  container.querySelectorAll('.leaflet-interactive').forEach(el => el.style.cursor = '');
 }
 
 // —— 开启/关闭绘图模式 —— //
@@ -765,7 +747,7 @@ function enableDraw(){
   if (drawActive) return;
   drawActive = true;
   map.getContainer().style.cursor = 'crosshair';
-  installCrosshairCursor();
+  installDrawCursor();
   // 右键绘制
   map.on('mousedown', onDownRight);
   map.on('mousemove', onMoveRight);
@@ -778,7 +760,7 @@ function disableDraw(){
   if (!drawActive) return;
   drawActive = false;
   drawing = false;
-  installCrosshairCursor();
+  uninstallDrawCursor();
   discardTemp();
   map.getContainer().style.cursor = '';
   map.off('mousedown', onDownRight);
