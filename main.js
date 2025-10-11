@@ -719,11 +719,53 @@ if (drawClearBtn) drawClearBtn.onclick = clearAllShapes;
 if (drawExportBtn) drawExportBtn.onclick = exportGeoJSON;
 if (drawShareBtn)  drawShareBtn.onclick  = shareGeoJSON;
 
+// ====== 全局光标修正（绘图时强制十字）======
+let _cursorFix = { onOver: null, onOut: null };
+
+function installCrosshairCursor() {
+  const container = map.getContainer();
+  // 1) 整个地图容器先用十字
+  container.style.cursor = 'crosshair';
+
+  // 2) 捕获阶段拦截所有悬浮到 Leaflet 图形元素上的事件，
+  //    给这些子元素设置 inline style 覆盖掉 .leaflet-interactive 的 pointer
+  _cursorFix.onOver = (e) => {
+    const el = e.target;
+    if (el && el.classList && el.classList.contains('leaflet-interactive')) {
+      el.style.cursor = 'crosshair';
+    }
+  };
+  _cursorFix.onOut = (e) => {
+    const el = e.target;
+    if (el && el.classList && el.classList.contains('leaflet-interactive')) {
+      el.style.cursor = ''; // 还原
+    }
+  };
+
+  // 用 capture=true，这样不受事件冒泡阶段干扰
+  container.addEventListener('mouseover', _cursorFix.onOver, true);
+  container.addEventListener('mouseout',  _cursorFix.onOut,  true);
+}
+
+function uninstallCrosshairCursor() {
+  const container = map.getContainer();
+  container.style.cursor = '';
+
+  if (_cursorFix.onOver) {
+    container.removeEventListener('mouseover', _cursorFix.onOver, true);
+    container.removeEventListener('mouseout',  _cursorFix.onOut,  true);
+    _cursorFix.onOver = _cursorFix.onOut = null;
+  }
+  // 彻底清掉可能留在子元素上的 inline cursor
+  container.querySelectorAll('.leaflet-interactive').forEach(el => el.style.cursor = '');
+}
+
 // —— 开启/关闭绘图模式 —— //
 function enableDraw(){
   if (drawActive) return;
   drawActive = true;
   map.getContainer().style.cursor = 'crosshair';
+  installCrosshairCursor();
   // 右键绘制
   map.on('mousedown', onDownRight);
   map.on('mousemove', onMoveRight);
@@ -736,6 +778,7 @@ function disableDraw(){
   if (!drawActive) return;
   drawActive = false;
   drawing = false;
+  installCrosshairCursor();
   discardTemp();
   map.getContainer().style.cursor = '';
   map.off('mousedown', onDownRight);
