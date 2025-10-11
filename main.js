@@ -676,78 +676,6 @@ function disableDraw(){
   drawActive = false;
   drawing = false;
   discardTemp();
-  map.off('mousedown', onDownRight);
-  map.off('mousemove', onMoveRight);
-  map.off('mouseup',   onUpRight);
-}
-
-function isRightButton(e){
-  const btn = e.originalEvent ? e.originalEvent.button : e.button;
-  return btn === 2;
-}
-
-function onDownRight(e){
-  // 橡皮也用左键点选删除，所以这里仅当右键或是箭头/线条等绘制工具才进入
-  if (!drawActive) return;
-  if (!isRightButton(e)){
-    // 左键在橡皮模式下走地图点击上面的 eraseAt
-    return;
-  }
-  drawing = true;
-  startLL = e.latlng;
-  map.dragging.disable();
-
-  if (drawMode === 'pen'){
-    freehand = L.polyline([startLL], { color: drawColor, weight: drawWeight, opacity: 1 }).addTo(map);
-    tempLayer = freehand;
-  } else if (drawMode === 'line' || drawMode === 'arrow'){
-    tempLayer = L.polyline([startLL, startLL], { color: drawColor, weight: drawWeight, opacity: 1 }).addTo(map);
-  } else if (drawMode === 'rect'){
-    tempLayer = L.rectangle([startLL, startLL], { color: drawColor, weight: drawWeight, fillOpacity: 0.08, fillColor: drawColor }).addTo(map);
-  } else if (drawMode === 'circle'){
-    tempLayer = L.circle(startLL, { radius: 1, color: drawColor, weight: drawWeight, fillOpacity: 0.08, fillColor: drawColor }).addTo(map);
-  }
-}
-
-function onMoveRight(e){
-  if (!drawActive || !drawing || !tempLayer) return;
-  const ll = e.latlng;
-  if (drawMode === 'pen'){
-    const pts = freehand.getLatLngs(); pts.push(ll); freehand.setLatLngs(pts);
-  } else if (drawMode === 'line' || drawMode === 'arrow'){
-    tempLayer.setLatLngs([startLL, ll]);
-  } else if (drawMode === 'rect'){
-    tempLayer.setBounds(L.latLngBounds(startLL, ll));
-  } else if (drawMode === 'circle'){
-    const r = map.distance(startLL, ll); tempLayer.setRadius(r);
-  }
-}
-
-function onUpRight(e){
-  if (!drawActive || !drawing) return;
-  drawing = false;
-  map.dragging.enable();
-
-  if (!tempLayer) return;
-
-  // 箭头（下面第 4 点还有“去掉多余线段&对齐中心”的修复）
-  if (drawMode === 'arrow'){
-    finalizeArrow(tempLayer);
-    tempLayer = null;
-    startLL = null;
-    return;
-  }
-
-  shapes.push(tempLayer);
-  tempLayer = null;
-  startLL = null;
-}
-
-function disableDraw(){
-  if (!drawActive) return;
-  drawActive = false;
-  drawing = false;
-  discardTemp();
   // 解绑事件
   map.off('mousedown', onDown);
   map.off('mousemove', onMove);
@@ -1474,6 +1402,3 @@ map.on('click', (e) => {
     window.geoMarker = null;
   }
 });
-
-//（可选）屏蔽浏览器默认右键菜单
-map.getContainer().addEventListener('contextmenu', (ev) => ev.preventDefault(), { passive: false });
