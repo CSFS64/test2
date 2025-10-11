@@ -118,6 +118,24 @@ if (toolIcon){
 /* 你可以加一些极简的缩略图背景（不改全局 CSS，只在面板内生效的内联 <style>） */
 const bmStyle = document.createElement('style');
 bmStyle.textContent = `
+bmStyle.textContent = `
+/* —— 面板的基础定位与层级 —— */
+#basemap-panel{ 
+  position: absolute;
+  top: 88px;
+  left: 88px;
+  z-index: 9999;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  width: 340px;
+  padding: 12px;
+}
+#basemap-panel.hidden{ display: none; }
+#basemap-panel .panel-header{ 
+  display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;
+}
+#basemap-panel .panel-title{ font-weight:600; font-size:16px; }
 #basemap-panel .bm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
 #basemap-panel .bm-item{border-radius:12px;padding:8px;cursor:pointer;user-select:none;border:2px solid transparent}
 #basemap-panel .bm-item.selected{border-color:#333}
