@@ -968,16 +968,14 @@ document.querySelectorAll('#draw-panel .draw-tool').forEach(makePressable);
   document.head.appendChild(style);
 })();
 
-/* ========= 导出：隐藏全部 UI → 保存为 PNG（按需加载 html2canvas） ========= */
+/* ========= 导出：隐藏 UI → 冻结 Leaflet → 等待瓦片 → 保存 PNG → 还原 ========= */
 let _exportCssEl = null;
 
 function installExportCss() {
   if (_exportCssEl) return;
   const id = map.getContainer().id || 'map';
   const esc = (window.CSS && CSS.escape) ? CSS.escape(id) : id.replace(/[^a-zA-Z0-9_-]/g, "\\$&");
-  // 需要隐藏的 UI 选择器可按你页面实际补充
   const css = `
-    /* 进入导出态时隐藏除地图外的所有 UI（你可按需增删） */
     .__exporting .topbar,
     .__exporting .sidebar,
     .__exporting .icon-group,
@@ -990,20 +988,17 @@ function installExportCss() {
     .__exporting .leaflet-control-container,
     .__exporting .leaflet-popup-pane { display: none !important; }
 
-    /* 强制地图与其子元素光标为默认，避免十字或手型进入截图 */
     .__exporting #${esc}, .__exporting #${esc} * { cursor: default !important; }
   `;
   _exportCssEl = document.createElement('style');
-  _exportCssEl.setAttribute('data-export-css', '1');
   _exportCssEl.textContent = css;
   document.head.appendChild(_exportCssEl);
 }
-
 function uninstallExportCss() {
   if (_exportCssEl) { _exportCssEl.remove(); _exportCssEl = null; }
 }
 
-/* 动态加载 html2canvas（只在首次导出时触发） */
+/* 动态加载 html2canvas（只在首次导出时加载） */
 function ensureHtml2Canvas() {
   return new Promise((resolve, reject) => {
     if (window.html2canvas) return resolve(window.html2canvas);
@@ -1016,40 +1011,119 @@ function ensureHtml2Canvas() {
   });
 }
 
-/* 真正的导出函数：隐藏 UI → 截图 → 下载 → 还原 UI */
+/* 等待当前视窗内所有 TileLayer 完成加载 */
+function waitVisibleTiles() {
+  const waits = [];
+  map.eachLayer(l => {
+    if (l instanceof L.TileLayer) {
+      // 已经就绪会立刻触发一次 'load'，否则等到加载完成
+      waits.push(new Promise(res => {
+        const onLoad = () => { l.off('load', onLoad); res(); };
+        l.on('load', onLoad);
+        // 兜底：若已经加载完成，下一帧解除监听
+        requestAnimationFrame(() => { l.off('load', onLoad); res(); });
+      }));
+    }
+  });
+  return Promise.all(waits);
+}
+
+/* 冻结所有 pane 的 transform，避免 html2canvas 计算偏移 */
+function freezeLeafletTransforms() {
+  const panes = map.getPanes();
+  const targets = [
+    panes.mapPane, panes.tilePane, panes.overlayPane,
+    panes.shadowPane, panes.markerPane, panes.tooltipPane, panes.popupPane
+  ].filter(Boolean);
+
+  const prev = new Map();
+  targets.forEach(el => {
+    const style = el.style;
+    prev.set(el, {
+      transform: style.transform,
+      left: style.left,
+      top: style.top,
+      willChange: style.willChange
+    });
+    // 读取当前 translate 像素（Leaflet 内部存着）
+    const pos = (L.DomUtil.getPosition && L.DomUtil.getPosition(el)) || { x: 0, y: 0 };
+    style.transform = 'none';
+    style.left = pos.x + 'px';
+    style.top = pos.y + 'px';
+    style.willChange = 'auto';
+  });
+  // 锁定容器尺寸，防止布局在隐藏 UI 时回流改变地图大小
+  const mapEl = map.getContainer();
+  const rect = mapEl.getBoundingClientRect();
+  const prevMapSize = { width: mapEl.style.width, height: mapEl.style.height };
+  mapEl.style.width = rect.width + 'px';
+  mapEl.style.height = rect.height + 'px';
+
+  return function unfreeze() {
+    targets.forEach(el => {
+      const p = prev.get(el);
+      if (!p) return;
+      el.style.transform = p.transform || '';
+      el.style.left = p.left || '';
+      el.style.top = p.top || '';
+      el.style.willChange = p.willChange || '';
+    });
+    mapEl.style.width = prevMapSize.width || '';
+    mapEl.style.height = prevMapSize.height || '';
+  };
+}
+
 async function exportMapAsPNGNoUI() {
+  // 保留按钮样式：这里只换点击逻辑，不改 DOM 文案
+  let restoreCursor = null;
   try {
-    // 若在绘图/测距中，先把交互停掉，避免截到交互点；随后再恢复
+    // 停止交互与动画，防抖动
     const wasDraw = !!drawActive;
     const wasRuler = !!rulerActive;
     if (wasDraw) disableDraw();
     if (wasRuler) disableRuler();
 
+    // 临时关闭地图交互（不改你的全局设置，完了再恢复）
+    const toDisable = [
+      map.dragging, map.touchZoom, map.doubleClickZoom,
+      map.scrollWheelZoom, map.boxZoom, map.keyboard
+    ].filter(Boolean);
+    const reEnable = [];
+    toDisable.forEach(api => { if (api.enabled && api.enabled()) { api.disable(); reEnable.push(api); } });
+
     installExportCss();
     document.documentElement.classList.add('__exporting');
 
-    // 等一帧让隐藏生效并确保瓦片渲染完成
+    // 等 UI 隐藏生效
     await new Promise(r => requestAnimationFrame(() => setTimeout(r, 30)));
 
+    // 等瓦片就绪
+    await waitVisibleTiles();
+
+    // 冻结 transform，避免右偏/缺块
+    const unfreeze = freezeLeafletTransforms();
+
     const h2c = await ensureHtml2Canvas();
-    // 为了最清晰，按设备像素比放大；如果文件太大可把 scale 调小
-    const canvas = await h2c(document.getElementById('map'), {
+    const mapEl = document.getElementById('map');
+    const canvas = await h2c(mapEl, {
       useCORS: true,
       backgroundColor: null,
-      scale: Math.max(1, Math.floor(window.devicePixelRatio || 1))
+      scale: Math.max(1, Math.floor(window.devicePixelRatio || 1)),
+      windowWidth: document.documentElement.clientWidth,
+      windowHeight: document.documentElement.clientHeight
     });
 
-    const dataURL = canvas.toDataURL('image/png');
+    // 下载
     const a = document.createElement('a');
-    const ts = new Date().toISOString().replace(/[:.]/g, '-');
-    a.href = dataURL;
-    a.download = `map-${ts}.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.download = `map-${new Date().toISOString().replace(/[:.]/g,'-')}.png`;
     a.click();
 
     // 还原
+    unfreeze();
     document.documentElement.classList.remove('__exporting');
     uninstallExportCss();
-
+    reEnable.forEach(api => api.enable());
     if (wasDraw) enableDraw();
     if (wasRuler) enableRuler();
   } catch (err) {
@@ -1059,13 +1133,10 @@ async function exportMapAsPNGNoUI() {
   }
 }
 
-/* ——— 把“导出”按钮切换为导出 PNG ——— */
+/* 用 PNG 导出替换原按钮的点击逻辑（不改样式/文字） */
 if (drawExportBtn) {
-  // 可选：顺便把按钮文字改一下
-  try { drawExportBtn.textContent = '保存 PNG'; } catch {}
   drawExportBtn.onclick = exportMapAsPNGNoUI;
 }
-
 
 /* ===================== 更新列表（静态示例数据） ===================== */
 const updates = [
