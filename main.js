@@ -433,7 +433,6 @@ function addRulerPoint(latlng){
   }).addTo(map);
 
   // 允许拖动
-  mk.dragging = true;
   mk.on('mousedown', function (e) {
     if (!rulerActive) return;
     map.dragging.disable();
@@ -1357,18 +1356,11 @@ map.on('touchstart', (e) => {
   const touch = e.originalEvent.touches[0];
   if (!touch) return;
   __lpLatLng = map.mouseEventToLatLng(touch);
-  ...
-});
-
-map.on('touchstart', (e) => {
-  const touch = e.originalEvent.touches[0];
-  if (!touch) return;
-  __lpLatLng = map.mouseEventToLatLng(touch);
   clearTimeout(__lpTimer);
   __lpTimer = setTimeout(() => {
     if (__lpLatLng) dropMarkerAt(__lpLatLng);
     __lpTimer = null;
-  }, 600); // 长按 600ms 触发
+  }, 600);
 });
 
 map.on('touchmove', (e) => {
