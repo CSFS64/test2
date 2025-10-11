@@ -14,18 +14,119 @@ const map = L.map('map', { zoomControl: false, preferCanvas: true }).setView([48
 // 共享 Canvas 渲染器
 const vecRenderer = L.canvas({ padding: 0.5 });
 
-// 卫星底图
-L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-  attribution: 'Tiles © Esri',
-  crossOrigin: true
-}).addTo(map);
+/* ===================== 底图切换（🛠️） ===================== */
+// 1) 定义底图集合（无需密钥）
+const BASEMAPS = {
+  standard: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    crossOrigin: true,
+    attribution: '© OpenStreetMap contributors'
+  }),
+  topo: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+    maxZoom: 17,
+    crossOrigin: true,
+    attribution: '© OpenTopoMap (CC-BY-SA), © OSM contributors'
+  }),
+  satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 19,
+    crossOrigin: true,
+    attribution: 'Tiles © Esri'
+  })
+};
 
-// 地名注记
-L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
-  attribution: 'Labels © Esri',
-  pane: 'overlayPane',
-  crossOrigin: true
-}).addTo(map);
+// 2) 保持一个指针到当前底图层
+let baseLayer = null;
+
+// 3) 注记覆盖层（你已有的那层，确保始终在上）
+const labelsOverlay = L.tileLayer(
+  'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+  { pane: 'overlayPane', crossOrigin: true, attribution: 'Labels © Esri' }
+);
+
+// 4) 切换函数
+function setBasemap(key){
+  const next = BASEMAPS[key];
+  if (!next) return;
+
+  // 换底图
+  if (baseLayer) map.removeLayer(baseLayer);
+  baseLayer = next.addTo(map);
+
+  // 确保注记覆盖层在上方（如果你希望某些底图不要注记，可在这里按需控制）
+  if (!map.hasLayer(labelsOverlay)) labelsOverlay.addTo(map);
+
+  // 更新 UI 选中态
+  document.querySelectorAll('#basemap-panel .bm-item').forEach(el => el.classList.remove('selected'));
+  const sel = document.querySelector(`#basemap-panel .bm-item[data-key="${key}"]`);
+  sel && sel.classList.add('selected');
+}
+
+// 5) 初始化：把你原来的底图替换成我们管理的 baseLayer
+//    先不要直接 addTo(map) 旧的那条 Esri 影像，在这里统一设定默认（比如 satellite）
+if (baseLayer) map.removeLayer(baseLayer);
+setBasemap('satellite'); // 默认影像
+
+// 6) 构建面板 DOM（示例结构，配合你的 CSS）
+const toolIcon = document.querySelector('.icon-group .icon.tools'); // 🛠️按钮，请给它加上 .tools 类
+let basemapPanel = document.getElementById('basemap-panel');
+if (!basemapPanel) {
+  basemapPanel = document.createElement('div');
+  basemapPanel.id = 'basemap-panel';
+  basemapPanel.className = 'panel hidden'; // 复用你的面板通用样式
+  basemapPanel.innerHTML = `
+    <div class="panel-header">
+      <div class="panel-title">Settings</div>
+      <button id="close-basemap" class="close-btn" aria-label="Close">×</button>
+    </div>
+    <div class="panel-body">
+      <div class="section-title">Map view</div>
+      <div class="bm-grid">
+        <div class="bm-item selected" data-key="standard" title="Standard">
+          <div class="bm-thumb bm-thumb-standard"></div>
+          <div class="bm-label">Standard</div>
+        </div>
+        <div class="bm-item" data-key="topo" title="Topo">
+          <div class="bm-thumb bm-thumb-topo"></div>
+          <div class="bm-label">Topo</div>
+        </div>
+        <div class="bm-item" data-key="satellite" title="Satellite">
+          <div class="bm-thumb bm-thumb-sat"></div>
+          <div class="bm-label">Satellite</div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(basemapPanel);
+
+  // 简单交互绑定
+  basemapPanel.querySelector('#close-basemap').onclick = () => basemapPanel.classList.add('hidden');
+  basemapPanel.querySelectorAll('.bm-item').forEach(el => {
+    el.addEventListener('click', () => setBasemap(el.dataset.key));
+  });
+}
+
+// 7) 打开/关闭面板（复用你的“关闭其它面板”逻辑）
+if (toolIcon){
+  toolIcon.onclick = () => {
+    const isHidden = basemapPanel.classList.contains('hidden');
+    closeAllPanelsExtended && closeAllPanelsExtended();
+    if (isHidden) basemapPanel.classList.remove('hidden');
+  };
+}
+
+/* 你可以加一些极简的缩略图背景（不改全局 CSS，只在面板内生效的内联 <style>） */
+const bmStyle = document.createElement('style');
+bmStyle.textContent = `
+#basemap-panel .bm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+#basemap-panel .bm-item{border-radius:12px;padding:8px;cursor:pointer;user-select:none;border:2px solid transparent}
+#basemap-panel .bm-item.selected{border-color:#333}
+#basemap-panel .bm-thumb{width:100%;aspect-ratio:1/1;border-radius:10px;background-size:cover;background-position:center;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+#basemap-panel .bm-label{text-align:center;margin-top:6px;font-size:12px;color:#444}
+#basemap-panel .bm-thumb-standard{background-image:url('data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#f4f2e9"/><path d="M0 60 H120" stroke="#cfc7b0" stroke-width="3"/><path d="M0 30 H120" stroke="#e0dac8"/><path d="M0 90 H120" stroke="#e0dac8"/><path d="M30 0 V120" stroke="#e0dac8"/><path d="M60 0 V120" stroke="#cfc7b0" stroke-width="3"/><path d="M90 0 V120" stroke="#e0dac8"/></svg>')}');}
+#basemap-panel .bm-thumb-topo{background-image:url('data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#eef3e8"/><path d="M10 100 C30 80, 50 90, 70 70 S110 60 120 40" fill="none" stroke="#9bb27a" stroke-width="2"/><path d="M0 80 C20 60, 40 70, 60 50 S90 40 110 20" fill="none" stroke="#c5d5ab" stroke-width="2"/></svg>')}');}
+#basemap-panel .bm-thumb-sat{background-image:url('data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#253b24"/><stop offset="1" stop-color="#4c5a2e"/></linearGradient></defs><rect width="120" height="120" fill="url(#g)"/><circle cx="40" cy="40" r="14" fill="#6a7b37"/><rect x="70" y="65" width="28" height="18" fill="#38461f"/></svg>')}');}
+`;
+document.head.appendChild(bmStyle);
 
 L.control.scale({
   position: 'bottomleft',
