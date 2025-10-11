@@ -9,7 +9,7 @@ let availableDates = [];        // Date[]（保留用）
 let availableDateStrs = [];     // "YYYY-MM-DD" 字符串数组（用于相邻跳转）
 
 /* ===================== 地图初始化 ===================== */
-const map = L.map('map', { zoomControl: false }).setView([48.6, 37.9], 10);
+const map = L.map('map', { zoomControl: false, preferCanvas: true }).setView([48.6, 37.9], 10);
 
 L.control.scale({
   position: 'bottomleft',
@@ -25,9 +25,9 @@ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 }).addTo(map);
 
 // 地名注记
-L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
-  attribution: 'Labels © Esri',
-  pane: 'overlayPane'
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+  attribution: 'Tiles © Esri',
+  crossOrigin: true
 }).addTo(map);
 
 /* ===================== 日期工具（统一使用 UTC） ===================== */
