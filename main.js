@@ -968,211 +968,32 @@ document.querySelectorAll('#draw-panel .draw-tool').forEach(makePressable);
   document.head.appendChild(style);
 })();
 
-/* ========= 导出：隐藏 UI → 冻结 Leaflet → 等待瓦片 → 保存 PNG → 还原 ========= */
-let _exportCssEl = null;
-
-function installExportCss() {
-  if (_exportCssEl) return;
-  const id = map.getContainer().id || 'map';
-  const esc = (window.CSS && CSS.escape) ? CSS.escape(id) : id.replace(/[^a-zA-Z0-9_-]/g, "\\$&");
-  const css = `
-    .__exporting .topbar,
-    .__exporting .sidebar,
-    .__exporting .icon-group,
-    .__exporting #update-panel,
-    .__exporting #info-panel,
-    .__exporting #calendar-popup,
-    .__exporting #geo-panel,
-    .__exporting #draw-panel,
-    .__exporting #ruler-panel,
-    .__exporting .leaflet-control-container,
-    .__exporting .leaflet-popup-pane { display: none !important; }
-
-    .__exporting #${esc}, .__exporting #${esc} * { cursor: default !important; }
-  `;
-  _exportCssEl = document.createElement('style');
-  _exportCssEl.textContent = css;
-  document.head.appendChild(_exportCssEl);
-}
-function uninstallExportCss() {
-  if (_exportCssEl) { _exportCssEl.remove(); _exportCssEl = null; }
-}
-
-/* 动态加载 html2canvas（只在首次导出时加载） */
-function ensureHtml2Canvas() {
-  return new Promise((resolve, reject) => {
-    if (window.html2canvas) return resolve(window.html2canvas);
-    const s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
-    s.async = true;
-    s.onload = () => resolve(window.html2canvas);
-    s.onerror = () => reject(new Error('html2canvas 加载失败'));
-    document.head.appendChild(s);
-  });
-}
-
-/* 等待当前视窗内所有 TileLayer 完成加载 */
-function waitVisibleTiles() {
-  const waits = [];
-  map.eachLayer(l => {
-    if (l instanceof L.TileLayer) {
-      // 已经就绪会立刻触发一次 'load'，否则等到加载完成
-      waits.push(new Promise(res => {
-        const onLoad = () => { l.off('load', onLoad); res(); };
-        l.on('load', onLoad);
-        // 兜底：若已经加载完成，下一帧解除监听
-        requestAnimationFrame(() => { l.off('load', onLoad); res(); });
-      }));
-    }
-  });
-  return Promise.all(waits);
-}
-
-/* 冻结所有 pane 的 transform，避免 html2canvas 计算偏移 */
-function freezeLeafletTransforms() {
-  const panes = map.getPanes();
-  const targets = [
-    panes.mapPane, panes.tilePane, panes.overlayPane,
-    panes.shadowPane, panes.markerPane, panes.tooltipPane, panes.popupPane
-  ].filter(Boolean);
-
-  const prev = new Map();
-  targets.forEach(el => {
-    const style = el.style;
-    prev.set(el, {
-      transform: style.transform,
-      left: style.left,
-      top: style.top,
-      willChange: style.willChange
-    });
-    // 读取当前 translate 像素（Leaflet 内部存着）
-    const pos = (L.DomUtil.getPosition && L.DomUtil.getPosition(el)) || { x: 0, y: 0 };
-    style.transform = 'none';
-    style.left = pos.x + 'px';
-    style.top = pos.y + 'px';
-    style.willChange = 'auto';
-  });
-  // 锁定容器尺寸，防止布局在隐藏 UI 时回流改变地图大小
-  const mapEl = map.getContainer();
-  const rect = mapEl.getBoundingClientRect();
-  const prevMapSize = { width: mapEl.style.width, height: mapEl.style.height };
-  mapEl.style.width = rect.width + 'px';
-  mapEl.style.height = rect.height + 'px';
-
-  return function unfreeze() {
-    targets.forEach(el => {
-      const p = prev.get(el);
-      if (!p) return;
-      el.style.transform = p.transform || '';
-      el.style.left = p.left || '';
-      el.style.top = p.top || '';
-      el.style.willChange = p.willChange || '';
-    });
-    mapEl.style.width = prevMapSize.width || '';
-    mapEl.style.height = prevMapSize.height || '';
-  };
-}
-
-async function exportMapAsPNGNoUI() {
+async function exportMapAsPNG_LeafletImage() {
   try {
+    // 临时关掉绘图/标尺交互，避免导出时误触
     const wasDraw  = !!drawActive;
     const wasRuler = !!rulerActive;
     if (wasDraw)  disableDraw();
     if (wasRuler) disableRuler();
 
-    // 临时禁用交互，避免抖动
-    const inter = [map.dragging, map.touchZoom, map.doubleClickZoom, map.scrollWheelZoom, map.boxZoom, map.keyboard].filter(Boolean);
-    const reEn  = [];
-    inter.forEach(api => { if (api.enabled && api.enabled()) { api.disable(); reEn.push(api); } });
+    // 等待可视瓦片和矢量完成一帧绘制（保险起见）
+    await new Promise(r => requestAnimationFrame(() => setTimeout(r, 30)));
 
-    installExportCss();
-    document.documentElement.classList.add('__exporting');
+    window.leafletImage(map, function(err, canvas) {
+      if (err) { showMessage('导出失败：' + err); return; }
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = `map-${new Date().toISOString().replace(/[:.]/g,'-')}.png`;
+      a.click();
 
-    // 等隐藏生效
-    await new Promise(r => requestAnimationFrame(() => setTimeout(r, 20)));
-
-    // 锁尺寸 & 冻结 transform
-    const unfreeze = freezeLeafletTransforms();
-
-    // —— 等“视窗内”瓦片全部加载 —— //
-    await waitTilesInView();
-
-    // 取当前 map 容器的屏幕矩形（含滚动补偿）
-    const mapEl = map.getContainer();
-    const rect  = mapEl.getBoundingClientRect();
-    const clip  = {
-      x: Math.round(rect.left + window.scrollX),
-      y: Math.round(rect.top  + window.scrollY),
-      width:  Math.round(rect.width),
-      height: Math.round(rect.height)
-    };
-
-    const h2c = await ensureHtml2Canvas();
-    const canvas = await h2c(document.documentElement, {
-      useCORS: true,
-      backgroundColor: null,
-      scrollX: 0,                 // 关键：归零页面滚动
-      scrollY: 0,
-      x: clip.x, y: clip.y,       // 关键：精确裁剪区域
-      width: clip.width, height: clip.height,
-      scale: Math.max(1, Math.floor(window.devicePixelRatio || 1)),
-      removeContainer: true
+      if (wasDraw)  enableDraw();
+      if (wasRuler) enableRuler();
     });
-
-    // 下载
-    const a = document.createElement('a');
-    a.href = canvas.toDataURL('image/png');
-    a.download = `map-${new Date().toISOString().replace(/[:.]/g,'-')}.png`;
-    a.click();
-
-    // 还原
-    unfreeze();
-    document.documentElement.classList.remove('__exporting');
-    uninstallExportCss();
-    reEn.forEach(api => api.enable());
-    if (wasDraw)  enableDraw();
-    if (wasRuler) enableRuler();
-  } catch (err) {
-    document.documentElement.classList.remove('__exporting');
-    uninstallExportCss();
-    showMessage('导出 PNG 失败：' + (err?.message || err));
+  } catch (e) {
+    showMessage('导出失败：' + (e?.message || e));
   }
 }
-
-/* 更严格地等待可见瓦片 */
-function waitTilesInView() {
-  return new Promise(resolve => {
-    const mapEl = map.getContainer();
-    const viewRect = mapEl.getBoundingClientRect();
-
-    function inView(img) {
-      const r = img.getBoundingClientRect();
-      // 与地图容器有交集就算在视窗内
-      return !(r.right < viewRect.left || r.left > viewRect.right || r.bottom < viewRect.top || r.top > viewRect.bottom);
-    }
-
-    function ready() {
-      const tiles = Array.from(mapEl.querySelectorAll('.leaflet-tile'));
-      // 只看视窗内的瓦片
-      const vis = tiles.filter(inView);
-      return vis.length > 0 && vis.every(img => img.complete && img.naturalWidth > 0);
-    }
-
-    // 小循环直到就绪，再延时一帧稳定
-    (function tick() {
-      if (ready()) {
-        requestAnimationFrame(() => setTimeout(resolve, 30));
-      } else {
-        requestAnimationFrame(tick);
-      }
-    })();
-  });
-}
-
-// 按钮样式不变，只换绑定
-if (drawExportBtn) {
-  drawExportBtn.onclick = exportMapAsPNGNoUI;
-}
+if (drawExportBtn) drawExportBtn.onclick = exportMapAsPNG_LeafletImage;
 
 
 /* ===================== 更新列表（静态示例数据） ===================== */
