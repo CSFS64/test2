@@ -1921,25 +1921,30 @@ function applyUnderline(){ document.execCommand('underline'); }
   const iBtn = bar.querySelector('#fmt-italic');
   const uBtn = bar.querySelector('#fmt-underline');
 
-  [bBtn,iBtn,uBtn].forEach(btn => {
-    btn?.addEventListener('mousedown', e => e.preventDefault()); // 防止按钮夺走焦点
-    btn?.addEventListener('click', () => { 
-      restoreNoteSelection(); 
-      (btn===bBtn?applyBold:btn===iBtn?applyItalic:applyUnderline)(); 
+  // 按钮：阻止鼠标按下夺走焦点，点击时恢复选区后执行命令
+  [bBtn, iBtn, uBtn].forEach(btn => {
+    btn?.addEventListener('mousedown', e => e.preventDefault());
+    btn?.addEventListener('click', () => {
+      restoreNoteSelection();
+      (btn===bBtn ? applyBold : btn===iBtn ? applyItalic : applyUnderline)();
     });
   });
 
-  fontSel?.addEventListener('mousedown', e => e.preventDefault());
-  sizeSel?.addEventListener('mousedown', e => e.preventDefault());
-
+  // ⚠️ 不要对 select 做 mousedown.preventDefault()，否则不会展开
   fontSel?.addEventListener('change', () => {
     restoreNoteSelection();
     const val = fontSel.value.trim();
     if (val) wrapWithSpanStyle({ 'font-family': val });
   });
+
   sizeSel?.addEventListener('change', () => {
     restoreNoteSelection();
     const val = sizeSel.value.trim();
     if (val) wrapWithSpanStyle({ 'font-size': `${val}px` });
+  });
+
+  // 加一条兜底：编辑批注时，任何选区变化都缓存
+  document.addEventListener('selectionchange', () => {
+    if (noteEditing) saveNoteSelection();
   });
 })();
