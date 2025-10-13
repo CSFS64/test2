@@ -879,39 +879,15 @@ body, html {
 
 
 
-/* 让 Leaflet 的 divIcon 外壳按内容撑开 */
-.leaflet-marker-icon{
+/* 只作用于批注图标 */
+.leaflet-marker-icon.note-icon{
   width: auto !important;
   height: auto !important;
   display: inline-block !important;
 }
 
-/* 批注容器：透明 + 也按内容撑开 */
-.leaflet-note{
-  display: inline-block !important;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-}
 .leaflet-note:before,
 .leaflet-note:after{ display: none !important; }
-
-/* 批注文本：横排、可换行；给最小宽度避免“一字一行” */
-.leaflet-note .note-text{
-  display: inline-block !important;
-  min-width: 140px;         /* 可调：120~200 */
-  max-width: 280px;
-  white-space: pre-wrap;
-  word-break: break-word;
-  margin: 0;
-  padding: 0;
-  background: transparent !important;
-  border: 0 !important;
-  outline: none !important;
-  writing-mode: horizontal-tb; /* 仅对文本本身指定横排即可 */
-  text-orientation: mixed;
-}
 
 /* 仅编辑时显示外框（颜色=文字色） */
 .leaflet-note .note-text[contenteditable="true"]:focus{
