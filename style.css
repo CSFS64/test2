@@ -933,3 +933,27 @@ body, html {
 #note-format-bar .divider{
   width: 1px; height: 18px; background: #333; margin: 0 4px;
 }
+
+.leaflet-note,
+.leaflet-note *,
+.leaflet-note .note-text,
+.leaflet-note .note-text *{
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  transform: none !important;
+}
+
+.leaflet-note .note-text{
+  display: inline-block !important;
+  min-width: 140px;
+  max-width: 500px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  line-height: 1.25;
+  background: transparent !important;
+  outline: none !important;
+  border: 0 !important;
+  margin: 0;
+  padding: 0;
+}
