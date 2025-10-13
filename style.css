@@ -879,42 +879,41 @@ body, html {
 
 
 
-/* —— 批注容器 —— */
+/* 让 Leaflet 的 divIcon 外壳按内容撑开 */
+.leaflet-marker-icon{
+  width: auto !important;
+  height: auto !important;
+  display: inline-block !important;
+}
+
+/* 批注容器：透明 + 也按内容撑开 */
 .leaflet-note{
+  display: inline-block !important;
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
   padding: 0 !important;
-  position: relative;
-  color: #111;
 }
 .leaflet-note:before,
 .leaflet-note:after{ display: none !important; }
 
-/* 强制横排（覆盖任何来自上层的 vertical-rl） */
-.leaflet-note,
-.leaflet-note *,
-.leaflet-note .note-text,
-.leaflet-note .note-text *{
-  writing-mode: horizontal-tb !important;
-  text-orientation: mixed !important;
-  transform: none !important;          /* 防止被 rotate */
-}
-
-/* 文字本体：默认只有文字（横排、可换行） */
+/* 批注文本：横排、可换行；给最小宽度避免“一字一行” */
 .leaflet-note .note-text{
-  display: inline-block;
+  display: inline-block !important;
+  min-width: 140px;         /* 可调：120~200 */
   max-width: 280px;
   white-space: pre-wrap;
   word-break: break-word;
-  background: transparent !important;
-  outline: none !important;
-  border: 0 !important;
   margin: 0;
   padding: 0;
+  background: transparent !important;
+  border: 0 !important;
+  outline: none !important;
+  writing-mode: horizontal-tb; /* 仅对文本本身指定横排即可 */
+  text-orientation: mixed;
 }
 
-/* 仅编辑时显示外框（颜色= currentColor，即文字色） */
+/* 仅编辑时显示外框（颜色=文字色） */
 .leaflet-note .note-text[contenteditable="true"]:focus{
   outline: 1.5px solid currentColor;
   outline-offset: 2px;
@@ -926,40 +925,4 @@ body, html {
   padding: 0;
 }
 
-.leaflet-marker-icon {
-  width: auto !important;
-  height: auto !important;
-  display: inline-block !important;
-}
-
-.leaflet-note{
-  display: inline-block;
-}
-
-.leaflet-note .note-text{
-  display: inline-block;
-  max-width: 280px;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-/* 关键修复：让 Leaflet 的 divIcon 外壳不再是 0 宽 */
-.leaflet-marker-icon{
-  width: auto !important;
-  height: auto !important;
-  display: inline-block !important; /* 让它按内容撑开 */
-}
-
-/* 批注根元素也作为内容盒参与宽度计算 */
-.leaflet-note{
-  display: inline-block !important;
-}
-
-/* 文字盒：给一个“可读”的最小宽度，避免一字一行 */
-.leaflet-note .note-text{
-  display: inline-block !important;
-  min-width: 140px;          /* ← 新增：随你调 120~200 都行 */
-  max-width: 280px;          /* 你原来保留 */
-  white-space: pre-wrap;
-  word-break: break-word;
 }
