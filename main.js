@@ -1150,7 +1150,18 @@ function createNoteAt(latlng, presetText='') {
   const icon = L.divIcon({ className: '', html: div, iconSize: null, iconAnchor: [16,16] });
   const marker = L.marker(latlng, { icon, draggable: false }).addTo(map);
   const host = marker.getElement();
-  if (host) { host.style.width = 'auto'; host.style.height = 'auto'; host.style.display = 'inline-block'; }
+  if (host) {
+    host.style.width = 'auto';
+    host.style.height = 'auto';
+    host.style.display = 'inline-block';
+    // ★ 阻止右键继续冒泡到 map
+    host.addEventListener('contextmenu', ev => {
+      if (ev.target.closest('.note-text')) {
+        ev.stopPropagation();
+        // 不要 preventDefault，这样可以保留选择状态
+      }
+    });
+  }
 
   marker.on('click', () => {
     if (drawMode === 'erase') { removeNote(marker); return; }
@@ -1712,12 +1723,14 @@ function dropMarkerAt(latlng) {
   }).openPopup();
 }
 
-// —— 桌面：右键（Leaflet 会发 contextmenu 事件） —— //
 // 右键生成坐标
 map.on('contextmenu', (e) => {
-  if (drawActive) { // 绘图时禁用右键生成坐标
-    e.originalEvent?.preventDefault?.();
-    return;
+  // ★ 在批注上右键：交给批注自己的菜单；不要触发地图坐标弹窗
+  if (e.originalEvent?.target?.closest?.('.leaflet-note')) return;
+
+  if (drawActive) { 
+    e.originalEvent?.preventDefault?.(); 
+    return; 
   }
   e.originalEvent?.preventDefault?.();
   dropMarkerAt(e.latlng);
