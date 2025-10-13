@@ -1136,7 +1136,7 @@ function createNoteAt(latlng, presetText='') {
   div.className = 'leaflet-note';
   const inner = document.createElement('div');
   inner.className = 'note-text';
-  inner.textContent = presetText || '在此输入批注…';
+  inner.textContent = presetText || '';
   div.appendChild(inner);
 
   const icon = L.divIcon({
