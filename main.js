@@ -900,14 +900,27 @@ function undoLastShape(){
   if (tempLayer){ discardTemp(); return; }
   const last = shapes.pop();
   if (!last) return;
-  if (last.parts) last.parts.forEach(p => map.removeLayer(p));
-  else map.removeLayer(last);
+
+  if (last.type === 'note' && last.marker){
+    try { map.removeLayer(last.marker); } catch {}
+    return;
+  }
+  if (last.parts){
+    last.parts.forEach(p => map.removeLayer(p));
+  } else {
+    map.removeLayer(last);
+  }
 }
 function clearAllShapes(){
   discardTemp();
   shapes.forEach(s => {
-    if (s.parts) s.parts.forEach(p => map.removeLayer(p));
-    else map.removeLayer(s);
+    if (s && s.type === 'note' && s.marker){
+      try { map.removeLayer(s.marker); } catch {}
+    } else if (s && s.parts){
+      s.parts.forEach(p => map.removeLayer(p));
+    } else if (s){
+      map.removeLayer(s);
+    }
   });
   shapes = [];
 }
