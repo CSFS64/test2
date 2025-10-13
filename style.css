@@ -957,3 +957,20 @@ body, html {
   margin: 0;
   padding: 0;
 }
+
+:root{
+  /* 全局可调默认字号（你只改这里即可） */
+  --note-font-size: 16px;  /* 17/18 也可 */
+  --note-line-height: 1.4;
+}
+
+/* 批注文本基础样式（默认就更大 & 更易读） */
+.leaflet-note .note-text{
+  font-size: var(--note-font-size) !important;
+  line-height: var(--note-line-height);
+  /* 中文优先的无衬线字体栈（跨平台更稳） */
+  font-family:
+    "Noto Sans SC","PingFang SC","Microsoft YaHei",
+    "Source Han Sans SC","Hiragino Sans GB",
+    Arial,Helvetica,sans-serif !important;
+}
