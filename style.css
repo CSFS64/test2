@@ -879,17 +879,20 @@ body, html {
 
 
 
-/* 只作用于批注图标 */
+/* =================== 批注（Leaflet Note）最终样式 =================== */
+
+/* 仅作用于批注的 divIcon 外壳，避免 0 宽高 */
 .leaflet-marker-icon.note-icon{
   width: auto !important;
   height: auto !important;
   display: inline-block !important;
 }
 
-.leaflet-note:before,
-.leaflet-note:after{ display: none !important; }
+/* 去掉你模板里可能带的 ::before/::after 箭头等 */
+.leaflet-note::before,
+.leaflet-note::after{ display: none !important; }
 
-/* 仅编辑时显示外框（颜色=文字色） */
+/* 仅在编辑时给可视外框（颜色 = currentColor，即文本色） */
 .leaflet-note .note-text[contenteditable="true"]:focus{
   outline: 1.5px solid currentColor;
   outline-offset: 2px;
@@ -897,7 +900,50 @@ body, html {
   padding: 2px 4px;
 }
 
-/* 右键编辑条 */
+/* 书写方向与旋转修正：只限制在文本节点自身（避免影响其它插件） */
+.leaflet-note .note-text,
+.leaflet-note .note-text *{
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  transform: none !important;
+}
+
+/* —— 可调变量 —— */
+:root{
+  --note-font-size: 16px;         /* 默认字号（要更大就改这里，如 17px/18px） */
+  --note-line-height: 1.4;        /* 行高 */
+  --note-min-width: 140px;        /* 最窄宽度，避免一字一行 */
+  --note-max-width: 420px;        /* 自动换行的上限宽度（稍微大一些） */
+}
+
+/* 关键：加权选择器 + !important，顶住外层 font 设置 */
+.leaflet-pane .leaflet-marker-icon.note-icon .leaflet-note .note-text{
+  display: inline-block !important;
+
+  /* 可读性与换行控制 */
+  min-width: var(--note-min-width) !important;
+  max-width: var(--note-max-width) !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+  line-height: var(--note-line-height) !important;
+
+  /* 视觉与重置 */
+  background: transparent !important;
+  outline: none !important;
+  border: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+
+  /* 字体与字号（中文优先的无衬线栈） */
+  font-size: var(--note-font-size) !important;
+  font-family:
+    "Noto Sans SC","PingFang SC","Microsoft YaHei",
+    "Source Han Sans SC","Hiragino Sans GB",
+    Arial,Helvetica,sans-serif !important;
+}
+
+/* =================== 右键编辑条 =================== */
 #note-format-bar{
   position: fixed;
   z-index: 99999;
@@ -905,7 +951,7 @@ body, html {
   color: #fff;
   border-radius: 8px;
   padding: 6px 8px;
-  display: none;
+  display: none;                 /* 默认隐藏，右键文本时显示 */
   gap: 6px;
   align-items: center;
   box-shadow: 0 6px 16px rgba(0,0,0,.25);
@@ -921,52 +967,10 @@ body, html {
   padding: 4px 6px;
   cursor: pointer;
 }
-#note-format-bar button{
-  min-width: 28px;
-}
+#note-format-bar button{ min-width: 28px; }
 #note-format-bar button:hover,
 #note-format-bar select:hover{ background:#2b2b2b; }
 #note-format-bar .divider{
   width: 1px; height: 18px; background: #333; margin: 0 4px;
 }
 
-.leaflet-note,
-.leaflet-note *,
-.leaflet-note .note-text,
-.leaflet-note .note-text *{
-  writing-mode: horizontal-tb !important;
-  text-orientation: mixed !important;
-  transform: none !important;
-}
-
-.leaflet-note .note-text{
-  display: inline-block !important;
-  min-width: 140px;
-  max-width: 1000px;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  word-break: normal;
-  line-height: 1.25;
-  background: transparent !important;
-  outline: none !important;
-  border: 0 !important;
-  margin: 0;
-  padding: 0;
-}
-
-:root{
-  /* 全局可调默认字号（你只改这里即可） */
-  --note-font-size: 16px;  /* 17/18 也可 */
-  --note-line-height: 1.4;
-}
-
-/* 批注文本基础样式（默认就更大 & 更易读） */
-.leaflet-note .note-text{
-  font-size: var(--note-font-size) !important;
-  line-height: var(--note-line-height);
-  /* 中文优先的无衬线字体栈（跨平台更稳） */
-  font-family:
-    "Noto Sans SC","PingFang SC","Microsoft YaHei",
-    "Source Han Sans SC","Hiragino Sans GB",
-    Arial,Helvetica,sans-serif !important;
-}
