@@ -1291,7 +1291,6 @@ toGeoJSONFeatureCollection = function(){
         type:'Feature',
         geometry:{ type:'Point', coordinates:[lng, lat] },
         properties:{ mode:'note', text: txt, color: (el?.style?.color || null) }
-        properties:{ mode:'note', text: txt }
       });
     }
   });
