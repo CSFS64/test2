@@ -1778,3 +1778,157 @@ map.on('click', (e) => {
     window.geoMarker = null;
   }
 });
+
+// ★ 一次性创建右键编辑条
+const _fmtBar = document.createElement('div');
+_fmtBar.id = 'note-format-bar';
+_fmtBar.innerHTML = `
+  <select id="fmt-font">
+    <option value="">字体</option>
+    <option>Inter</option>
+    <option>Arial</option>
+    <option>Segoe UI</option>
+    <option>Helvetica</option>
+    <option>Noto Sans SC</option>
+    <option>SimHei</option>
+    <option>SimSun</option>
+  </select>
+  <select id="fmt-size">
+    <option value="">字号</option>
+    <option value="12">12</option>
+    <option value="14">14</option>
+    <option value="16">16</option>
+    <option value="18">18</option>
+    <option value="20">20</option>
+    <option value="24">24</option>
+    <option value="28">28</option>
+    <option value="32">32</option>
+  </select>
+  <span class="divider"></span>
+  <button id="fmt-bold"><b>B</b></button>
+  <button id="fmt-italic"><i>I</i></button>
+  <button id="fmt-underline"><u>U</u></button>
+`;
+document.body.appendChild(_fmtBar);
+
+let _noteLastRange = null;
+
+// 保存选区（仅限 note-text 内）
+function saveNoteSelection() {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return;
+  const r = sel.getRangeAt(0);
+  // 只保存 .note-text 内的选区
+  const anc = sel.anchorNode;
+  if (anc && (anc.nodeType === 3 ? anc.parentElement : anc).closest('.note-text')) {
+    _noteLastRange = r.cloneRange();
+  }
+}
+function restoreNoteSelection() {
+  if (!_noteLastRange) return false;
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(_noteLastRange);
+  return true;
+}
+
+// 在进入编辑时，给 note 文本绑定保存选区
+const _origEnterNoteEdit = enterNoteEdit;
+enterNoteEdit = function(marker){
+  _origEnterNoteEdit(marker);
+  const el = marker.getElement()?.querySelector('.note-text');
+  if (!el) return;
+  // 鼠标/键盘变化时都保存最新选区
+  ['keyup','mouseup'].forEach(evt => {
+    el.addEventListener(evt, saveNoteSelection);
+  });
+  // 右键时弹出菜单
+  el.addEventListener('contextmenu', (ev) => {
+    ev.preventDefault();      // 保留当前选区，但阻止浏览器菜单
+    saveNoteSelection();      // 确保已保存
+    showFormatBar(ev.clientX, ev.clientY);
+  });
+};
+
+// 关闭编辑时，顺手隐藏工具条
+const _origExitNoteEdit = exitNoteEdit;
+exitNoteEdit = function(){
+  hideFormatBar();
+  _origExitNoteEdit();
+};
+
+// 展示/隐藏工具条
+function showFormatBar(x, y){
+  const bar = document.getElementById('note-format-bar');
+  if (!bar) return;
+  bar.style.display = 'flex';
+  // 简单避让视口边缘
+  const w = 320, h = 42;
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const left = Math.min(x, vw - w - 8);
+  const top  = Math.min(y, vh - h - 8);
+  bar.style.left = `${left}px`;
+  bar.style.top  = `${top}px`;
+}
+function hideFormatBar(){
+  const bar = document.getElementById('note-format-bar');
+  if (bar) bar.style.display = 'none';
+}
+
+// 点击外部收起
+document.addEventListener('mousedown', (e) => {
+  const bar = document.getElementById('note-format-bar');
+  if (!bar || bar.style.display === 'none') return;
+  if (e.target.closest('#note-format-bar') || e.target.closest('.note-text')) return;
+  hideFormatBar();
+});
+
+// 工具条指令
+function wrapWithSpanStyle(styleObj){
+  // 用 insertHTML 包一层 <span style="...">选中文本</span>
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return;
+  const txt = sel.toString();
+  if (!txt) return;
+  const styleStr = Object.entries(styleObj).map(([k,v]) => `${k}:${v}`).join(';');
+  const html = `<span style="${styleStr}">${txt.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>`;
+  document.execCommand('insertHTML', false, html);
+}
+
+function applyBold(){ document.execCommand('bold'); }
+function applyItalic(){ document.execCommand('italic'); }
+function applyUnderline(){ document.execCommand('underline'); }
+
+// 绑定格式按钮
+(function bindFormatBar(){
+  const bar = document.getElementById('note-format-bar');
+  if (!bar) return;
+
+  const fontSel = bar.querySelector('#fmt-font');
+  const sizeSel = bar.querySelector('#fmt-size');
+  const bBtn = bar.querySelector('#fmt-bold');
+  const iBtn = bar.querySelector('#fmt-italic');
+  const uBtn = bar.querySelector('#fmt-underline');
+
+  [bBtn,iBtn,uBtn].forEach(btn => {
+    btn?.addEventListener('mousedown', e => e.preventDefault()); // 防止按钮夺走焦点
+    btn?.addEventListener('click', () => { 
+      restoreNoteSelection(); 
+      (btn===bBtn?applyBold:btn===iBtn?applyItalic:applyUnderline)(); 
+    });
+  });
+
+  fontSel?.addEventListener('mousedown', e => e.preventDefault());
+  sizeSel?.addEventListener('mousedown', e => e.preventDefault());
+
+  fontSel?.addEventListener('change', () => {
+    restoreNoteSelection();
+    const val = fontSel.value.trim();
+    if (val) wrapWithSpanStyle({ 'font-family': val });
+  });
+  sizeSel?.addEventListener('change', () => {
+    restoreNoteSelection();
+    const val = sizeSel.value.trim();
+    if (val) wrapWithSpanStyle({ 'font-size': `${val}px` });
+  });
+})();
