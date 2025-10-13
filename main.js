@@ -1147,7 +1147,7 @@ function createNoteAt(latlng, presetText='') {
   inner.style.color = drawColor;          // ← 新增：初始颜色 = 当前画笔色
   div.appendChild(inner);
 
-  const icon = L.divIcon({ className: '', html: div, iconSize: null, iconAnchor: [16,16] });
+  const icon = L.divIcon({ className: 'note-icon', html: div, iconSize: null, iconAnchor: [16,16] });
   const marker = L.marker(latlng, { icon, draggable: false }).addTo(map);
   const host = marker.getElement();
   if (host) {
