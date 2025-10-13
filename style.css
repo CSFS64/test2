@@ -896,10 +896,6 @@ body, html {
   border-radius: 6px;
   padding: 2px 4px;
 }
-.leaflet-note .note-text[contenteditable="true"]:not(:focus){
-  outline: none;
-  padding: 0;
-}
 
 /* 右键编辑条 */
 #note-format-bar{
