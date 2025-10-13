@@ -925,4 +925,35 @@ body, html {
   padding: 0;
 }
 
+/* 右键编辑条 */
+#note-format-bar{
+  position: fixed;
+  z-index: 99999;
+  background: #111;
+  color: #fff;
+  border-radius: 8px;
+  padding: 6px 8px;
+  display: none;
+  gap: 6px;
+  align-items: center;
+  box-shadow: 0 6px 16px rgba(0,0,0,.25);
+  font-size: 13px;
+  white-space: nowrap;
+}
+#note-format-bar select,
+#note-format-bar button{
+  background: #222;
+  color: #fff;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 4px 6px;
+  cursor: pointer;
+}
+#note-format-bar button{
+  min-width: 28px;
+}
+#note-format-bar button:hover,
+#note-format-bar select:hover{ background:#2b2b2b; }
+#note-format-bar .divider{
+  width: 1px; height: 18px; background: #333; margin: 0 4px;
 }
