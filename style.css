@@ -879,82 +879,32 @@ body, html {
 
 
 
-/* —— 批注容器：完全透明 —— */
+/* —— 批注容器 —— */
 .leaflet-note{
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
   padding: 0 !important;
-  min-width: 0 !important;
-  max-width: none !important;
+  position: relative;
   color: #111;
-  position: relative;
-}
-
-/* 去掉小尖角 */
-.leaflet-note:before,
-.leaflet-note:after{
-  display: none !important;
-}
-
-/* 文字本体：默认只有文字，没有任何框 */
-.leaflet-note .note-text{
-  background: transparent !important;
-  border: 0 !important;
-  outline: none !important;
-  padding: 0 !important;
-  margin: 0;
-  display: inline;
-  white-space: pre-wrap;
-  word-break: break-word;
-  opacity: 1;
-  writing-mode: horizontal-tb !important;
-  text-orientation: mixed !important;
-}
-
-/* 仅“正在编辑”时显示一个矩形框（不改变排版，用 outline） */
-.leaflet-note .note-text[contenteditable="true"]{
-  outline: 1.5px solid currentColor;
-  outline-offset: 2px;
-  border-radius: 6px;
-  padding: 2px 4px;
-}
-
-/* 保险：只有聚焦才画框（有些环境会提前加 contenteditable） */
-.leaflet-note .note-text[contenteditable="true"]:not(:focus){
-  outline: none;
-  padding: 0;
-}
-
-/* 强制批注容器及其所有后代使用横排 */
-.leaflet-note,
-.leaflet-note *,
-.leaflet-note .note-text,
-.leaflet-note .note-text * {
-  writing-mode: horizontal-tb !important;
-  text-orientation: mixed !important;
-}
-
-/* 如有被旋转过（有些框架会 rotate 文字），顺手清掉 */
-.leaflet-note,
-.leaflet-note * {
-  transform: none !important;
-}
-
-/* 你的透明样式依旧保留（略）——只示意关键几行 */
-.leaflet-note{
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  position: relative;
 }
 .leaflet-note:before,
 .leaflet-note:after{ display: none !important; }
 
+/* 强制横排（覆盖任何来自上层的 vertical-rl） */
+.leaflet-note,
+.leaflet-note *,
+.leaflet-note .note-text,
+.leaflet-note .note-text *{
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  transform: none !important;          /* 防止被 rotate */
+}
+
+/* 文字本体：默认只有文字（横排、可换行） */
 .leaflet-note .note-text{
-  display: inline-block;            /* 建议用 inline-block，更稳定的换行盒 */
-  max-width: 280px;                 /* 给个宽度才会自然换行 */
+  display: inline-block;
+  max-width: 280px;
   white-space: pre-wrap;
   word-break: break-word;
   background: transparent !important;
@@ -964,7 +914,7 @@ body, html {
   padding: 0;
 }
 
-/* 仅编辑时显示矩形框（颜色跟随 currentColor，即跟随文字色） */
+/* 仅编辑时显示外框（颜色= currentColor，即文字色） */
 .leaflet-note .note-text[contenteditable="true"]:focus{
   outline: 1.5px solid currentColor;
   outline-offset: 2px;
