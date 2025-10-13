@@ -873,3 +873,55 @@ body, html {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23253b24'/><stop offset='1' stop-color='%234c5a2e'/></linearGradient></defs><rect width='120' height='120' fill='url(%23g)'/><circle cx='40' cy='40' r='14' fill='%236a7b37'/><rect x='70' y='65' width='28' height='18' fill='%2338461f'/></svg>");
 }
 
+
+
+
+
+
+
+/* 批注容器（用 L.divIcon 渲染） */
+.leaflet-note {
+  min-width: 140px;
+  max-width: 280px;
+  background: #fff;
+  border: 1.5px solid #111;
+  border-radius: 8px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+  padding: 6px 8px;
+  font-size: 13px;
+  line-height: 1.35;
+  color: #111;
+}
+
+/* 可编辑区域 */
+.leaflet-note [contenteditable="true"] {
+  outline: none;
+  display: block;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* 非编辑态时略微淡 */
+.leaflet-note .note-text.readonly {
+  opacity: .9;
+}
+
+/* 批注的小“锚点”箭头 */
+.leaflet-note:after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  bottom: -7px;
+  border-width: 7px 7px 0 7px;
+  border-style: solid;
+  border-color: #111 transparent transparent transparent;
+}
+.leaflet-note:before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  bottom: -6px;
+  border-width: 7px 7px 0 7px;
+  border-style: solid;
+  border-color: #fff transparent transparent transparent;
+}
