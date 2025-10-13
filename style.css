@@ -926,3 +926,19 @@ body, html {
   padding: 0;
 }
 
+.leaflet-marker-icon {
+  width: auto !important;
+  height: auto !important;
+  display: inline-block !important;
+}
+
+.leaflet-note{
+  display: inline-block;
+}
+
+.leaflet-note .note-text{
+  display: inline-block;
+  max-width: 280px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
