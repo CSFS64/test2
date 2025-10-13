@@ -1093,6 +1093,202 @@ async function exportMapAsPNG_LeafletImage() {
 }
 if (drawExportBtn) drawExportBtn.onclick = exportMapAsPNG_LeafletImage;
 
+/* ===================== 📝 批注工具 ===================== */
+let noteEditing = null; // { marker, el } 当前正在编辑的批注
+
+// 如果面板里没放“📝”按钮，这里自动补一个（可选）
+(function ensureNoteButton(){
+  const bar = document.querySelector('#draw-panel .tools, #draw-panel'); // 你的工具按钮容器选择器按需调整
+  if (!bar) return;
+  if (!bar.querySelector('.draw-tool[data-tool="note"]')) {
+    const btn = document.createElement('button');
+    btn.className = 'draw-tool';
+    btn.dataset.tool = 'note';
+    btn.title = '批注';
+    btn.textContent = '📝';
+    bar.querySelector('.draw-tool') ? bar.insertBefore(btn, bar.querySelector('.draw-tool')) : bar.appendChild(btn);
+    btn.addEventListener('click', () => {
+      drawMode = 'note';
+      document.querySelectorAll('#draw-panel .draw-tool').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      discardTemp();
+      exitNoteEdit(); // 切换时收起正在编辑的批注
+    });
+  }
+})();
+
+// 新建批注 Marker（用 divIcon 装一个 contenteditable 的 div）
+function createNoteAt(latlng, presetText='') {
+  const div = document.createElement('div');
+  div.className = 'leaflet-note';
+  const inner = document.createElement('div');
+  inner.className = 'note-text';
+  inner.textContent = presetText || '在此输入批注…';
+  div.appendChild(inner);
+
+  const icon = L.divIcon({
+    className: '',             // 不要默认的 'leaflet-div-icon'
+    html: div,
+    iconSize: null,            // 由内容撑开
+    iconAnchor: [16, 16]       // 让“锚点”大致在左下附近
+  });
+
+  const marker = L.marker(latlng, { icon, draggable: false }).addTo(map);
+
+  // 左键点击可重新进入编辑
+  marker.on('click', () => {
+    if (drawMode === 'erase') { // 橡皮模式：删除
+      removeNote(marker);
+      return;
+    }
+    enterNoteEdit(marker);
+  });
+
+  // 记录到 shapes（便于撤销/清空/导出）
+  shapes.push({ type:'note', marker, getLatLng: () => marker.getLatLng() });
+
+  // 初次创建就进入编辑
+  enterNoteEdit(marker);
+  return marker;
+}
+
+function enterNoteEdit(marker){
+  // 先把其他编辑关掉
+  exitNoteEdit();
+
+  const root = marker.getElement();
+  if (!root) return;
+  const textEl = root.querySelector('.note-text');
+  if (!textEl) return;
+
+  textEl.setAttribute('contenteditable', 'true');
+  textEl.classList.remove('readonly');
+  // 将光标移到末尾
+  const range = document.createRange();
+  range.selectNodeContents(textEl);
+  range.collapse(false);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  textEl.focus();
+
+  // 在编辑时禁止地图拖拽，避免右键/拖动误操作
+  map.dragging.disable();
+
+  noteEditing = { marker, el: textEl };
+
+  // Enter 换行，Ctrl/Cmd+Enter 结束编辑
+  textEl.addEventListener('keydown', noteKeydown);
+}
+
+function noteKeydown(e){
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter'){
+    e.preventDefault();
+    exitNoteEdit();
+  }
+}
+
+function exitNoteEdit(){
+  if (!noteEditing) return;
+  const { el } = noteEditing;
+  el.removeAttribute('contenteditable');
+  el.classList.add('readonly');
+  el.removeEventListener('keydown', noteKeydown);
+  noteEditing = null;
+  map.dragging.enable();
+}
+
+function removeNote(marker){
+  // 从 shapes 中移除
+  const idx = shapes.findIndex(s => s && s.type === 'note' && s.marker === marker);
+  if (idx !== -1) shapes.splice(idx,1);
+  try { map.removeLayer(marker); } catch {}
+}
+
+/* —— 将“右键绘制”逻辑扩展上 note —— */
+const _origOnDownRight = onDownRight;
+onDownRight = function(e){
+  if (!drawActive || !isRightButton(e)) return;
+
+  if (drawMode === 'note'){
+    // 在其它位置右键：若有正在编辑的批注，先收起
+    if (noteEditing) exitNoteEdit();
+    // 在光标位置新建批注并进入编辑
+    createNoteAt(e.latlng);
+    // note 不需要进入“拖拽绘制”，直接 return
+    return;
+  }
+
+  // 其他模式走原逻辑
+  _origOnDownRight(e);
+};
+
+const _origOnUpRight = onUpRight;
+onUpRight = function(e){
+  if (!drawActive) return;
+  if (drawMode === 'note'){
+    // note 不需要 up 处理
+    return;
+  }
+  _origOnUpRight(e);
+};
+
+const _origOnMoveRight = onMoveRight;
+onMoveRight = function(e){
+  if (!drawActive) return;
+  if (drawMode === 'note'){
+    // note 不需要 move 处理
+    return;
+  }
+  _origOnMoveRight(e);
+};
+
+/* —— 切换工具时，自动收起批注编辑 —— */
+const _origDiscardTemp = discardTemp;
+discardTemp = function(){
+  exitNoteEdit();
+  _origDiscardTemp();
+};
+
+/* —— 橡皮模式下点击批注删除（已在 marker click 里处理）。
+      若你更偏向于“点附近删除”，也可在 eraseAt 里加命中测试： —— */
+const _origEraseAt = eraseAt;
+eraseAt = function(ll){
+  // 命中最近的 note
+  for (let i = shapes.length - 1; i >= 0; i--){
+    const s = shapes[i];
+    if (s && s.type === 'note'){
+      const p1 = map.latLngToLayerPoint(s.marker.getLatLng());
+      const p2 = map.latLngToLayerPoint(ll);
+      if (p1.distanceTo(p2) <= 16){ // 16px 误差圈
+        removeNote(s.marker);
+        return true;
+      }
+    }
+  }
+  return _origEraseAt(ll);
+};
+
+/* —— 导出时把批注输出到 GeoJSON —— */
+const _origToGeoJSON = toGeoJSONFeatureCollection;
+toGeoJSONFeatureCollection = function(){
+  const fc = _origToGeoJSON();
+  // 附加 notes
+  shapes.forEach(s => {
+    if (s && s.type === 'note'){
+      const el = s.marker.getElement()?.querySelector('.note-text');
+      const txt = (el?.textContent || '').trim();
+      const { lat, lng } = s.marker.getLatLng();
+      fc.features.push({
+        type:'Feature',
+        geometry:{ type:'Point', coordinates:[lng, lat] },
+        properties:{ mode:'note', text: txt }
+      });
+    }
+  });
+  return fc;
+};
+
 
 /* ===================== 更新列表（静态示例数据） ===================== */
 const updates = [
