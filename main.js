@@ -623,6 +623,19 @@ let tempLayer  = null;         // 正在绘制中的图层
 let shapes     = [];           // 已完成图层
 let freehand   = null;         // pen 模式的折线
 
+// —— note 模式下的左键点击：第一次点击放置文本框；若已在编辑，则单纯退出编辑 —— //
+function onMapClickNoteMode(e){
+  if (!drawActive || drawMode !== 'note') return;
+
+  // 若当前已有一个批注处于编辑状态，则这次点击仅用于“结束编辑”，不新建
+  if (noteEditing) {
+    exitNoteEdit();
+    return;
+  }
+  // 没在编辑：在点击点放置一个新的文本框并进入编辑
+  createNoteAt(e.latlng);
+}
+
 function distPointToSeg(px, a, b){
   // px, a, b 均为 layerPoint（像素）
   const vx = b.x - a.x, vy = b.y - a.y;
@@ -845,12 +858,14 @@ function enableDraw(){
   drawActive = true;
   map.getContainer().style.cursor = 'crosshair';
   installDrawCursor();
-  // 右键绘制
+  // 右键绘制（线/箭头/矩形/圆/手绘）
   map.on('mousedown', onDownRight);
   map.on('mousemove', onMoveRight);
   map.on('mouseup',   onUpRight);
   // 左键“点擦除”
   map.on('click', onEraseIfNeeded);
+  // ★ 左键放置/退出 note
+  map.on('click', onMapClickNoteMode);
 }
 
 function disableDraw(){
@@ -864,6 +879,8 @@ function disableDraw(){
   map.off('mousemove', onMoveRight);
   map.off('mouseup',   onUpRight);
   map.off('click', onEraseIfNeeded);
+  // ★ 解绑
+  map.off('click', onMapClickNoteMode);
 }
 
 function onEraseIfNeeded(e){
@@ -1226,21 +1243,14 @@ function removeNote(marker){
   try { map.removeLayer(marker); } catch {}
 }
 
-/* —— 将“右键绘制”逻辑扩展上 note —— */
 const _origOnDownRight = onDownRight;
 onDownRight = function(e){
   if (!drawActive || !isRightButton(e)) return;
 
   if (drawMode === 'note'){
-    // 在其它位置右键：若有正在编辑的批注，先收起
-    if (noteEditing) exitNoteEdit();
-    // 在光标位置新建批注并进入编辑
-    createNoteAt(e.latlng);
-    // note 不需要进入“拖拽绘制”，直接 return
+    // note 模式下不再用右键创建；右键只用于在文本框内弹出格式工具条（见 enterNoteEdit 里的 contextmenu）
     return;
   }
-
-  // 其他模式走原逻辑
   _origOnDownRight(e);
 };
 
@@ -1772,6 +1782,7 @@ map.on('touchend touchcancel', () => {
 });
 
 map.on('click', (e) => {
+  hideFormatBar();
   if (rulerActive) return; // ← Ruler 模式下，click 被用来加点，不删 pin
   if (window.geoMarker){
     try{ window.geoMarker.remove(); }catch{ map.removeLayer(window.geoMarker); }
