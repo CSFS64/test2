@@ -946,7 +946,7 @@ body, html {
 .leaflet-note .note-text{
   display: inline-block !important;
   min-width: 140px;
-  max-width: 500px;
+  max-width: 1000px;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   word-break: normal;
