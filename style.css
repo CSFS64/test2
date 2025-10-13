@@ -942,3 +942,24 @@ body, html {
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+/* 关键修复：让 Leaflet 的 divIcon 外壳不再是 0 宽 */
+.leaflet-marker-icon{
+  width: auto !important;
+  height: auto !important;
+  display: inline-block !important; /* 让它按内容撑开 */
+}
+
+/* 批注根元素也作为内容盒参与宽度计算 */
+.leaflet-note{
+  display: inline-block !important;
+}
+
+/* 文字盒：给一个“可读”的最小宽度，避免一字一行 */
+.leaflet-note .note-text{
+  display: inline-block !important;
+  min-width: 140px;          /* ← 新增：随你调 120~200 都行 */
+  max-width: 280px;          /* 你原来保留 */
+  white-space: pre-wrap;
+  word-break: break-word;
+}
