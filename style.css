@@ -913,7 +913,7 @@ body, html {
   --note-font-size: 16px;         /* 默认字号（要更大就改这里，如 17px/18px） */
   --note-line-height: 1.4;        /* 行高 */
   --note-min-width: 140px;        /* 最窄宽度，避免一字一行 */
-  --note-max-width: 420px;        /* 自动换行的上限宽度（稍微大一些） */
+  --note-max-width: 650px;        /* 自动换行的上限宽度（稍微大一些） */
 }
 
 /* 关键：加权选择器 + !important，顶住外层 font 设置 */
