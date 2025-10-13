@@ -925,3 +925,14 @@ body, html {
   border-style: solid;
   border-color: #fff transparent transparent transparent;
 }
+
+// 覆盖批注样式
+(function installTransparentNoteStyle(){
+  const style = document.createElement('style');
+  style.textContent = `
+    .leaflet-note{ background:transparent!important; border:none!important; box-shadow:none!important; padding:0!important; }
+    .leaflet-note:before,.leaflet-note:after{ display:none!important; } /* 去掉小尖角 */
+    .leaflet-note .note-text{ background:transparent!important; outline:none!important; }
+  `;
+  document.head.appendChild(style);
+})();
