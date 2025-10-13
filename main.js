@@ -1149,6 +1149,8 @@ function createNoteAt(latlng, presetText='') {
 
   const icon = L.divIcon({ className: '', html: div, iconSize: null, iconAnchor: [16,16] });
   const marker = L.marker(latlng, { icon, draggable: false }).addTo(map);
+  const host = marker.getElement();
+  if (host) { host.style.width = 'auto'; host.style.height = 'auto'; host.style.display = 'inline-block'; }
 
   marker.on('click', () => {
     if (drawMode === 'erase') { removeNote(marker); return; }
