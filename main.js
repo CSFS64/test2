@@ -1796,13 +1796,23 @@ _fmtBar.id = 'note-format-bar';
 _fmtBar.innerHTML = `
   <select id="fmt-font">
     <option value="">字体</option>
-    <option>Inter</option>
-    <option>Arial</option>
-    <option>Segoe UI</option>
-    <option>Helvetica</option>
-    <option>Noto Sans SC</option>
-    <option>SimHei</option>
-    <option>SimSun</option>
+    <!-- 中文无衬线（推荐默认） -->
+    <option value='"Noto Sans SC","PingFang SC","Microsoft YaHei","Source Han Sans SC","Hiragino Sans GB",Arial,Helvetica,sans-serif'>
+      中文无衬线（推荐）
+    </option>
+    <!-- 中文衬线 -->
+    <option value='"Source Han Serif SC","Songti SC","Noto Serif SC","STSong","SimSun",serif'>
+      中文衬线
+    </option>
+    <!-- 开源中文（文楷类，若系统未装会回退） -->
+    <option value='"LXGW WenKai","Noto Sans SC","Microsoft YaHei",sans-serif'>
+      霞鹜文楷（可选）
+    </option>
+    <!-- 常见西文字体栈（有中文时会回退到系统中文） -->
+    <option value='Inter,Arial,Helvetica,sans-serif'>Inter</option>
+    <option value='Arial,Helvetica,sans-serif'>Arial</option>
+    <option value='Segoe UI,Arial,Helvetica,sans-serif'>Segoe UI</option>
+    <option value='Helvetica,Arial,sans-serif'>Helvetica</option>
   </select>
   <select id="fmt-size">
     <option value="">字号</option>
