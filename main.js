@@ -779,6 +779,7 @@ if (drawColorsWrap) {
       // 更新进行中的临时图层颜色
       if (tempLayer && tempLayer.setStyle) tempLayer.setStyle({ color: drawColor, fillColor: drawColor });
       if (freehand && freehand.setStyle)  freehand.setStyle({ color: drawColor });
+      if (noteEditing?.marker) setNoteColor(noteEditing.marker, drawColor);
     };
     drawColorsWrap.appendChild(sw);
   });
@@ -1130,37 +1131,31 @@ let noteEditing = null; // { marker, el } 当前正在编辑的批注
   }
 })();
 
-// 新建批注 Marker（用 divIcon 装一个 contenteditable 的 div）
+// —— 新增：给批注节点设置颜色的工具函数 —— //
+function setNoteColor(marker, color){
+  const el = marker.getElement()?.querySelector('.note-text');
+  if (el) el.style.color = color || '#111';
+}
+
+// 修改 createNoteAt：创建时使用当前画笔色
 function createNoteAt(latlng, presetText='') {
   const div = document.createElement('div');
   div.className = 'leaflet-note';
   const inner = document.createElement('div');
   inner.className = 'note-text';
   inner.textContent = presetText || '在此输入批注…';
+  inner.style.color = drawColor;          // ← 新增：初始颜色 = 当前画笔色
   div.appendChild(inner);
 
-  const icon = L.divIcon({
-    className: '',             // 不要默认的 'leaflet-div-icon'
-    html: div,
-    iconSize: null,            // 由内容撑开
-    iconAnchor: [16, 16]       // 让“锚点”大致在左下附近
-  });
-
+  const icon = L.divIcon({ className: '', html: div, iconSize: null, iconAnchor: [16,16] });
   const marker = L.marker(latlng, { icon, draggable: false }).addTo(map);
 
-  // 左键点击可重新进入编辑
   marker.on('click', () => {
-    if (drawMode === 'erase') { // 橡皮模式：删除
-      removeNote(marker);
-      return;
-    }
+    if (drawMode === 'erase') { removeNote(marker); return; }
     enterNoteEdit(marker);
   });
 
-  // 记录到 shapes（便于撤销/清空/导出）
   shapes.push({ type:'note', marker, getLatLng: () => marker.getLatLng() });
-
-  // 初次创建就进入编辑
   enterNoteEdit(marker);
   return marker;
 }
@@ -1295,6 +1290,7 @@ toGeoJSONFeatureCollection = function(){
       fc.features.push({
         type:'Feature',
         geometry:{ type:'Point', coordinates:[lng, lat] },
+        properties:{ mode:'note', text: txt, color: (el?.style?.color || null) }
         properties:{ mode:'note', text: txt }
       });
     }
