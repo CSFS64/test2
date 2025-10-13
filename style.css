@@ -904,18 +904,20 @@ body, html {
   outline: none !important;
   padding: 0 !important;
   margin: 0;
-  display: inline;             /* 不用块级盒子，像普通文本一样贴地 */
+  display: inline;
   white-space: pre-wrap;
   word-break: break-word;
-  opacity: 1;                  /* 非编辑态不降透明度 */
+  opacity: 1;
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
 }
 
 /* 仅“正在编辑”时显示一个矩形框（不改变排版，用 outline） */
 .leaflet-note .note-text[contenteditable="true"]{
-  outline: 1.5px solid #111;   /* 你要的矩形框 */
-  outline-offset: 2px;         /* 框和文字留点缝 */
+  outline: 1.5px solid currentColor;
+  outline-offset: 2px;
   border-radius: 6px;
-  padding: 2px 4px;            /* 只在编辑时加点内边距，便于敲字 */
+  padding: 2px 4px;
 }
 
 /* 保险：只有聚焦才画框（有些环境会提前加 contenteditable） */
@@ -923,3 +925,4 @@ body, html {
   outline: none;
   padding: 0;
 }
+
