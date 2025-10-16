@@ -1323,6 +1323,7 @@ toGeoJSONFeatureCollection = function(){
 
 /* ===================== 更新列表（静态示例数据） ===================== */
 const updates = [
+  { date: "2025-10-15", summary: "苏梅：1. 乌克兰国防军向Oleksiivka推进；康斯坦丁尼夫卡：1. 澄清了托列茨克附近的前线；2. 俄军在Kleban-Byk方向取得了部分成功；波克罗夫斯克：1. 乌克兰国防军向Shakhove方向推进" },
   { date: "2025-10-14", summary: "苏梅：1. 乌克兰国防军向Oleksiivka推进；波克罗夫斯克：1. 俄军被从Mayak击退" },
   { date: "2025-10-13", summary: "波克罗夫斯克：1. 俄军被从Poltavka北部击退；2. 澄清了Volodymyrivka南部的情况；3. 澄清了Volodymyrivka内部的情况" },
   { date: "2025-10-12", summary: "康斯坦丁尼夫卡：1. 澄清了Nelipivka方向的前线；波克罗夫斯克：1. 乌克兰国防军解放了Novo Shakhovoe并向Shakhovoe方向推进；2. 澄清了Chervonyi Lyman、Balahan和Dymytrovka(Kotlyne)附近的前线；第聂伯彼得罗夫斯克：1. 俄军被从Yalta击退；2. 俄军在Filiia、Yanvaske、Kalynivske方向取得了部分成功；3. 澄清了Poltavka附近的前线；扎波罗热：1. 乌克兰国防军解放了Mali Shcherbaky、Shcherbaky和Stepove；2. 澄清了Orikhiv和Stepnohirsk方向的前线" },
