@@ -1323,6 +1323,7 @@ toGeoJSONFeatureCollection = function(){
 
 /* ===================== 更新列表（静态示例数据） ===================== */
 const updates = [
+  { date: "2025-10-17", summary: "库普扬斯克：1. 俄军在Pishchane方向取得了部分成功；西维尔斯克：1. 俄军在Verkhnokamyanske北部取得了部分成功；2. 澄清了Vyimvka南部的前线；康斯坦丁尼夫卡：1. 澄清了卡索夫亚尔附近的前线；2. 俄军向康斯坦丁尼夫卡东部渗透；3. 澄清了Dyliivka附近的前线；4. 战斗在Kleban-Byk东南进行；第聂伯彼得罗夫斯克：1. 俄军在Verbove南部取得了部分成功；2. 俄军在Poltavka附近取得了部分成功" },
   { date: "2025-10-15", summary: "苏梅：1. 乌克兰国防军向Oleksiivka推进；康斯坦丁尼夫卡：1. 澄清了托列茨克附近的前线；2. 俄军在Kleban-Byk方向取得了部分成功；波克罗夫斯克：1. 乌克兰国防军向Shakhove方向推进" },
   { date: "2025-10-14", summary: "苏梅：1. 乌克兰国防军向Oleksiivka推进；波克罗夫斯克：1. 俄军被从Mayak击退" },
   { date: "2025-10-13", summary: "波克罗夫斯克：1. 俄军被从Poltavka北部击退；2. 澄清了Volodymyrivka南部的情况；3. 澄清了Volodymyrivka内部的情况" },
