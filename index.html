@@ -13,48 +13,6 @@
     defer
   ></script>
 
-  <style>
-  .khb{ 
-    position: fixed;          /* 固定在地图上方 */
-    top: 10px; 
-    left: 64px;               /* 避开你的“☰”按钮，可自行调 40~96px */
-    z-index: 10000; 
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; /* 不再用等宽体 */
-  }
-  .khb__bar{
-    display: flex; align-items: center; gap: 8px;
-    padding: 6px 10px;
-    background: rgba(255,255,255,.92);       /* 半透明白 */
-    border: 1px solid rgba(0,0,0,.12);
-    border-radius: 12px;
-    box-shadow: 0 6px 18px rgba(0,0,0,.15);  /* 柔和投影 */
-  }
-  .khb__home{ color:#111; font-weight:700; text-decoration:none; letter-spacing: 0; }
-  .khb__sep{ display:none; }                 /* 去掉分隔点 */
-  .khb__meta{ font-size:12px; gap:6px; flex-wrap: nowrap; }
-  .khb__date{ opacity:.8; white-space:nowrap; }
-  .khb__title{ 
-    max-width: 28ch;                         /* 一行省略号 */
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
-  }
-  .khb__link{ 
-    color:#0b63c5; text-decoration: none; font-weight:600; 
-    border-bottom: 1px dotted currentColor; 
-  }
-  .khb__link:hover{ text-decoration: underline; }
-  .khb__new{ 
-    background:#ffec99; border-color:#f1c40f; 
-    font-weight:700; letter-spacing:0; 
-  }
-  @media (max-width: 640px){
-    .khb{ left: 48px; top: 8px; }
-    .khb__title{ max-width: 18ch; }
-  }
-  @media (prefers-reduced-motion: no-preference){
-    .khb__new{ animation: none; }            /* 关掉闪烁 */
-  }
-  </style>
-
   <!-- Leaflet 地图样式 -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   
