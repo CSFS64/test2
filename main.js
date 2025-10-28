@@ -1323,6 +1323,7 @@ toGeoJSONFeatureCollection = function(){
 
 /* ===================== 更新列表（静态示例数据） ===================== */
 const updates = [
+  { date: "2025-10-27", summary: "库普扬斯克：1. 澄清了Pishchne附近的前线；波克罗夫斯克：1. 澄清了Shakhove东部的交战区；2. 澄清了Maiak附近的前线；3. 乌克兰国防军向Maiak推进" },
   { date: "2025-10-26", summary: "波克罗夫斯克：1. 乌克兰国防军清除了罗津斯克的俄军；2. 俄军向波克罗夫斯克西部和铁路南部渗透；3. 澄清了Kotlyne方向的前线；4. 澄清了Vovomykolaivka附近的前线" },
   { date: "2025-10-25", summary: "波克罗夫斯克：1. 乌克兰国防军向Shakhove和Pankivka方向推进；2. Volodymyrivka的俄军突击小组已被清除；3. 乌克兰国防军解放了Sukhetske和Zatyshok；4. 俄军在Kotlyne方向取得了部分成功" },
   { date: "2025-10-24", summary: "利曼：1. 乌克兰国防军解放了Torske；康斯坦丁尼夫卡：1. 俄军在Predtechyne方向取得了部分成功；2. 乌克兰国防军清除了城市附近的俄军突击小组；波克罗夫斯克：1. 俄军在Blahan方向取得了部分成功；2. 俄军向城市南部渗透；3. 澄清了Udachne西南的交战区；第聂伯彼得罗夫斯克：1. 俄军在Filiya方向取得了部分成功；2. 乌克兰国防军完全解放了Yanvaeske；3. 俄军占领了Poltava" },
