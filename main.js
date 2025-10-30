@@ -1323,6 +1323,7 @@ toGeoJSONFeatureCollection = function(){
 
 /* ===================== 更新列表（静态示例数据） ===================== */
 const updates = [
+  { date: "2025-10-29", summary: "波克罗夫斯克：1. 乌克兰国防军向Shakhove方向推进；2. 俄军继续向米尔诺格勒、波克罗夫斯克和Hryshyne方向渗透" },
   { date: "2025-10-28", summary: "波克罗夫斯克：1. 乌克兰国防军向Shakhove方向推进" },
   { date: "2025-10-27", summary: "库普扬斯克：1. 澄清了Pishchne附近的前线；波克罗夫斯克：1. 澄清了Shakhove东部的交战区；2. 澄清了Maiak附近的前线；3. 乌克兰国防军向Maiak推进" },
   { date: "2025-10-26", summary: "波克罗夫斯克：1. 乌克兰国防军清除了罗津斯克的俄军；2. 俄军向波克罗夫斯克西部和铁路南部渗透；3. 澄清了Kotlyne方向的前线；4. 澄清了Vovomykolaivka附近的前线" },
