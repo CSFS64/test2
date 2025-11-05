@@ -415,6 +415,81 @@ if (closeGeoBtn){
   };
 }
 
+// ===== 工事 =====
+
+let trenchData = null;
+let trenchLayer = null;
+let trenchVisible = false;
+
+function getTrenchStyle(f) {
+  const color = (f.properties?.color || '#ffff8d').toLowerCase();
+  const weight = Number(f.properties?.weight ?? 2);
+  return { color, weight };
+}
+
+async function ensureTrenchData() {
+  if (trenchData) return;
+  const resp = await fetch('/data/trench.json');
+  trenchData = await resp.json();
+}
+
+function getTileBoundsLatLng(map) {
+  const pb = map.getPixelBounds();
+  const sw = map.unproject(pb.getBottomLeft());
+  const ne = map.unproject(pb.getTopRight());
+  return L.latLngBounds(sw, ne);
+}
+
+function computeVisibleFeatures(map) {
+  const tileBounds = getTileBoundsLatLng(map);
+
+  const visible = trenchData.features.filter(f => {
+    if (!f || !f.geometry) return false;
+    const bbox = turf.bbox(f); // [minX, minY, maxX, maxY] = [lonW, latS, lonE, latN]
+    const fbounds = L.latLngBounds(
+      [bbox[1], bbox[0]],  // [latS, lonW]
+      [bbox[3], bbox[2]]   // [latN, lonE]
+    );
+    return tileBounds.intersects(fbounds);
+  });
+
+  return { type: 'FeatureCollection', features: visible };
+}
+
+function renderVisibleTrench() {
+  if (!trenchLayer) {
+    trenchLayer = L.geoJSON([], { style: getTrenchStyle });
+  }
+  trenchLayer.clearLayers();
+  const fc = computeVisibleFeatures(map);
+  trenchLayer.addData(fc);
+
+  if (!map.hasLayer(trenchLayer)) {
+    trenchLayer.addTo(map);
+  }
+}
+
+let renderTimer = null;
+function scheduleRender() {
+  clearTimeout(renderTimer);
+  renderTimer = setTimeout(renderVisibleTrench, 120); // 120ms 可自行调整
+}
+
+document.getElementById('btn-trench').addEventListener('click', async () => {
+  if (!trenchVisible) {
+    await ensureTrenchData();
+    renderVisibleTrench();
+    map.on('moveend zoomend resize', scheduleRender);
+    trenchVisible = true;
+  } else {
+    map.off('moveend zoomend resize', scheduleRender);
+    if (trenchLayer && map.hasLayer(trenchLayer)) {
+      map.removeLayer(trenchLayer);
+    }
+    trenchVisible = false;
+  }
+});
+
 /* ===================== Ruler 运行时状态与工具 ===================== */
 const rulerIcon      = document.querySelector('.sidebar-section.middle .icon-group .icon:nth-child(2)'); // 📏
 const rulerPanel     = document.getElementById('ruler-panel');          // 你已有的面板
