@@ -422,37 +422,26 @@ let trenchVisible = false;
 let renderTimer = null;
 
 async function loadBRJson(url) {
-  console.log('[trench] fetching:', url);
-  const resp = await fetch(url, { cache: 'force-cache' });
+  const resp = await fetch(url, { cache: 'no-store' }); // 避免缓存干扰
   const enc = (resp.headers.get('content-encoding') || '').toLowerCase();
   if (!resp.ok) throw new Error(`HTTP ${resp.status} for ${url}`);
 
   const src = new Uint8Array(await resp.arrayBuffer());
-
-  // 工具函数：把字节尝试成文本；失败就返回 null
-  const tryText = (u8) => {
-    try { return new TextDecoder('utf-8', {fatal:true}).decode(u8); }
-    catch { return null; }
-  };
-  // 工具函数：快速判断像不像 JSON
-  const looksJson = (txt) => {
-    if (!txt) return false;
-    const s = txt.trimStart();
-    return s.startsWith('{') || s.startsWith('[');
-  };
+  const toText = (u8) => new TextDecoder('utf-8').decode(u8);
+  const looksJson = (s) => !!s && /^\s*[{[]/.test(s);
 
   let bytes = src;
   let text = null;
 
-  // ① 按响应头尝试
+  // ① 按响应头优先解码
   try {
     if (enc.includes('br')) {
-      bytes = fflate.decompressSync(src);
-      text  = tryText(bytes);
+      bytes = fflate.brotliDecompressSync(src);   // ✅ 正确的 Brotli 解码
+      text = toText(bytes);
       console.log('[trench] decoded by header: br');
     } else if (enc.includes('gzip')) {
       bytes = fflate.gunzipSync(src);
-      text  = tryText(bytes);
+      text = toText(bytes);
       console.log('[trench] decoded by header: gzip');
     }
   } catch (e) {
@@ -460,40 +449,31 @@ async function loadBRJson(url) {
     bytes = src; text = null;
   }
 
-  // ② 如果还不像 JSON，按扩展名再试一次
+  // ② 如果还不像 JSON，则按扩展名再试
   if (!looksJson(text)) {
     try {
       if (url.endsWith('.br')) {
-        bytes = fflate.decompressSync(bytes);   // 再 brotli 一次
-        text  = tryText(bytes);
+        bytes = fflate.brotliDecompressSync(bytes);  // ✅ Brotli
+        text  = toText(bytes);
         console.log('[trench] decoded by extension: .br');
       } else if (url.endsWith('.gz')) {
-        bytes = fflate.gunzipSync(bytes);       // 再 gzip 一次
-        text  = tryText(bytes);
+        bytes = fflate.gunzipSync(bytes);
+        text  = toText(bytes);
         console.log('[trench] decoded by extension: .gz');
+      } else {
+        text = toText(bytes); // 明文
       }
     } catch (e) {
       console.warn('[trench] ext-based decode failed:', e);
-      text = tryText(bytes); // 继续尝试当作明文
+      text = toText(bytes); // 兜底当明文
     }
   }
 
-  // ③ 兜底：双层顺序都试一遍（极端情况：gzip(brotli(json)) / brotli(gzip(json)))
   if (!looksJson(text)) {
-    try { text = tryText(fflate.strFromU8(fflate.decompressSync(fflate.gunzipSync(src)))); } catch {}
-    if (!looksJson(text)) {
-      try { text = tryText(fflate.strFromU8(fflate.gunzipSync(fflate.decompressSync(src)))); } catch {}
-    }
-  }
-
-  // ④ 如果仍不是 JSON，打印前 200 个字符帮助定位
-  if (!looksJson(text)) {
-    const preview = (text ?? tryText(src) ?? '').slice(0, 200);
-    console.error('[trench] not json after attempts. preview:', preview);
+    console.error('[trench] preview:', (text || toText(src)).slice(0, 200));
     throw new Error('Decoded content is not valid JSON');
   }
 
-  // ⑤ 解析
   const json = JSON.parse(text);
   console.log('[trench] JSON parsed OK, features:', json.features?.length ?? 'n/a');
   return json;
