@@ -422,55 +422,48 @@ let trenchVisible = false;
 let renderTimer = null;
 
 async function loadBRJson(url) {
-  const resp = await fetch(url, { cache: 'no-store' }); // 避免缓存干扰
-  const enc = (resp.headers.get('content-encoding') || '').toLowerCase();
+  const resp = await fetch(url, { cache: 'no-store' });
   if (!resp.ok) throw new Error(`HTTP ${resp.status} for ${url}`);
 
-  const src = new Uint8Array(await resp.arrayBuffer());
-  const toText = (u8) => new TextDecoder('utf-8').decode(u8);
-  const looksJson = (s) => !!s && /^\s*[{[]/.test(s);
+  const enc = (resp.headers.get('content-encoding') || '').toLowerCase();
+  const looksJson = s => !!s && /^\s*[{[]/.test(s);
 
-  let bytes = src;
-  let text = null;
+  const isBr = enc.includes('br') || url.endsWith('.br');
+  const isGz = enc.includes('gzip') || url.endsWith('.gz');
 
-  // ① 按响应头优先解码
-  try {
-    if (enc.includes('br')) {
-      bytes = fflate.brotliDecompressSync(src);   // ✅ 正确的 Brotli 解码
-      text = toText(bytes);
-      console.log('[trench] decoded by header: br');
-    } else if (enc.includes('gzip')) {
-      bytes = fflate.gunzipSync(src);
-      text = toText(bytes);
-      console.log('[trench] decoded by header: gzip');
-    }
-  } catch (e) {
-    console.warn('[trench] header-based decode failed:', e);
-    bytes = src; text = null;
-  }
+  let bytesU8;
 
-  // ② 如果还不像 JSON，则按扩展名再试
-  if (!looksJson(text)) {
-    try {
-      if (url.endsWith('.br')) {
-        bytes = fflate.brotliDecompressSync(bytes);  // ✅ Brotli
-        text  = toText(bytes);
-        console.log('[trench] decoded by extension: .br');
-      } else if (url.endsWith('.gz')) {
-        bytes = fflate.gunzipSync(bytes);
-        text  = toText(bytes);
-        console.log('[trench] decoded by extension: .gz');
-      } else {
-        text = toText(bytes); // 明文
+  // ① 原生解压（优先，最稳）
+  if ((isBr || isGz) && 'DecompressionStream' in self && resp.body) {
+    const ds = new DecompressionStream(isBr ? 'br' : 'gzip');
+    const stream = resp.body.pipeThrough(ds);
+    const ab = await new Response(stream).arrayBuffer();
+    bytesU8 = new Uint8Array(ab);
+    console.log('[trench] decoded by native DecompressionStream:', isBr ? 'br' : 'gzip');
+  } else {
+    // ② 读原始字节
+    const raw = new Uint8Array(await resp.arrayBuffer());
+
+    // ③ 如果需要 gzip 兜底，用 fflate 解
+    if (isGz && typeof fflate?.gunzipSync === 'function') {
+      try {
+        bytesU8 = fflate.gunzipSync(raw);
+        console.log('[trench] decoded by fflate gzip fallback');
+      } catch (e) {
+        console.warn('[trench] fflate gzip fallback failed:', e);
+        bytesU8 = raw;
       }
-    } catch (e) {
-      console.warn('[trench] ext-based decode failed:', e);
-      text = toText(bytes); // 兜底当明文
+    }
+    // ④ Brotli 如果没原生支持且 fflate 不提供 brotli，就只能期望服务器已自动解压
+    else {
+      bytesU8 = raw;
     }
   }
 
+  const text = new TextDecoder('utf-8').decode(bytesU8);
+
   if (!looksJson(text)) {
-    console.error('[trench] preview:', (text || toText(src)).slice(0, 200));
+    console.error('[trench] preview (first 200 chars):', text.slice(0, 200));
     throw new Error('Decoded content is not valid JSON');
   }
 
