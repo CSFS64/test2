@@ -415,22 +415,35 @@ if (closeGeoBtn){
   };
 }
 
-// ===== 工事 =====
-
+// ===== 工事（Trench） =====
 let trenchData = null;
 let trenchLayer = null;
 let trenchVisible = false;
+let renderTimer = null;
+
+async function loadBRJson(url) {
+  const resp = await fetch(url, { cache: 'force-cache' });
+  if (!resp.ok) throw new Error(`HTTP ${resp.status} for ${url}`);
+  const u8 = new Uint8Array(await resp.arrayBuffer());
+  let raw;
+  try {
+    raw = fflate.decompressSync(u8);
+  } catch {
+    raw = u8;
+  }
+  const text = fflate.strFromU8(raw);
+  return JSON.parse(text);
+}
+
+async function ensureTrenchData() {
+  if (trenchData) return;
+  trenchData = await loadBRJson('data/trench.json.br');
+}
 
 function getTrenchStyle(f) {
   const color = (f.properties?.color || '#ffff8d').toLowerCase();
   const weight = Number(f.properties?.weight ?? 2);
   return { color, weight };
-}
-
-async function ensureTrenchData() {
-  if (trenchData) return;
-  const resp = await fetch('/data/trench.json');
-  trenchData = await resp.json();
 }
 
 function getTileBoundsLatLng(map) {
@@ -445,11 +458,8 @@ function computeVisibleFeatures(map) {
 
   const visible = trenchData.features.filter(f => {
     if (!f || !f.geometry) return false;
-    const bbox = turf.bbox(f); // [minX, minY, maxX, maxY] = [lonW, latS, lonE, latN]
-    const fbounds = L.latLngBounds(
-      [bbox[1], bbox[0]],  // [latS, lonW]
-      [bbox[3], bbox[2]]   // [latN, lonE]
-    );
+    const [minX, minY, maxX, maxY] = turf.bbox(f); // [lonW, latS, lonE, latN]
+    const fbounds = L.latLngBounds([minY, minX], [maxY, maxX]);
     return tileBounds.intersects(fbounds);
   });
 
@@ -457,35 +467,32 @@ function computeVisibleFeatures(map) {
 }
 
 function renderVisibleTrench() {
-  if (!trenchLayer) {
-    trenchLayer = L.geoJSON([], { style: getTrenchStyle });
-  }
+  if (!trenchLayer) trenchLayer = L.geoJSON([], { style: getTrenchStyle });
   trenchLayer.clearLayers();
-  const fc = computeVisibleFeatures(map);
-  trenchLayer.addData(fc);
-
-  if (!map.hasLayer(trenchLayer)) {
-    trenchLayer.addTo(map);
-  }
+  trenchLayer.addData(computeVisibleFeatures(map));
+  if (!map.hasLayer(trenchLayer)) trenchLayer.addTo(map);
 }
 
-let renderTimer = null;
 function scheduleRender() {
   clearTimeout(renderTimer);
-  renderTimer = setTimeout(renderVisibleTrench, 120); // 120ms 可自行调整
+  renderTimer = setTimeout(renderVisibleTrench, 120);
 }
 
 document.getElementById('btn-trench').addEventListener('click', async () => {
   if (!trenchVisible) {
-    await ensureTrenchData();
+    try {
+      await ensureTrenchData();
+    } catch (e) {
+      console.error('Failed to load trench data:', e);
+      alert('无法加载战壕数据，请稍后再试。');
+      return;
+    }
     renderVisibleTrench();
     map.on('moveend zoomend resize', scheduleRender);
     trenchVisible = true;
   } else {
     map.off('moveend zoomend resize', scheduleRender);
-    if (trenchLayer && map.hasLayer(trenchLayer)) {
-      map.removeLayer(trenchLayer);
-    }
+    if (trenchLayer && map.hasLayer(trenchLayer)) map.removeLayer(trenchLayer);
     trenchVisible = false;
   }
 });
