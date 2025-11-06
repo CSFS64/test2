@@ -416,8 +416,8 @@ if (closeGeoBtn){
 }
 
 // ===== Trench 分片懒加载 + 仅视窗渲染 =====
-// 依赖：Leaflet、turf
-// 可选：提供 manifest（每个分片的整体 bbox）可减少不必要的网络请求
+// 依赖：Leaflet、turf（全局可用）
+// 本模块：每次打开都会显示加载遮罩和来源 Attribution
 
 (() => {
   // === 配置 ===
@@ -426,21 +426,21 @@ if (closeGeoBtn){
     'data/trench_2.json',
     'data/trench_3.json',
   ];
-  // 可选：如果你能提供一个 manifest 文件（建议）
-  // 形如：{ "chunks": [ { "url":"data/trench_1.json", "bbox":[minX,minY,maxX,maxY] }, ... ] }
-  const CHUNK_MANIFEST_URL = 'data/trench.manifest.json'; // 若没有可留空或指向不存在
+  // 可选：形如 { "chunks":[{ "url":"data/trench_1.json", "bbox":[minX,minY,maxX,maxY] }, ... ] }
+  const CHUNK_MANIFEST_URL = 'data/trench.manifest.json'; // 没有可留空或指向不存在
 
-  const RENDER_DELAY = 120; // ms：移动/缩放结束后延迟渲染
-  const PREFETCH_PAD = 0.15; // 视窗放大一定边距进行判交（减少抖动）
+  const RENDER_DELAY = 120;   // ms：移动/缩放结束后延迟渲染
+  const PREFETCH_PAD = 0.15;  // 判交时对视窗放大边距（减少抖动）
+  const MIN_SPINNER_MS = 900; // 加载遮罩的最短展示时间（更显从容）
 
   // === 状态 ===
   let trenchVisible = false;
   let renderTimer = null;
-  let trenchLayer = null;           // L.GeoJSON（Canvas）
-  let manifest = null;              // { chunks: [{url, bbox}] } 可为空
-  const chunkState = new Map();     // url -> { loaded, features, bbox, _ready }
+  let trenchLayer = null;       // L.GeoJSON（Canvas）
+  let manifest = null;          // { chunks: [{url, bbox}] } 可为空
+  const chunkState = new Map(); // url -> { loaded, features, bbox }
 
-  // === 工具 ===
+  // === 小工具 ===
   const looksJson = s => !!s && /^\s*[\[{]/.test(s);
 
   async function fetchJson(url) {
@@ -451,23 +451,28 @@ if (closeGeoBtn){
     return JSON.parse(text);
   }
 
+  function featureStyle(f) {
+    const color   = String(f?.properties?.color   || '#ffff8d').toLowerCase();
+    const weight  = Number(f?.properties?.weight  ?? 2);
+    const opacity = Number(f?.properties?.opacity ?? 1);
+    return { color, weight, opacity };
+  }
+
   function ensureLayer() {
     if (!trenchLayer) {
+      // 只在 trench 可见时展示来源（出现在地图右下角，与底图 attribution 共存）
       trenchLayer = L.geoJSON([], {
         renderer: L.canvas({ padding: 0.25 }),
         style: featureStyle,
         filter: f => ['LineString','MultiLineString','Polygon','MultiPolygon'].includes(f?.geometry?.type),
         attribution: 'Trench © Playfra · <a href="https://x.com/Playfra0" target="_blank" rel="noopener">Source</a>'
       });
+      // 若你的地图没有 attribution 控件，补上（不会重复添加）
+      if (!document.querySelector('.leaflet-control-attribution')) {
+        L.control.attribution({ prefix: false }).addTo(map);
+      }
     }
     return trenchLayer;
-  }
-
-  function featureStyle(f) {
-    const color   = String(f?.properties?.color   || '#ffff8d').toLowerCase();
-    const weight  = Number(f?.properties?.weight  ?? 2);
-    const opacity = Number(f?.properties?.opacity ?? 1);
-    return { color, weight, opacity };
   }
 
   function latLngBoundsFromBbox(b) {
@@ -487,7 +492,7 @@ if (closeGeoBtn){
     );
   }
 
-  // 预处理：计算每个要素的 bbox，顺带可记录每个分片整体 bbox（若原数据没有）
+  // 预处理：为每个要素计算 bbox，并返回分片整体 bbox
   function preprocessChunk(url, fc) {
     if (fc.type !== 'FeatureCollection' || !Array.isArray(fc.features)) {
       throw new Error(`Chunk ${url} must be a FeatureCollection with features[]`);
@@ -513,7 +518,7 @@ if (closeGeoBtn){
     return { features: fc.features, bbox: chunkBbox };
   }
 
-  // 根据视窗，筛选某个分片内可见要素
+  // 视窗内要素筛选
   function visibleFeaturesInChunk(map, chunk) {
     const vb = expandBounds(map.getBounds(), PREFETCH_PAD);
     const out = [];
@@ -525,16 +530,16 @@ if (closeGeoBtn){
     return out;
   }
 
-  // 渲染：清空后把“所有已加载分片的可见要素”加到图层
+  // 渲染：清空后将“所有已加载分片的可见要素”加入图层
   function renderVisible() {
     if (!trenchVisible) return;
     const layer = ensureLayer();
     layer.clearLayers();
 
-    for (const [url, st] of chunkState) {
+    for (const [, st] of chunkState) {
       if (!st.loaded || !Array.isArray(st.features)) continue;
       const vf = visibleFeaturesInChunk(map, st);
-      if (vf.length) layer.addData({ type:'FeatureCollection', features: vf });
+      if (vf.length) layer.addData({ type: 'FeatureCollection', features: vf });
     }
     if (!map.hasLayer(layer)) layer.addTo(map);
   }
@@ -544,9 +549,9 @@ if (closeGeoBtn){
     renderTimer = setTimeout(renderVisible, RENDER_DELAY);
   }
 
-  // 如果有 manifest，用它的整体 bbox 先做判交，能省一次网络请求
+  // 如果有 manifest，先用分片整体 bbox 与视窗判交（能省请求）
   function chunkMaybeNeeded(url) {
-    if (!manifest) return true; // 没 manifest，保守：需要
+    if (!manifest) return true;
     const entry = manifest.chunks?.find(c => c.url === url && Array.isArray(c.bbox));
     if (!entry) return true;
     const vb = expandBounds(map.getBounds(), PREFETCH_PAD);
@@ -554,22 +559,22 @@ if (closeGeoBtn){
     return vb.intersects(cb);
   }
 
-  // 懒加载：只加载与当前视窗“整体相交”的分片；其余等下次视窗变化再判定
+  // 懒加载：仅加载与当前视窗整体相交的分片
   async function ensureChunksForView() {
     const promises = [];
     for (const url of CHUNK_URLS) {
       const st = chunkState.get(url) || {};
       chunkState.set(url, st);
 
-      if (st.loaded) continue;               // 已加载
-      if (!chunkMaybeNeeded(url)) continue;  // 与视窗不相交，先不拉
+      if (st.loaded) continue;              // 已加载
+      if (!chunkMaybeNeeded(url)) continue; // 与视窗不相交，先不拉
 
       st.loaded = 'pending';
       promises.push(
         fetchJson(url).then(fc => {
           const { features, bbox } = preprocessChunk(url, fc);
           st.features = features;
-          st.bbox = st.bbox || bbox; // 有就记一下，方便后续粗判
+          st.bbox = st.bbox || bbox;
           st.loaded = true;
           console.log('[trench] chunk ready:', url, 'features:', features.length);
         }).catch(e => {
@@ -578,36 +583,105 @@ if (closeGeoBtn){
         })
       );
     }
-    if (promises.length) {
-      await Promise.all(promises);
-    }
+    if (promises.length) await Promise.all(promises);
   }
 
-  // 每次视窗变化：先确认需要的分片是否已加载，再渲染
+  // 每次视窗变化：按需加载 + 可见渲染
   async function loadAndRenderForView() {
     await ensureChunksForView();
     renderVisible();
   }
 
-  // 入口：按钮切换
+  // ===== 加载遮罩（每次打开都显示） =====
+  let trenchLoadingEl = null;
+  let trenchLoadingShownAt = 0;
+
+  function ensureTrenchLoadingUI() {
+    if (trenchLoadingEl) return trenchLoadingEl;
+    const host = map.getContainer(); // 覆盖地图容器
+    const el = document.createElement('div');
+    el.className = 'trench-loading hidden';
+    el.innerHTML = `
+      <div class="trench-loading__backdrop"></div>
+      <div class="trench-loading__card">
+        <div class="trench-loading__spinner" aria-hidden="true"></div>
+        <div class="trench-loading__title">加载中…</div>
+        <div class="trench-loading__sub">Playfra <span style="opacity:.7">(via X)</span></div>
+      </div>
+    `;
+    const css = document.createElement('style');
+    css.textContent = `
+    .trench-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+      z-index:9999;pointer-events:none;opacity:0;transition:opacity .25s ease}
+    .trench-loading.show{opacity:1}
+    .trench-loading.hidden{display:none}
+    .trench-loading__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.35);backdrop-filter: blur(3px)}
+    .trench-loading__card{position:relative;min-width:240px;max-width:min(90vw,380px);padding:16px 18px;border-radius:14px;
+      background:rgba(15,18,25,.85);box-shadow:0 8px 26px rgba(0,0,0,.35);color:#e9eef5;text-align:center}
+    .trench-loading__title{font:600 16px/1.25 ui-sans-serif,system-ui,Segoe UI,Roboto,Arial;margin-top:10px}
+    .trench-loading__sub{font:500 12px/1.2 ui-sans-serif,system-ui,Segoe UI,Roboto,Arial;margin-top:6px;color:#c8d2de}
+    .trench-loading__spinner{width:28px;height:28px;border:3px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;
+      margin:0 auto;animation:trenchSpin 1s linear infinite}
+    @keyframes trenchSpin{to{transform:rotate(360deg)}}
+
+    /* 地图轻微虚化/降透明度（仅 loading 时挂到 map 容器） */
+    .trench-dim .leaflet-pane{filter: blur(1px) saturate(.95); opacity:.75; transition: filter .2s, opacity .2s}
+    `;
+    const hostStyle = getComputedStyle(host).position;
+    if (hostStyle === 'static' || !hostStyle) host.style.position = 'relative';
+    host.appendChild(css);
+    host.appendChild(el);
+    trenchLoadingEl = el;
+    return trenchLoadingEl;
+  }
+
+  function showTrenchLoading(text = '加载中…', sub = 'Playfra <span style="opacity:.7">(via X)</span>') {
+    const host = map.getContainer();
+    const el = ensureTrenchLoadingUI();
+    el.querySelector('.trench-loading__title').innerHTML = text;
+    el.querySelector('.trench-loading__sub').innerHTML = sub;
+    trenchLoadingShownAt = performance.now();
+
+    host.classList.add('trench-dim');       // 地图虚化和降透明度
+    el.classList.remove('hidden');
+    requestAnimationFrame(() => el.classList.add('show'));
+  }
+
+  function hideTrenchLoading() {
+    if (!trenchLoadingEl) return;
+    const host = map.getContainer();
+    const elapsed = performance.now() - trenchLoadingShownAt;
+    const wait = Math.max(0, MIN_SPINNER_MS - elapsed);
+    setTimeout(() => {
+      trenchLoadingEl.classList.remove('show');
+      setTimeout(() => {
+        trenchLoadingEl.classList.add('hidden');
+        host.classList.remove('trench-dim');
+      }, 250); // 等过渡
+    }, wait);
+  }
+
+  // ===== 入口：按钮切换 =====
   async function toggleTrench() {
     if (!trenchVisible) {
       try {
-        // 尝试加载 manifest（可选）
+        // 每次打开都先显示遮罩
+        showTrenchLoading('加载中…', 'Playfra <span style="opacity:.7">(via X)</span>');
+
+        // 可选：加载 manifest
         if (!manifest && CHUNK_MANIFEST_URL) {
           try {
             manifest = await fetchJson(CHUNK_MANIFEST_URL);
             if (!manifest?.chunks?.length) manifest = null;
-          } catch {
-            manifest = null; // 没有也没关系
-          }
+          } catch { manifest = null; }
         }
 
         await loadAndRenderForView();
       } catch (e) {
         console.error('Failed to init trench:', e);
         alert('无法加载战壕数据，请稍后再试。');
-        return;
+      } finally {
+        hideTrenchLoading();
       }
       map.on('moveend zoomend resize', onViewportChanged);
       trenchVisible = true;
@@ -622,9 +696,10 @@ if (closeGeoBtn){
   }
 
   function onViewportChanged() {
-    // 视窗变化后：按需加载新分片 + 只渲染可见要素
+    // 视窗变化后：按需加载新分片 + 只渲染可见要素（不强制显示遮罩）
     loadAndRenderForView().catch(e => console.error(e));
-    // 如果仅想重绘（不新增请求），可换成 scheduleRender()
+    // 若想在滑到新分片时也显示遮罩，可将上面换成：
+    // (async () => { showTrenchLoading(); try { await loadAndRenderForView(); } finally { hideTrenchLoading(); } })();
   }
 
   // 绑定按钮
@@ -632,7 +707,7 @@ if (closeGeoBtn){
   if (btn) {
     btn.addEventListener('click', toggleTrench);
   } else {
-    console.warn('[trench] #btn-trench not found; call toggleTrench() manually.');
+    console.warn('[trench] #btn-trench not found; call Trench.toggle() manually.');
   }
 
   // 暴露少量方法便于调试
