@@ -415,124 +415,202 @@ if (closeGeoBtn){
   };
 }
 
-// ===== 工事（Trench） =====
-let trenchData = null;
-let trenchLayer = null;
-let trenchVisible = false;
-let renderTimer = null;
+// ===== 工事（Trench）主模块 =====
+// 需求：全局已有 map（Leaflet），并已加载 turf、Leaflet。
+// 选配：如需解析 .gz，请在 HTML 里引入 fflate；.br 由 BrotliDecode 兜底。
 
-async function loadBRJson(url) {
-  const resp = await fetch(url, { cache: 'no-store' });
-  if (!resp.ok) throw new Error(`HTTP ${resp.status} for ${url}`);
+(() => {
+  // ====== 状态 ======
+  let trenchData = null;         // 原始 GeoJSON（仅加载一次）
+  let trenchLayer = null;        // L.GeoJSON 图层（Canvas 渲染）
+  let trenchVisible = false;     // 是否显示
+  let renderTimer = null;        // 节流定时器
+  const RENDER_DELAY = 120;      // ms：移动/缩放结束后的重绘延迟
 
-  const enc = (resp.headers.get('content-encoding') || '').toLowerCase();
-  const looksJson = s => !!s && /^\s*[{[]/.test(s);
+  // ====== 工具：加载 .json/.json.br/.json.gz 并解压 ======
+  async function loadBRJson(url) {
+    const resp = await fetch(url, { cache: 'no-store' });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status} for ${url}`);
 
-  const isBr = enc.includes('br') || url.endsWith('.br');
-  const isGz = enc.includes('gzip') || url.endsWith('.gz');
+    const enc = (resp.headers.get('content-encoding') || '').toLowerCase();
+    const ctype = (resp.headers.get('content-type') || '').toLowerCase();
+    const isBr = enc.includes('br') || url.endsWith('.br');
+    const isGz = enc.includes('gzip') || url.endsWith('.gz');
+    const looksJson = s => !!s && /^\s*[\[{]/.test(s);
 
-  let bytesU8;
+    // 情况 A：服务器明文 JSON（极少见，但以防万一）
+    if (!isBr && !isGz && ctype.includes('application/json')) {
+      const text = await resp.text();
+      if (!looksJson(text)) throw new Error('Body claims JSON but looks invalid');
+      const json = JSON.parse(text);
+      console.log('[trench] JSON parsed (plain) OK, features:', json.features?.length ?? 'n/a');
+      return json;
+    }
 
-  // ① 原生解压（优先，最稳）
-  if ((isBr || isGz) && 'DecompressionStream' in self && resp.body) {
-    const ds = new DecompressionStream(isBr ? 'br' : 'gzip');
-    const stream = resp.body.pipeThrough(ds);
-    const ab = await new Response(stream).arrayBuffer();
-    bytesU8 = new Uint8Array(ab);
-    console.log('[trench] decoded by native DecompressionStream:', isBr ? 'br' : 'gzip');
-  } else {
-    // ② 读原始字节
+    // 情况 B：优先使用原生解压（Chromium/新版 Firefox 支持；Safari 当前大多不支持）
+    if ((isBr || isGz) && 'DecompressionStream' in self && resp.body) {
+      const ds = new DecompressionStream(isBr ? 'br' : 'gzip');
+      const stream = resp.body.pipeThrough(ds);
+      const ab = await new Response(stream).arrayBuffer();
+      const text = new TextDecoder().decode(new Uint8Array(ab));
+      if (!looksJson(text)) throw new Error('Decoded (native) is not valid JSON');
+      console.log('[trench] decoded by native DecompressionStream:', isBr ? 'br' : 'gzip');
+      return JSON.parse(text);
+    }
+
+    // 情况 C：退化为手动解压
     const raw = new Uint8Array(await resp.arrayBuffer());
 
-    // ③ 如果需要 gzip 兜底，用 fflate 解
+    // gzip 兜底（需要 fflate）
     if (isGz && typeof fflate?.gunzipSync === 'function') {
       try {
-        bytesU8 = fflate.gunzipSync(raw);
+        const u8 = fflate.gunzipSync(raw);
+        const text = new TextDecoder().decode(u8);
+        if (!looksJson(text)) throw new Error('Decoded (fflate gzip) invalid JSON');
         console.log('[trench] decoded by fflate gzip fallback');
+        return JSON.parse(text);
       } catch (e) {
         console.warn('[trench] fflate gzip fallback failed:', e);
-        bytesU8 = raw;
+        throw new Error('Gzip fallback failed');
       }
     }
-    // ④ Brotli 如果没原生支持且 fflate 不提供 brotli，就只能期望服务器已自动解压
-    else {
-      bytesU8 = raw;
+
+    // Brotli 兜底（关键！GitHub Pages 不会自动解压 .br）
+    if (isBr && typeof BrotliDecode === 'function') {
+      try {
+        const u8 = BrotliDecode(raw);
+        const text = new TextDecoder().decode(u8);
+        if (!looksJson(text)) throw new Error('Decoded (Brotli JS) invalid JSON');
+        console.log('[trench] decoded by Brotli JS fallback');
+        return JSON.parse(text);
+      } catch (e) {
+        console.warn('[trench] Brotli JS fallback failed:', e);
+        throw new Error('Brotli fallback failed');
+      }
+    }
+
+    // 没有可用的解压器
+    throw new Error('No available decompressor (need DecompressionStream or BrotliDecode)');
+  }
+
+  // ====== 只加载一次 + 预处理（缓存 bbox、类型矫正） ======
+  async function ensureTrenchData() {
+    if (trenchData) return trenchData;
+    // 路径按你的仓库结构自行调整
+    const json = await loadBRJson('data/trench.json.br');
+
+    // 确保是 FeatureCollection
+    if (json.type !== 'FeatureCollection' || !Array.isArray(json.features)) {
+      throw new Error('Trench data must be a FeatureCollection with features[]');
+    }
+
+    // 预计算 bbox，后续相交判断更快
+    for (const f of json.features) {
+      if (!f || !f.geometry) continue;
+      try {
+        f._bbox = turf.bbox(f); // [minX, minY, maxX, maxY]
+      } catch (e) {
+        // 某些坏数据可能报错，忽略该要素
+        f._bbox = null;
+      }
+    }
+
+    trenchData = json;
+    console.log('[trench] data ready, features:', trenchData.features.length);
+    return trenchData;
+  }
+
+  // ====== 样式 ======
+  function getTrenchStyle(f) {
+    const color = String(f?.properties?.color || '#ffff8d').toLowerCase();
+    const weight = Number(f?.properties?.weight ?? 2);
+    const opacity = Number(f?.properties?.opacity ?? 1);
+    return { color, weight, opacity };
+  }
+
+  // ====== 视窗内要素筛选 ======
+  function computeVisibleFeatures(map) {
+    const view = map.getBounds();
+    const visible = [];
+
+    for (const f of trenchData.features) {
+      if (!f || !f.geometry || !f._bbox) continue;
+      const [minX, minY, maxX, maxY] = f._bbox; // lon/lat
+      const fbounds = L.latLngBounds([minY, minX], [maxY, maxX]);
+      if (view.intersects(fbounds)) visible.push(f);
+    }
+
+    return { type: 'FeatureCollection', features: visible };
+  }
+
+  // ====== 渲染（使用 Canvas 提升性能） ======
+  function ensureLayer() {
+    if (!trenchLayer) {
+      const canvasRenderer = L.canvas({ padding: 0.2 });
+      trenchLayer = L.geoJSON([], {
+        renderer: canvasRenderer,
+        style: getTrenchStyle,
+        // 可选：只显示 LineString/Polygon
+        filter: f => ['LineString', 'MultiLineString', 'Polygon', 'MultiPolygon'].includes(f?.geometry?.type),
+      });
+    }
+    return trenchLayer;
+  }
+
+  function renderVisibleTrench() {
+    if (!trenchData) return;
+    const layer = ensureLayer();
+    layer.clearLayers();
+    layer.addData(computeVisibleFeatures(map));
+    if (!map.hasLayer(layer)) layer.addTo(map);
+  }
+
+  function scheduleRender() {
+    clearTimeout(renderTimer);
+    renderTimer = setTimeout(renderVisibleTrench, RENDER_DELAY);
+  }
+
+  // ====== 公共按钮：显示/隐藏 ======
+  async function toggleTrench() {
+    if (!trenchVisible) {
+      try {
+        await ensureTrenchData();
+      } catch (e) {
+        console.error('Failed to load trench data:', e);
+        alert('无法加载战壕数据，请稍后再试。');
+        return;
+      }
+      renderVisibleTrench();
+      // 用 moveend/zoomend/resize 较省资源；若想更顺滑，可改为 move + rAF 节流
+      map.on('moveend zoomend resize', scheduleRender);
+      trenchVisible = true;
+    } else {
+      map.off('moveend zoomend resize', scheduleRender);
+      if (trenchLayer && map.hasLayer(trenchLayer)) {
+        map.removeLayer(trenchLayer);
+        trenchLayer.clearLayers(); // 释放内存
+      }
+      trenchVisible = false;
     }
   }
 
-  const text = new TextDecoder('utf-8').decode(bytesU8);
-
-  if (!looksJson(text)) {
-    console.error('[trench] preview (first 200 chars):', text.slice(0, 200));
-    throw new Error('Decoded content is not valid JSON');
-  }
-
-  const json = JSON.parse(text);
-  console.log('[trench] JSON parsed OK, features:', json.features?.length ?? 'n/a');
-  return json;
-}
-
-async function ensureTrenchData() {
-  if (trenchData) return;
-  trenchData = await loadBRJson('data/trench.json.br');
-}
-
-function getTrenchStyle(f) {
-  const color = (f.properties?.color || '#ffff8d').toLowerCase();
-  const weight = Number(f.properties?.weight ?? 2);
-  return { color, weight };
-}
-
-function getTileBoundsLatLng(map) {
-  const pb = map.getPixelBounds();
-  const sw = map.unproject(pb.getBottomLeft());
-  const ne = map.unproject(pb.getTopRight());
-  return L.latLngBounds(sw, ne);
-}
-
-function computeVisibleFeatures(map) {
-  const tileBounds = getTileBoundsLatLng(map);
-
-  const visible = trenchData.features.filter(f => {
-    if (!f || !f.geometry) return false;
-    const [minX, minY, maxX, maxY] = turf.bbox(f); // [lonW, latS, lonE, latN]
-    const fbounds = L.latLngBounds([minY, minX], [maxY, maxX]);
-    return tileBounds.intersects(fbounds);
-  });
-
-  return { type: 'FeatureCollection', features: visible };
-}
-
-function renderVisibleTrench() {
-  if (!trenchLayer) trenchLayer = L.geoJSON([], { style: getTrenchStyle });
-  trenchLayer.clearLayers();
-  trenchLayer.addData(computeVisibleFeatures(map));
-  if (!map.hasLayer(trenchLayer)) trenchLayer.addTo(map);
-}
-
-function scheduleRender() {
-  clearTimeout(renderTimer);
-  renderTimer = setTimeout(renderVisibleTrench, 120);
-}
-
-document.getElementById('btn-trench').addEventListener('click', async () => {
-  if (!trenchVisible) {
-    try {
-      await ensureTrenchData();
-    } catch (e) {
-      console.error('Failed to load trench data:', e);
-      alert('无法加载战壕数据，请稍后再试。');
-      return;
-    }
-    renderVisibleTrench();
-    map.on('moveend zoomend resize', scheduleRender);
-    trenchVisible = true;
+  // ====== 绑定按钮 ======
+  // 确保 HTML 里有：<button id="btn-trench">战壕</button>
+  const btn = document.getElementById('btn-trench');
+  if (btn) {
+    btn.addEventListener('click', toggleTrench);
   } else {
-    map.off('moveend zoomend resize', scheduleRender);
-    if (trenchLayer && map.hasLayer(trenchLayer)) map.removeLayer(trenchLayer);
-    trenchVisible = false;
+    console.warn('[trench] #btn-trench not found; call toggleTrench() manually to control.');
   }
-});
+
+  // 可选：导出到全局，方便调试
+  window.Trench = {
+    loadBRJson,
+    ensureTrenchData,
+    toggleTrench,
+    renderVisibleTrench,
+  };
+})();
 
 /* ===================== Ruler 运行时状态与工具 ===================== */
 const rulerIcon      = document.querySelector('.sidebar-section.middle .icon-group .icon:nth-child(2)'); // 📏
