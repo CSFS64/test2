@@ -415,184 +415,233 @@ if (closeGeoBtn){
   };
 }
 
-// ===== 工事（Trench）主模块 =====
-// 需求：全局已有 map（Leaflet），并已加载 turf、Leaflet。
-// 选配：如需解析 .gz，请在 HTML 里引入 fflate；.br 由 BrotliDecode 兜底。
+// ===== Trench 分片懒加载 + 仅视窗渲染 =====
+// 依赖：Leaflet、turf
+// 可选：提供 manifest（每个分片的整体 bbox）可减少不必要的网络请求
 
 (() => {
-  // ====== 状态 ======
-  let trenchData = null;         // 原始 GeoJSON（仅加载一次）
-  let trenchLayer = null;        // L.GeoJSON 图层（Canvas 渲染）
-  let trenchVisible = false;     // 是否显示
-  let renderTimer = null;        // 节流定时器
-  const RENDER_DELAY = 120;      // ms：移动/缩放结束后的重绘延迟
+  // === 配置 ===
+  const CHUNK_URLS = [
+    'data/trench_1.json',
+    'data/trench_2.json',
+    'data/trench_3.json',
+  ];
+  // 可选：如果你能提供一个 manifest 文件（建议）
+  // 形如：{ "chunks": [ { "url":"data/trench_1.json", "bbox":[minX,minY,maxX,maxY] }, ... ] }
+  const CHUNK_MANIFEST_URL = 'data/trench.manifest.json'; // 若没有可留空或指向不存在
 
-  // ====== 工具：加载 .json/.json.br/.json.gz 并解压 ======
-  async function loadBRJson(url) {
+  const RENDER_DELAY = 120; // ms：移动/缩放结束后延迟渲染
+  const PREFETCH_PAD = 0.15; // 视窗放大一定边距进行判交（减少抖动）
+
+  // === 状态 ===
+  let trenchVisible = false;
+  let renderTimer = null;
+  let trenchLayer = null;           // L.GeoJSON（Canvas）
+  let manifest = null;              // { chunks: [{url, bbox}] } 可为空
+  const chunkState = new Map();     // url -> { loaded, features, bbox, _ready }
+
+  // === 工具 ===
+  const looksJson = s => !!s && /^\s*[\[{]/.test(s);
+
+  async function fetchJson(url) {
     const resp = await fetch(url, { cache: 'no-store' });
     if (!resp.ok) throw new Error(`HTTP ${resp.status} for ${url}`);
-
-    const enc = (resp.headers.get('content-encoding') || '').toLowerCase();
-    const ctype = (resp.headers.get('content-type') || '').toLowerCase();
-    const isBr = enc.includes('br') || url.endsWith('.br');
-    const isGz = enc.includes('gzip') || url.endsWith('.gz');
-    const looksJson = s => !!s && /^\s*[\[{]/.test(s);
-
-    // 情况 A：服务器明文 JSON（极少见，但以防万一）
-    if (!isBr && !isGz && ctype.includes('application/json')) {
-      const text = await resp.text();
-      if (!looksJson(text)) throw new Error('Body claims JSON but looks invalid');
-      const json = JSON.parse(text);
-      console.log('[trench] JSON parsed (plain) OK, features:', json.features?.length ?? 'n/a');
-      return json;
-    }
-
-    // 情况 B：优先使用原生解压（Chromium/新版 Firefox 支持；Safari 当前大多不支持）
-    if ((isBr || isGz) && 'DecompressionStream' in self && resp.body) {
-      const ds = new DecompressionStream(isBr ? 'br' : 'gzip');
-      const stream = resp.body.pipeThrough(ds);
-      const ab = await new Response(stream).arrayBuffer();
-      const text = new TextDecoder().decode(new Uint8Array(ab));
-      if (!looksJson(text)) throw new Error('Decoded (native) is not valid JSON');
-      console.log('[trench] decoded by native DecompressionStream:', isBr ? 'br' : 'gzip');
-      return JSON.parse(text);
-    }
-
-    // 情况 C：退化为手动解压
-    const raw = new Uint8Array(await resp.arrayBuffer());
-
-    // gzip 兜底（需要 fflate）
-    if (isGz && typeof fflate?.gunzipSync === 'function') {
-      try {
-        const u8 = fflate.gunzipSync(raw);
-        const text = new TextDecoder().decode(u8);
-        if (!looksJson(text)) throw new Error('Decoded (fflate gzip) invalid JSON');
-        console.log('[trench] decoded by fflate gzip fallback');
-        return JSON.parse(text);
-      } catch (e) {
-        console.warn('[trench] fflate gzip fallback failed:', e);
-        throw new Error('Gzip fallback failed');
-      }
-    }
-
-    // Brotli 兜底（关键！GitHub Pages 不会自动解压 .br）
-    if (isBr && typeof BrotliDecode === 'function') {
-      try {
-        const u8 = BrotliDecode(raw);
-        const text = new TextDecoder().decode(u8);
-        if (!looksJson(text)) throw new Error('Decoded (Brotli JS) invalid JSON');
-        console.log('[trench] decoded by Brotli JS fallback');
-        return JSON.parse(text);
-      } catch (e) {
-        console.warn('[trench] Brotli JS fallback failed:', e);
-        throw new Error('Brotli fallback failed');
-      }
-    }
-
-    // 没有可用的解压器
-    throw new Error('No available decompressor (need DecompressionStream or BrotliDecode)');
+    const text = await resp.text();
+    if (!looksJson(text)) throw new Error(`Not JSON at ${url}`);
+    return JSON.parse(text);
   }
 
-  // ====== 只加载一次 + 预处理（缓存 bbox、类型矫正） ======
-  async function ensureTrenchData() {
-    if (trenchData) return trenchData;
-    // 路径按你的仓库结构自行调整
-    const json = await loadBRJson('data/trench.json.br');
-
-    // 确保是 FeatureCollection
-    if (json.type !== 'FeatureCollection' || !Array.isArray(json.features)) {
-      throw new Error('Trench data must be a FeatureCollection with features[]');
-    }
-
-    // 预计算 bbox，后续相交判断更快
-    for (const f of json.features) {
-      if (!f || !f.geometry) continue;
-      try {
-        f._bbox = turf.bbox(f); // [minX, minY, maxX, maxY]
-      } catch (e) {
-        // 某些坏数据可能报错，忽略该要素
-        f._bbox = null;
-      }
-    }
-
-    trenchData = json;
-    console.log('[trench] data ready, features:', trenchData.features.length);
-    return trenchData;
-  }
-
-  // ====== 样式 ======
-  function getTrenchStyle(f) {
-    const color = String(f?.properties?.color || '#ffff8d').toLowerCase();
-    const weight = Number(f?.properties?.weight ?? 2);
-    const opacity = Number(f?.properties?.opacity ?? 1);
-    return { color, weight, opacity };
-  }
-
-  // ====== 视窗内要素筛选 ======
-  function computeVisibleFeatures(map) {
-    const view = map.getBounds();
-    const visible = [];
-
-    for (const f of trenchData.features) {
-      if (!f || !f.geometry || !f._bbox) continue;
-      const [minX, minY, maxX, maxY] = f._bbox; // lon/lat
-      const fbounds = L.latLngBounds([minY, minX], [maxY, maxX]);
-      if (view.intersects(fbounds)) visible.push(f);
-    }
-
-    return { type: 'FeatureCollection', features: visible };
-  }
-
-  // ====== 渲染（使用 Canvas 提升性能） ======
   function ensureLayer() {
     if (!trenchLayer) {
-      const canvasRenderer = L.canvas({ padding: 0.2 });
       trenchLayer = L.geoJSON([], {
-        renderer: canvasRenderer,
-        style: getTrenchStyle,
-        // 可选：只显示 LineString/Polygon
-        filter: f => ['LineString', 'MultiLineString', 'Polygon', 'MultiPolygon'].includes(f?.geometry?.type),
+        renderer: L.canvas({ padding: 0.25 }),
+        style: featureStyle,
+        filter: f => ['LineString','MultiLineString','Polygon','MultiPolygon'].includes(f?.geometry?.type),
       });
     }
     return trenchLayer;
   }
 
-  function renderVisibleTrench() {
-    if (!trenchData) return;
+  function featureStyle(f) {
+    const color   = String(f?.properties?.color   || '#ffff8d').toLowerCase();
+    const weight  = Number(f?.properties?.weight  ?? 2);
+    const opacity = Number(f?.properties?.opacity ?? 1);
+    return { color, weight, opacity };
+  }
+
+  function latLngBoundsFromBbox(b) {
+    // b: [minX, minY, maxX, maxY] -> Leaflet bounds (SW, NE)
+    return L.latLngBounds([b[1], b[0]], [b[3], b[2]]);
+  }
+
+  function expandBounds(bounds, pad) {
+    if (!pad) return bounds;
+    const sw = bounds.getSouthWest();
+    const ne = bounds.getNorthEast();
+    const latPad = (ne.lat - sw.lat) * pad;
+    const lngPad = (ne.lng - sw.lng) * pad;
+    return L.latLngBounds(
+      [sw.lat - latPad, sw.lng - lngPad],
+      [ne.lat + latPad, ne.lng + lngPad]
+    );
+  }
+
+  // 预处理：计算每个要素的 bbox，顺带可记录每个分片整体 bbox（若原数据没有）
+  function preprocessChunk(url, fc) {
+    if (fc.type !== 'FeatureCollection' || !Array.isArray(fc.features)) {
+      throw new Error(`Chunk ${url} must be a FeatureCollection with features[]`);
+    }
+    let chunkBbox = null;
+    for (const f of fc.features) {
+      if (!f || !f.geometry) continue;
+      try {
+        f._bbox = turf.bbox(f); // [minX, minY, maxX, maxY]
+        if (f._bbox) {
+          if (!chunkBbox) chunkBbox = [...f._bbox];
+          else {
+            chunkBbox[0] = Math.min(chunkBbox[0], f._bbox[0]);
+            chunkBbox[1] = Math.min(chunkBbox[1], f._bbox[1]);
+            chunkBbox[2] = Math.max(chunkBbox[2], f._bbox[2]);
+            chunkBbox[3] = Math.max(chunkBbox[3], f._bbox[3]);
+          }
+        }
+      } catch {
+        f._bbox = null; // 坏几何，忽略
+      }
+    }
+    return { features: fc.features, bbox: chunkBbox };
+  }
+
+  // 根据视窗，筛选某个分片内可见要素
+  function visibleFeaturesInChunk(map, chunk) {
+    const vb = expandBounds(map.getBounds(), PREFETCH_PAD);
+    const out = [];
+    for (const f of chunk.features) {
+      if (!f || !f._bbox) continue;
+      const fb = latLngBoundsFromBbox(f._bbox);
+      if (vb.intersects(fb)) out.push(f);
+    }
+    return out;
+  }
+
+  // 渲染：清空后把“所有已加载分片的可见要素”加到图层
+  function renderVisible() {
+    if (!trenchVisible) return;
     const layer = ensureLayer();
     layer.clearLayers();
-    layer.addData(computeVisibleFeatures(map));
+
+    for (const [url, st] of chunkState) {
+      if (!st.loaded || !Array.isArray(st.features)) continue;
+      const vf = visibleFeaturesInChunk(map, st);
+      if (vf.length) layer.addData({ type:'FeatureCollection', features: vf });
+    }
     if (!map.hasLayer(layer)) layer.addTo(map);
   }
 
   function scheduleRender() {
     clearTimeout(renderTimer);
-    renderTimer = setTimeout(renderVisibleTrench, RENDER_DELAY);
+    renderTimer = setTimeout(renderVisible, RENDER_DELAY);
   }
 
-  // ====== 公共按钮：显示/隐藏 ======
+  // 如果有 manifest，用它的整体 bbox 先做判交，能省一次网络请求
+  function chunkMaybeNeeded(url) {
+    if (!manifest) return true; // 没 manifest，保守：需要
+    const entry = manifest.chunks?.find(c => c.url === url && Array.isArray(c.bbox));
+    if (!entry) return true;
+    const vb = expandBounds(map.getBounds(), PREFETCH_PAD);
+    const cb = latLngBoundsFromBbox(entry.bbox);
+    return vb.intersects(cb);
+  }
+
+  // 懒加载：只加载与当前视窗“整体相交”的分片；其余等下次视窗变化再判定
+  async function ensureChunksForView() {
+    const promises = [];
+    for (const url of CHUNK_URLS) {
+      const st = chunkState.get(url) || {};
+      chunkState.set(url, st);
+
+      if (st.loaded) continue;               // 已加载
+      if (!chunkMaybeNeeded(url)) continue;  // 与视窗不相交，先不拉
+
+      st.loaded = 'pending';
+      promises.push(
+        fetchJson(url).then(fc => {
+          const { features, bbox } = preprocessChunk(url, fc);
+          st.features = features;
+          st.bbox = st.bbox || bbox; // 有就记一下，方便后续粗判
+          st.loaded = true;
+          console.log('[trench] chunk ready:', url, 'features:', features.length);
+        }).catch(e => {
+          st.loaded = false;
+          console.error('[trench] failed to load chunk:', url, e);
+        })
+      );
+    }
+    if (promises.length) {
+      await Promise.all(promises);
+    }
+  }
+
+  // 每次视窗变化：先确认需要的分片是否已加载，再渲染
+  async function loadAndRenderForView() {
+    await ensureChunksForView();
+    renderVisible();
+  }
+
+  // 入口：按钮切换
   async function toggleTrench() {
     if (!trenchVisible) {
       try {
-        await ensureTrenchData();
+        // 尝试加载 manifest（可选）
+        if (!manifest && CHUNK_MANIFEST_URL) {
+          try {
+            manifest = await fetchJson(CHUNK_MANIFEST_URL);
+            if (!manifest?.chunks?.length) manifest = null;
+          } catch {
+            manifest = null; // 没有也没关系
+          }
+        }
+
+        await loadAndRenderForView();
       } catch (e) {
-        console.error('Failed to load trench data:', e);
+        console.error('Failed to init trench:', e);
         alert('无法加载战壕数据，请稍后再试。');
         return;
       }
-      renderVisibleTrench();
-      // 用 moveend/zoomend/resize 较省资源；若想更顺滑，可改为 move + rAF 节流
-      map.on('moveend zoomend resize', scheduleRender);
+      map.on('moveend zoomend resize', onViewportChanged);
       trenchVisible = true;
     } else {
-      map.off('moveend zoomend resize', scheduleRender);
+      map.off('moveend zoomend resize', onViewportChanged);
       if (trenchLayer && map.hasLayer(trenchLayer)) {
         map.removeLayer(trenchLayer);
-        trenchLayer.clearLayers(); // 释放内存
+        trenchLayer.clearLayers();
       }
       trenchVisible = false;
     }
   }
+
+  function onViewportChanged() {
+    // 视窗变化后：按需加载新分片 + 只渲染可见要素
+    loadAndRenderForView().catch(e => console.error(e));
+    // 如果仅想重绘（不新增请求），可换成 scheduleRender()
+  }
+
+  // 绑定按钮
+  const btn = document.getElementById('btn-trench');
+  if (btn) {
+    btn.addEventListener('click', toggleTrench);
+  } else {
+    console.warn('[trench] #btn-trench not found; call toggleTrench() manually.');
+  }
+
+  // 暴露少量方法便于调试
+  window.Trench = {
+    toggle: toggleTrench,
+    render: renderVisible,
+    loadForView: loadAndRenderForView,
+    state: chunkState,
+  };
+})();
 
   // ====== 绑定按钮 ======
   // 确保 HTML 里有：<button id="btn-trench">战壕</button>
