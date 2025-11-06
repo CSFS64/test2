@@ -23,6 +23,10 @@
 
   <!-- fflate 解压库 -->
   <script src="https://unpkg.com/fflate/umd/index.js"></script>
+  <!-- Brotli 纯JS兜底（提供全局 BrotliDecode(u8)） -->
+  <script src="https://cdn.jsdelivr.net/npm/brotli@1.3.2/dec/decode.min.js"></script>
+  <!-- 可选：如果你也会加载 .gz，就引入 fflate 做 gzip 兜底 -->
+  <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js"></script>
 </head>
   
 <body>
