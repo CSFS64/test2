@@ -457,6 +457,7 @@ if (closeGeoBtn){
         renderer: L.canvas({ padding: 0.25 }),
         style: featureStyle,
         filter: f => ['LineString','MultiLineString','Polygon','MultiPolygon'].includes(f?.geometry?.type),
+        attribution: 'Trench © Playfra · <a href="https://x.com/Playfra0" target="_blank" rel="noopener">Source</a>'
       });
     }
     return trenchLayer;
