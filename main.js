@@ -643,24 +643,6 @@ if (closeGeoBtn){
   };
 })();
 
-  // ====== 绑定按钮 ======
-  // 确保 HTML 里有：<button id="btn-trench">战壕</button>
-  const btn = document.getElementById('btn-trench');
-  if (btn) {
-    btn.addEventListener('click', toggleTrench);
-  } else {
-    console.warn('[trench] #btn-trench not found; call toggleTrench() manually to control.');
-  }
-
-  // 可选：导出到全局，方便调试
-  window.Trench = {
-    loadBRJson,
-    ensureTrenchData,
-    toggleTrench,
-    renderVisibleTrench,
-  };
-})();
-
 /* ===================== Ruler 运行时状态与工具 ===================== */
 const rulerIcon      = document.querySelector('.sidebar-section.middle .icon-group .icon:nth-child(2)'); // 📏
 const rulerPanel     = document.getElementById('ruler-panel');          // 你已有的面板
