@@ -10,15 +10,12 @@
   <link rel="stylesheet"
         href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-  <!-- 仅嵌入（iframe 预览）模式用的样式 -->
   <style>
-    /* 让页面在 iframe 中可拉满高度 */
     html[data-embed="1"], html[data-embed="1"] body { height: 100%; }
     html[data-embed="1"] #app,
     html[data-embed="1"] .map-wrap,
     html[data-embed="1"] #map { height: 100%; }
 
-    /* 嵌入时隐藏不必要的头/脚/说明条（按你页面的实际类名改） */
     html[data-embed="1"] .topbar,
     html[data-embed="1"] .footer,
     html[data-embed="1"] .help-strip {
