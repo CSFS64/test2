@@ -6,20 +6,55 @@
   <title>前线地图</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!-- Leaflet 样式 -->
+  <link rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- 仅嵌入（iframe 预览）模式用的样式 -->
+  <style>
+    /* 让页面在 iframe 中可拉满高度 */
+    html[data-embed="1"], html[data-embed="1"] body { height: 100%; }
+    html[data-embed="1"] #app,
+    html[data-embed="1"] .map-wrap,
+    html[data-embed="1"] #map { height: 100%; }
+
+    /* 嵌入时隐藏不必要的头/脚/说明条（按你页面的实际类名改） */
+    html[data-embed="1"] .topbar,
+    html[data-embed="1"] .footer,
+    html[data-embed="1"] .help-strip {
+      display: none !important;
+    }
+  </style>
+
+  <link rel="stylesheet" href="style.css" />
+
   <script
     src="https://csfs64.github.io/back_to_neon/assets/hub-banner.js"
     data-base="https://csfs64.github.io/back_to_neon/"
     data-updates-link="https://csfs64.github.io/back_to_neon/#updates"
-    data-autohide="5000"     <!-- 自动收起毫秒；0=不自动收起 -->
-    data-edge="8"            <!-- 保留边缘高度（px） -->
+    data-autohide="5000"
+    data-edge="8"
     defer
   ></script>
 
-  <!-- Leaflet 地图样式 -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  
-  <!-- 自定义样式 -->
-  <link rel="stylesheet" href="style.css" />
+  <script>
+    (function () {
+      try {
+        const usp = new URLSearchParams(location.search);
+        if (usp.has('embed') || usp.get('autoShow') === '1') {
+          // 给 <html> 打标记，触发上面的嵌入样式
+          document.documentElement.setAttribute('data-embed', '1');
+          // 等地图初始化后校正一次尺寸（全局 map 变量存在时）
+          window.addEventListener('load', function () {
+            try { window.map && window.map.invalidateSize(); } catch (e) {}
+            setTimeout(function () {
+              try { window.map && window.map.invalidateSize(); } catch (e) {}
+            }, 100);
+          });
+        }
+      } catch (e) {}
+    })();
+  </script>
 </head>
   
 <body>
