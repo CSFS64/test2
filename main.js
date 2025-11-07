@@ -1645,6 +1645,7 @@ toGeoJSONFeatureCollection = function(){
 
 /* ===================== 更新列表（静态示例数据） ===================== */
 const updates = [
+  { date: "2025-11-07", summary: "康斯坦丁尼夫卡：1. 澄清了Predtechyne附近的前线；波克罗夫斯克：1. 俄军被从Shakhove东部击退；2. 澄清了Volodymyrivka南部的前线；3. 澄清了罗津斯克附近的前线；4. 俄军在波克罗夫斯克南部取得了部分成功" },
   { date: "2025-11-02", summary: "波克罗夫斯克：1. 乌克兰国防军向Shakhove方向推进；2. 俄军在Chervonyi Lyman、Blahan和波克罗夫斯克方向取得了部分成功" },
   { date: "2025-10-29", summary: "波克罗夫斯克：1. 乌克兰国防军向Shakhove方向推进；2. 俄军在米尔诺格勒和Hryshyne方向取得了部分成功；3. 俄军继续向米尔诺格勒、Rih、Novopavlivka、波克罗夫斯克和Hryshyne方向渗透" },
   { date: "2025-10-28", summary: "波克罗夫斯克：1. 乌克兰国防军向Shakhove方向推进" },
