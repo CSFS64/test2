@@ -24,14 +24,24 @@
 
   <link rel="stylesheet" href="style.css" />
 
-  <script
-    src="https://csfs64.github.io/back_to_neon/assets/hub-banner.js"
-    data-base="https://csfs64.github.io/back_to_neon/"
-    data-updates-link="https://csfs64.github.io/back_to_neon/#updates"
-    data-autohide="5000"
-    data-edge="8"
-    defer
-  ></script>
+  <script>
+    (function () {
+      try {
+        const usp = new URLSearchParams(location.search);
+        const isEmbed = usp.has('embed') || usp.get('autoShow') === '1';
+        if (isEmbed) return;
+  
+        const s = document.createElement('script');
+        s.src = 'https://csfs64.github.io/back_to_neon/assets/hub-banner.js';
+        s.defer = true;
+        s.dataset.base = 'https://csfs64.github.io/back_to_neon/';
+        s.dataset.updatesLink = 'https://csfs64.github.io/back_to_neon/#updates';
+        s.dataset.autohide = '5000';
+        s.dataset.edge = '8';
+        document.head.appendChild(s);
+      } catch (e) {}
+    })();
+  </script>
 
   <script>
     (function () {
