@@ -1419,18 +1419,30 @@ document.querySelectorAll('#draw-panel .draw-tool').forEach(makePressable);
   document.head.appendChild(style);
 })();
 
-async function exportMapAsPNG_LeafletImage() {
+// 自动：若 trench 可见则包含，否则导出纯底图/其它矢量
+async function exportMapAsPNG_LeafletImage({ mode = 'auto' } = {}) {
   try {
-    // 临时关掉绘图/标尺交互，避免导出时误触
+    const wantTrench =
+      mode === 'force-on' ? true :
+      mode === 'force-off' ? false :
+      (window.Trench && window.Trench.isVisible()); // auto
+
+    // 临时关交互，避免误触
     const wasDraw  = !!drawActive;
     const wasRuler = !!rulerActive;
     if (wasDraw)  disableDraw();
     if (wasRuler) disableRuler();
 
-    // 等待可视瓦片和矢量完成一帧绘制（保险起见）
+    // 若需要 trench：确保当前视窗所需分片已加载并完成一帧绘制
+    if (wantTrench && window.Trench) {
+      try { await window.Trench.loadForView(); } catch {}
+      await new Promise(r => requestAnimationFrame(() => setTimeout(r, 30)));
+    }
+
+    // 再等一帧，保证底图瓦片/矢量刷新
     await new Promise(r => requestAnimationFrame(() => setTimeout(r, 30)));
 
-    window.leafletImage(map, function(err, canvas) {
+    window.leafletImage(map, function (err, canvas) {
       if (err) { showMessage('导出失败：' + err); return; }
       const a = document.createElement('a');
       a.href = canvas.toDataURL('image/png');
@@ -1444,7 +1456,9 @@ async function exportMapAsPNG_LeafletImage() {
     showMessage('导出失败：' + (e?.message || e));
   }
 }
-if (drawExportBtn) drawExportBtn.onclick = exportMapAsPNG_LeafletImage;
+if (drawExportBtn) {
+  drawExportBtn.onclick = () => exportMapAsPNG_LeafletImage({ mode: 'auto' });
+}
 
 /* ===================== 📝 批注工具 ===================== */
 let noteEditing = null; // { marker, el } 当前正在编辑的批注
