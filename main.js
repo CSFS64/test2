@@ -459,6 +459,7 @@ if (closeGeoBtn){
     const weight  = Number(f?.properties?.weight  ?? 2);
     const opacity = Number(f?.properties?.opacity ?? 1);
     return { color, weight, opacity };
+    window.TrenchStyle = { featureStyle };
   }
 
   function ensureLayer() {
@@ -1456,8 +1457,8 @@ async function exportMapAsPNG_LeafletImage({ mode = 'auto' } = {}) {
 
       if (fc && fc.features && fc.features.length) {
         tempSvgTrench = L.geoJSON(fc, {
-          renderer: L.svg(),                     // 用 SVG 渲染，leaflet-image 能抓到
-          style: featureStyle                    // 复用你 trench 的样式函数
+          renderer: L.svg(),
+          style: (window.TrenchStyle?.featureStyle) || ((f)=>({color:'#ffff8d',weight:2,opacity:1}))
         }).addTo(map).bringToFront();
       }
     }
