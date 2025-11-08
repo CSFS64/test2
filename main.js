@@ -720,6 +720,16 @@ if (closeGeoBtn){
     console.warn('[trench] #btn-trench not found; use Trench.open()/close()/toggle().');
   }
 
+  function collectVisibleFeatureCollection(){
+    const features = [];
+    for (const [, st] of chunkState){
+      if (!st.loaded || !Array.isArray(st.features)) continue;
+      const vf = visibleFeaturesInChunk(map, st);
+      if (vf.length) features.push(...vf);
+    }
+    return { type:'FeatureCollection', features };
+  }
+
   // === 导出接口 ===
   window.Trench = {
     open: openTrench,     // 强制打开（预览页可调用 / 或 autoShow）
@@ -728,7 +738,8 @@ if (closeGeoBtn){
     render: renderVisible,
     loadForView: loadAndRenderForView,
     state: chunkState,
-    isVisible: () => trenchVisible
+    isVisible: () => trenchVisible,
+    snapshotVisible: collectVisibleFeatureCollection
   };
 
   // 预览页自动打开（主站默认不开）
@@ -1419,7 +1430,7 @@ document.querySelectorAll('#draw-panel .draw-tool').forEach(makePressable);
   document.head.appendChild(style);
 })();
 
-// 自动：若 trench 可见则包含，否则导出纯底图/其它矢量
+// 导出
 async function exportMapAsPNG_LeafletImage({ mode = 'auto' } = {}) {
   try {
     const wantTrench =
@@ -1427,27 +1438,44 @@ async function exportMapAsPNG_LeafletImage({ mode = 'auto' } = {}) {
       mode === 'force-off' ? false :
       (window.Trench && window.Trench.isVisible()); // auto
 
-    // 临时关交互，避免误触
     const wasDraw  = !!drawActive;
     const wasRuler = !!rulerActive;
     if (wasDraw)  disableDraw();
     if (wasRuler) disableRuler();
 
-    // 若需要 trench：确保当前视窗所需分片已加载并完成一帧绘制
+    // 需要 trench 的话，确保已加载并完成一次渲染
+    let tempSvgTrench = null;
     if (wantTrench && window.Trench) {
       try { await window.Trench.loadForView(); } catch {}
       await new Promise(r => requestAnimationFrame(() => setTimeout(r, 30)));
+
+      // ★ 关键：把“当前会被渲染出来的 trench 要素”克隆成一个 SVG 图层
+      const fc = (typeof window.Trench.snapshotVisible === 'function')
+        ? window.Trench.snapshotVisible()
+        : null;
+
+      if (fc && fc.features && fc.features.length) {
+        tempSvgTrench = L.geoJSON(fc, {
+          renderer: L.svg(),                     // 用 SVG 渲染，leaflet-image 能抓到
+          style: featureStyle                    // 复用你 trench 的样式函数
+        }).addTo(map).bringToFront();
+      }
     }
 
-    // 再等一帧，保证底图瓦片/矢量刷新
+    // 再等一帧，保证底图/矢量都稳定
     await new Promise(r => requestAnimationFrame(() => setTimeout(r, 30)));
 
     window.leafletImage(map, function (err, canvas) {
-      if (err) { showMessage('导出失败：' + err); return; }
-      const a = document.createElement('a');
-      a.href = canvas.toDataURL('image/png');
-      a.download = `map-${new Date().toISOString().replace(/[:.]/g,'-')}.png`;
-      a.click();
+      // 清理临时 SVG
+      if (tempSvgTrench) { try { map.removeLayer(tempSvgTrench); } catch {} }
+
+      if (err) { showMessage('导出失败：' + err); }
+      else {
+        const a = document.createElement('a');
+        a.href = canvas.toDataURL('image/png');
+        a.download = `map-${new Date().toISOString().replace(/[:.]/g,'-')}.png`;
+        a.click();
+      }
 
       if (wasDraw)  enableDraw();
       if (wasRuler) enableRuler();
