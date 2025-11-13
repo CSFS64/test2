@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <title>前线地图</title>
+  <title>Kalyna Battle Map</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Leaflet 样式 -->
@@ -48,9 +48,7 @@
       try {
         const usp = new URLSearchParams(location.search);
         if (usp.has('embed') || usp.get('autoShow') === '1') {
-          // 给 <html> 打标记，触发上面的嵌入样式
           document.documentElement.setAttribute('data-embed', '1');
-          // 等地图初始化后校正一次尺寸（全局 map 变量存在时）
           window.addEventListener('load', function () {
             try { window.map && window.map.invalidateSize(); } catch (e) {}
             setTimeout(function () {
@@ -61,6 +59,9 @@
       } catch (e) {}
     })();
   </script>
+
+  <script>window.__MAINTENANCE__ = true;</script>
+  <script src="https://csfs64.github.io/back_to_neon/maintenance.js" defer></script>
 </head>
   
 <body>
