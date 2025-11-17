@@ -7,6 +7,8 @@ let latestDate = null;          // 最新可用日期（UTC 零点）
 let currentLayer = null;        // 当前地图图层
 let availableDates = [];        // Date[]（保留用）
 let availableDateStrs = [];     // "YYYY-MM-DD" 字符串数组（用于相邻跳转）
+let serverLatestStr = null;     // 来自 latest.json 的 YYYY-MM-DD
+const LATEST_SEEN_KEY = 'kalyna_latest_seen_date_v1';
 
 /* ===================== 地图初始化 ===================== */
 const map = L.map('map', { zoomControl: false, preferCanvas: true }).setView([48.6, 37.9], 10);
@@ -138,6 +140,60 @@ function toIsoDate(date){
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth()+1).padStart(2,'0')}-${String(date.getUTCDate()).padStart(2,'0')}`;
 }
 
+/* ===================== 通用工具：无缓存 fetch JSON ===================== */
+function fetchJsonNoCache(url) {
+  const sep = url.includes('?') ? '&' : '?';
+  const full = `${url}${sep}_=${Date.now()}`;
+  return fetch(full, { cache: 'no-store' }).then(res => {
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  });
+}
+
+// 本地存储安全读写（防止隐身/禁用 localStorage 报错）
+function safeGetLatestSeen() {
+  try {
+    return localStorage.getItem(LATEST_SEEN_KEY) || null;
+  } catch {
+    return null;
+  }
+}
+function safeSetLatestSeen(dateStr) {
+  try {
+    localStorage.setItem(LATEST_SEEN_KEY, dateStr);
+  } catch {
+    // 忽略
+  }
+}
+
+/* ===================== “新更新”提示（高亮 🔔 按钮） ===================== */
+function setUpdateBadge(on) {
+  if (!bellButton) return;
+  if (on) bellButton.classList.add('has-new-update');
+  else bellButton.classList.remove('has-new-update');
+}
+
+(function ensureUpdateBadgeStyle() {
+  const style = document.createElement('style');
+  style.textContent = `
+    .icon.has-new-update {
+      position: relative;
+    }
+    .icon.has-new-update::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #f97316;
+      box-shadow: 0 0 0 2px rgba(0,0,0,.7);
+    }
+  `;
+  document.head.appendChild(style);
+})();
+
 /* ===================== 轻提示 ===================== */
 function showMessage(msg) {
   alert(msg);
@@ -178,34 +234,75 @@ function loadDataForDate(dateStr) {
 }
 
 /* ===================== 加载可用日期（latest + 列表） ===================== */
+/* ===================== 加载可用日期（latest + 列表） ===================== */
 function loadAvailableDates() {
-  // latest.json
-  fetch("data/latest.json")
-    .then(res => res.json())
+  const lastSeen = safeGetLatestSeen(); // 上一次用户“确认看过”的最新日期（YYYY-MM-DD 字符串）
+
+  // 1) latest.json —— 只在首次加载页面时请求一次，并关闭缓存
+  fetchJsonNoCache("data/latest.json")
     .then(obj => {
-      const [yyyy, mm, dd] = obj.date.split('-');
+      serverLatestStr = String(obj.date).trim(); // 服务器声明的最新日期
+      const [yyyy, mm, dd] = serverLatestStr.split('-');
       latestDate = new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd)));
       latestDate.setUTCHours(0, 0, 0, 0);
+
+      // 给 datePicker 设 max（无论如何都用服务器最新）
+      if (datePicker) {
+        datePicker.max = formatDate(latestDate);
+      }
+
+      // 决定“初始展示哪一天”
+      let initialDate = latestDate;            // 默认：当前服务器最新
+      const serverStr = serverLatestStr;
+      const storedStr = lastSeen;
+
+      if (!storedStr) {
+        // ✅ 用户第一次访问：像现在一样，直接跳最新并记一笔
+        initialDate = latestDate;
+        safeSetLatestSeen(serverStr);
+        setUpdateBadge(false);
+      } else if (serverStr > storedStr) {
+        // ✅ 有比“上次看过”更新的更新：
+        //    1. 初始仍停留在旧的 storedStr（用户熟悉的那天）
+        //    2. 点亮 🔔 提示有新更新
+        const [sy, sm, sd] = storedStr.split('-');
+        initialDate = new Date(Date.UTC(Number(sy), Number(sm) - 1, Number(sd)));
+        initialDate.setUTCHours(0, 0, 0, 0);
+        setUpdateBadge(true);
+      } else {
+        // ✅ 没有比上次更新更新的内容：正常按当前 latest 来
+        initialDate = latestDate;
+        setUpdateBadge(false);
+      }
+
+      // 这里才真正驱动地图与 UI
+      updateDate(initialDate);
+
+      // 把 latestDate 也塞进 availableDates 备用
       availableDates.push(latestDate);
-      if (datePicker) datePicker.max = formatDate(latestDate);
-      updateDate(latestDate);
     })
     .catch(() => {
-      // 退回今天（UTC 当地零点），只用于首次初始化展示
+      // latest.json 拉不到：退回“今天”（UTC 当地零点），只用于首次展示
       latestDate = new Date();
-      updateDate(latestDate);
+      const todayUTC = new Date(Date.UTC(
+        latestDate.getUTCFullYear(),
+        latestDate.getUTCMonth(),
+        latestDate.getUTCDate()
+      ));
+      serverLatestStr = formatDate(todayUTC);  // 当成一个临时“最新日期”
+      updateDate(todayUTC);
+      setUpdateBadge(false);
     });
 
-  // available-dates.json
-  fetch("data/available-dates.json")
-    .then(res => res.json())
+  // 2) available-dates.json —— 用来给“相邻有更新”的跳转列表
+  fetchJsonNoCache("data/available-dates.json")
     .then(dates => {
       // 文件里的日期 → UTC Date → YYYY-MM-DD
       const fromFile = dates.map(s => {
         const [y, m, d] = s.split('-');
         return formatDate(new Date(Date.UTC(+y, +m - 1, +d)));
       });
-      const addLatest = latestDate ? [formatDate(latestDate)] : [];
+      const addLatest = latestDate ? [formatDate(latestDate)] : (serverLatestStr ? [serverLatestStr] : []);
       availableDateStrs = Array.from(new Set([...fromFile, ...addLatest])).sort();
       availableDates = availableDateStrs.map(s => parseDate(s));
     })
@@ -318,16 +415,14 @@ if (closeCalBtn && calendarPopup) {
 }
 if (jumpLatestBtn) {
   jumpLatestBtn.onclick = () => {
-    fetch("data/latest.json")
-      .then(res => res.json())
-      .then(obj => {
-        const [yyyy, mm, dd] = obj.date.split('-');
-        const date = new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd)));
-        updateDate(date);
-      })
-      .catch(() => {
-        if (latestDate) updateDate(latestDate);
-      });
+    if (latestDate) {
+      updateDate(latestDate);   // 直接跳到服务器最新那天
+    } else {
+      // 兜底：如果还没拉到 latest，就用“今天”
+      const today = new Date();
+      const d = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
+      updateDate(d);
+    }
   };
 }
 
@@ -2036,8 +2131,17 @@ async function renderInfoPanel(dateStr){
 const __oldUpdateDate = updateDate;
 updateDate = function(date){
   __oldUpdateDate(date);
+
+  const dateStr = currentDateEl?.textContent?.trim();
+
+  // 如果当前日期就是服务器声明的“最新日期”，则认为用户已经“看到最新”，记一笔并关掉小红点
+  if (dateStr && serverLatestStr && dateStr === serverLatestStr) {
+    safeSetLatestSeen(serverLatestStr);
+    setUpdateBadge(false);
+  }
+
+  // 信息面板开着的话，顺便刷新一下统计
   if (infoPanel && !infoPanel.classList.contains('hidden')){
-    const dateStr = currentDateEl?.textContent?.trim();
     if (dateStr) renderInfoPanel(dateStr);
   }
 };
