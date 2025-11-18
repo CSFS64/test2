@@ -1783,7 +1783,7 @@ toGeoJSONFeatureCollection = function(){
 
 /* ===================== 更新列表（静态示例数据） ===================== */
 const updates = [
-  { date: "2025-10-17", summary: "" },
+  { date: "2025-10-17", summary: "库普扬斯克：1. 澄清了库普扬斯克北部的前线；波克罗夫斯克：1. 乌克兰国防军向Shakhove方向推进；2. 澄清了Shakhove以东的前线；3. 澄清了Novotoreske附近的前线；4. 俄军在Volodymyrivka南部取得了部分成功" },
   { date: "2025-11-16", summary: "全新更新功能测试，无前线变化" },
   { date: "2025-11-15", summary: "西维尔斯克：1. 澄清了Dronivka附近的前线；2. 乌克兰国防军向Verkhnokamyanske方向推进；康斯坦丁尼夫卡：1. 乌克兰国防军从Katerynivka撤退；波克罗夫斯克：1. 澄清了Volodymyrivka以东的前线；2. 澄清了Suvorove附近的前线；3. 澄清了米尔诺格勒以东的前线；4. 俄军在Rih取得了部分成功；扎波罗热：1. 乌克兰国防军从Novovasylivske撤退" },
   { date: "2025-11-14", summary: "波克罗夫斯克：1. 乌克兰国防军向Shakhove方向推进；2. 澄清了Volodymyrivka以东的前线；3.澄清了罗津斯克以东的前线；3. 俄军继续向米尔诺格勒渗透；4. 俄军在波克罗夫斯克南部取得了部分成功；5. 乌克兰国防军已从Udachne撤退；第聂伯彼得罗夫斯克：1. 澄清了Orestopil方向的前线；2. 澄清了Oleksiivka方向的前线；3. 澄清了Vyshneve方向的前线；4. 澄清了Yehorivka方向的前线；胡里艾伯勒：1. 俄军在Rivnopillia方向取得了部分成功" },
