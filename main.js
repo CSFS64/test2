@@ -1783,6 +1783,7 @@ toGeoJSONFeatureCollection = function(){
 
 /* ===================== 更新列表（静态示例数据） ===================== */
 const updates = [
+  { date: "2025-11-30", summary: "波克罗夫斯克：1. 俄军继续尝试向波克罗夫斯克渗透；第聂伯彼得罗夫斯克：1. 乌克兰国防军清除了Ivanivka的俄军" },
   { date: "2025-11-29", summary: "胡里艾伯勒：1. 俄军在Zatyshshya和Zelenyi Hai方向取得了部分成功" },
   { date: "2025-11-27", summary: "西维尔斯克：1. 澄清了西维尔斯克东部的前线；康斯坦丁尼夫卡：1. 澄清了Ivanopillia方向的前线；波克罗夫斯克：1. 乌克兰国防军从Promin撤退；2. 澄清了Rivne方向的前线；3. 乌克兰国防军在城市西部的反击取得了成功；胡里艾伯勒：1. 乌克兰国防军从Uspenivka撤退；2. 乌克兰国防军从Rivnopillia撤退；3. 乌克兰国防军从Yablukove撤退" },
   { date: "2025-11-24", summary: "利曼：1. 俄军在Yampil北部取得了部分成功；西维尔斯克：1. 澄清了Zvanivka方向的前线；康斯坦丁尼夫卡：1. 乌克兰国防军向Oleksandro-Shultyne推进；波克罗夫斯克：1. 澄清了Shakhove方向的前线；2. 澄清了波克罗夫斯克市中心的前线" },
