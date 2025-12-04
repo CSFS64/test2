@@ -1783,6 +1783,7 @@ toGeoJSONFeatureCollection = function(){
 
 /* ===================== 更新列表（静态示例数据） ===================== */
 const updates = [
+  { date: "2025-12-04", summary: "西维尔斯克：1. 澄清了Zvanivka附近的前线；米尔诺格勒：1. 俄军在新经济区取得了部分成功；2. 俄军在Promin方向取得了部分成功；扎波罗热：1. 确认了乌克兰国防军对Krasnohirske和Pryvil的控制" },
   { date: "2025-12-01", summary: "沃夫昌斯克：1. 澄清了城市附近的前线；波克罗夫斯克：1. 俄军继续向城市内部渗透；2. 澄清了Hryshyne方向的前线；胡里艾伯勒：1. 乌克兰国防军从Zatyshshya撤退" },
   { date: "2025-11-30", summary: "波克罗夫斯克：1. 俄军继续尝试向波克罗夫斯克渗透；第聂伯彼得罗夫斯克：1. 乌克兰国防军清除了Ivanivka的俄军" },
   { date: "2025-11-29", summary: "胡里艾伯勒：1. 俄军在Zatyshshya和Zelenyi Hai方向取得了部分成功" },
