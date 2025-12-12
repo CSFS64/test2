@@ -1783,6 +1783,7 @@ toGeoJSONFeatureCollection = function(){
 
 /* ===================== 更新列表（静态示例数据） ===================== */
 const updates = [
+  { date: "2025-12-11", summary: "胡里艾伯勒：1. 澄清了Varvarivka方向的前线" },
   { date: "2025-12-10", summary: "前线没有明显变化，澄清了波克罗夫斯克和米尔诺格勒方向的前线" },
   { date: "2025-12-09", summary: "前线没有明显变化" },
   { date: "2025-12-08", summary: "沃夫昌斯克：1. 俄军在城市北部取得了部分成功；西维尔斯克：1. 澄清了城市东部的前线；波克罗夫斯克：1. 乌克兰国防军已从Lysivka和Sukhyi Yar撤退；胡里艾伯勒：1. 俄军在Zatyshshya和Zelenyi Hai方向取得了部分成功" },
