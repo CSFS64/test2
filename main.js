@@ -1783,6 +1783,7 @@ toGeoJSONFeatureCollection = function(){
 
 /* ===================== 更新列表（静态示例数据） ===================== */
 const updates = [
+  { date: "2025-12-12", summary: "库普扬斯克：1. 乌克兰国防军解放了Kindrashivka；2. 乌克兰国防军解放了Radkivka；3. 乌克兰国防军解放了Moskovka；4. 乌克兰国防军向库普扬斯克推进" },
   { date: "2025-12-11", summary: "胡里艾伯勒：1. 澄清了Varvarivka方向的前线" },
   { date: "2025-12-10", summary: "前线没有明显变化，澄清了波克罗夫斯克和米尔诺格勒方向的前线" },
   { date: "2025-12-09", summary: "前线没有明显变化" },
