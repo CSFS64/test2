@@ -2551,7 +2551,7 @@ async function onMapClickCreateMapNote(e) {
 
   // 2) 如果点到 UI（面板、按钮、popup），别触发新增
   const t = e.originalEvent?.target;
-  #if (t && (t.closest?.('.panel') || t.closest?.('.leaflet-popup') || t.closest?.('.icon-group'))) {
+  if (t && (t.closest?.('.panel') || t.closest?.('.leaflet-popup') || t.closest?.('.icon-group'))) {
     return;
   }
 
