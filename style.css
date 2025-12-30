@@ -974,3 +974,163 @@ body, html {
   width: 1px; height: 18px; background: #333; margin: 0 4px;
 }
 
+
+
+
+
+
+
+
+/* ===================== Map Notes ===================== */
+
+/* 面板容器（复用你的 panel hidden 逻辑） */
+#notes-panel {
+  position: fixed;
+  right: 18px;
+  top: 84px;
+  width: 360px;
+  max-width: calc(100vw - 36px);
+  max-height: calc(100vh - 120px);
+  overflow: hidden;
+  border-radius: 14px;
+  background: rgba(15, 18, 25, 0.92);
+  color: #e9eef5;
+  box-shadow: 0 10px 30px rgba(0,0,0,.45);
+  z-index: 9999;
+  backdrop-filter: blur(6px);
+}
+
+#notes-panel.hidden { display: none; }
+
+#notes-panel .panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+#notes-panel .panel-title {
+  font: 700 14px/1 ui-sans-serif, system-ui, Segoe UI, Roboto, Arial;
+  letter-spacing: .2px;
+}
+
+#notes-panel .close-btn {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(255,255,255,.08);
+  color: #fff;
+  cursor: pointer;
+}
+
+#notes-panel .panel-body {
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+#notes-panel .notes-toolbar {
+  display: flex;
+  gap: 8px;
+}
+
+#notes-panel .notes-btn {
+  flex: 1;
+  padding: 10px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  color: #e9eef5;
+  cursor: pointer;
+  font: 600 12px/1 ui-sans-serif, system-ui;
+}
+
+#notes-panel .notes-btn.primary {
+  background: rgba(34,197,94,.16);
+  border-color: rgba(34,197,94,.30);
+}
+
+#notes-panel .notes-btn.danger {
+  background: rgba(239,68,68,.14);
+  border-color: rgba(239,68,68,.28);
+}
+
+#notes-panel .notes-hint {
+  font: 500 12px/1.35 ui-sans-serif, system-ui;
+  color: rgba(233,238,245,.75);
+}
+
+#notes-panel .notes-list {
+  overflow: auto;
+  max-height: calc(100vh - 260px);
+  padding-right: 4px;
+}
+
+#notes-panel .note-item {
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.05);
+  border-radius: 12px;
+  padding: 10px 10px;
+  margin-bottom: 8px;
+}
+
+#notes-panel .note-item .meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font: 600 11px/1 ui-sans-serif, system-ui;
+  color: rgba(233,238,245,.75);
+  margin-bottom: 6px;
+}
+
+#notes-panel .note-item .text {
+  font: 600 12px/1.35 ui-sans-serif, system-ui;
+  color: rgba(233,238,245,.95);
+  white-space: pre-wrap;
+}
+
+#notes-panel .note-item .actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+#notes-panel .note-mini {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  color: #e9eef5;
+  cursor: pointer;
+  font: 700 11px/1 ui-sans-serif, system-ui;
+}
+
+/* 地图 marker（DivIcon） */
+.leaflet-note-pin {
+  transform: translate(-50%, -100%);
+  pointer-events: auto;
+}
+
+.leaflet-note-pin .pin {
+  min-width: 22px;
+  min-height: 22px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.92);
+  color: #111;
+  font: 800 12px/18px ui-sans-serif, system-ui;
+  box-shadow: 0 8px 18px rgba(0,0,0,.35);
+  border: 2px solid rgba(0,0,0,.65);
+}
+
+.leaflet-note-popup .leaflet-popup-content-wrapper {
+  background: rgba(15,18,25,.94);
+  color: #e9eef5;
+  border-radius: 12px;
+}
+
+.leaflet-note-popup .leaflet-popup-tip {
+  background: rgba(15,18,25,.94);
+}
