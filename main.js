@@ -238,9 +238,10 @@ function safeSetLatestSeen(dateStr) {
 
 /* ===================== “新更新”提示（高亮 🔔 按钮） ===================== */
 function setUpdateBadge(on) {
-  if (!bellButton) return;
-  if (on) bellButton.classList.add('has-new-update');
-  else bellButton.classList.remove('has-new-update');
+  const bell = document.querySelector('.icon-group .icon:nth-child(3)');
+  if (!bell) return;
+  if (on) bell.classList.add('has-new-update');
+  else bell.classList.remove('has-new-update');
 }
 
 (function ensureUpdateBadgeStyle() {
