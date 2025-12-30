@@ -10,11 +10,70 @@ let availableDateStrs = [];     // "YYYY-MM-DD" 字符串数组（用于相邻�
 let serverLatestStr = null;     // 来自 latest.json 的 YYYY-MM-DD
 const LATEST_SEEN_KEY = 'kalyna_latest_seen_date_v1';
 
+// ===== MAP NOTES STATE =====
+const MAP_NOTES_API = "https://map-api.20060303jjc.workers.dev";
+
+let mapNotesLayer = null;          // Leaflet layer group
+let mapNotesById = new Map();      // id -> note
+let mapNoteEditTokens = new Map(); // id -> edit_token（仅内存）
+
 /* ===================== 地图初始化 ===================== */
 const map = L.map('map', { zoomControl: false, preferCanvas: true, doubleClickZoom: false }).setView([48.6, 37.9], 10);
 
 // 共享 Canvas 渲染器
 const vecRenderer = L.canvas({ padding: 0.5 });
+
+// ===== MAP NOTES RENDER =====
+function ensureMapNotesLayer(){
+  if (!mapNotesLayer) {
+    mapNotesLayer = L.layerGroup().addTo(map);
+  }
+  return mapNotesLayer;
+}
+
+function esc(s){
+  return String(s ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;");
+}
+
+function mapNotePopupHTML(note){
+  const canEdit = mapNoteEditTokens.has(note.id);
+  return `
+    <div style="max-width:260px">
+      <b>${esc(note.title)}</b>
+      ${note.body ? `<div style="margin:6px 0">${esc(note.body)}</div>` : ""}
+      ${note.link_url ? `<a href="${esc(note.link_url)}" target="_blank">${esc(note.link_text||note.link_url)}</a>` : ""}
+      ${canEdit ? `<div style="margin-top:8px"><button class="mn-edit" data-id="${note.id}">Edit</button></div>` : ""}
+    </div>
+  `;
+}
+
+function addMapNote(note){
+  ensureMapNotesLayer();
+  const m = L.circleMarker([note.lat, note.lng], {
+    radius: 6,
+    color: "#ffd166",
+    weight: 2,
+    fillOpacity: 0.9
+  });
+
+  m.bindPopup(mapNotePopupHTML(note));
+  m.addTo(mapNotesLayer);
+}
+
+async function loadApprovedMapNotes(){
+  ensureMapNotesLayer();
+  mapNotesLayer.clearLayers();
+  mapNotesById.clear();
+
+  const list = await mapNotesApi("/api/notes");
+  list.forEach(n => {
+    mapNotesById.set(n.id, n);
+    addMapNote(n);
+  });
+}
 
 /* ===================== 底图切换（🛠️） ===================== */
 // 1) 定义底图集合（无需密钥）
@@ -148,6 +207,29 @@ function fetchJsonNoCache(url) {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   });
+}
+
+// ===== MAP NOTES API =====
+async function mapNotesApi(path, { method="GET", body=null, headers={} } = {}) {
+  const url = MAP_NOTES_API.replace(/\/$/, "") + path;
+  const init = {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      ...headers
+    }
+  };
+  if (body) init.body = JSON.stringify(body);
+
+  const res = await fetch(url, init);
+  const txt = await res.text();
+  let data = null;
+  try { data = txt ? JSON.parse(txt) : null; } catch {}
+
+  if (!res.ok) {
+    throw new Error(data?.error || `HTTP ${res.status}`);
+  }
+  return data;
 }
 
 // 本地存储安全读写（防止隐身/禁用 localStorage 报错）
@@ -323,6 +405,9 @@ function updateDate(date) {
 
 /* ===================== 初始化 ===================== */
 loadAvailableDates();
+
+// ===== MAP NOTES INIT =====
+loadApprovedMapNotes().catch(console.error);
 
 /* ===================== 相邻“有更新”的日期跳转 ===================== */
 function ensureAvailableDateStrsReady(){
@@ -2241,6 +2326,46 @@ function dropMarkerAt(latlng) {
 
 // 右键生成坐标
 map.on('contextmenu', (e) => {
+  // ===== MAP NOTES SUBMIT =====
+  async function submitMapNote(latlng){
+    const title = prompt("Title:");
+    if (!title) return;
+  
+    const body = prompt("Body (optional):") || "";
+  
+    const res = await mapNotesApi("/api/notes", {
+      method: "POST",
+      body: {
+        lat: latlng.lat,
+        lng: latlng.lng,
+        title,
+        body
+      }
+    });
+  
+    // 保存 edit_token（只在内存）
+    mapNoteEditTokens.set(res.id, res.edit_token);
+  
+    // 本地立即显示（你也可以不显示，等 approve；这里先显示方便测试）
+    const localNote = {
+      id: res.id,
+      lat: latlng.lat,
+      lng: latlng.lng,
+      title,
+      body,
+      created_at: Date.now()
+    };
+    mapNotesById.set(res.id, localNote);
+    addMapNote(localNote);
+  }
+  
+  // ★ 双击：仅在“非绘图 / 非尺子”时触发
+  map.on("dblclick", (e) => {
+    if (drawActive) return;
+    if (rulerActive) return;
+    submitMapNote(e.latlng).catch(err => alert(err.message));
+  });
+
   // ★ 在批注上右键：交给批注自己的菜单；不要触发地图坐标弹窗
   if (e.originalEvent?.target?.closest?.('.leaflet-note')) return;
 
