@@ -1173,31 +1173,30 @@ body, html {
   cursor: pointer;
 }
 
-/* ===== Map Note Popup 自适应尺寸 ===== */
-.note-popup {
-  /* 横向策略 */
-  max-width: 520px;            /* 桌面最大宽度（你可调 480–600） */
-  min-width: 220px;            /* 防止太窄 */
-  width: max-content;          /* 内容决定宽度 */
-  max-width: min(520px, 92vw); /* 不超过视口 */
-
-  /* 纵向 */
-  max-height: 60vh;            /* 防止正文过长把屏幕占满 */
-  overflow-y: auto;
-
-  /* 文本表现 */
-  word-break: break-word;      /* 英文/长链接不撑破 */
+/* 让 Leaflet 弹窗内容不要溢出 */
+.leaflet-popup-content {
+  max-width: min(520px, 92vw);
   overflow-wrap: anywhere;
-  white-space: normal;
-
-  /* 视觉（可选） */
-  line-height: 1.45;
+  word-break: break-word;
 }
 
-/* 手机端：略窄于屏幕 */
-@media (max-width: 640px) {
-  .note-popup {
-    max-width: 88vw;           /* 不顶满屏幕 */
-    min-width: unset;
+/* 你的 note 内容容器 */
+.note-popup{
+  width: min(520px, 92vw);   /* 关键：不要用 max-content */
+  max-width: min(520px, 92vw);
+  box-sizing: border-box;
+
+  overflow-wrap: anywhere;    /* 关键：长串强制断行 */
+  word-break: break-word;
+
+  max-height: 60vh;           /* 正文太长就滚动 */
+  overflow-y: auto;
+}
+
+/* 手机端略窄于屏幕 */
+@media (max-width: 640px){
+  .note-popup{
+    width: 88vw;
+    max-width: 88vw;
   }
 }
