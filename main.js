@@ -2,6 +2,7 @@
 const currentDateEl = document.getElementById('current-date');
 const datePicker     = document.getElementById('date-picker');
 const calendarPopup  = document.getElementById('calendar-popup');
+const MAP_NOTES_API = "https://map-api.20060303jjc.workers.dev";
 
 let latestDate = null;          // 最新可用日期（UTC 零点）
 let currentLayer = null;        // 当前地图图层
