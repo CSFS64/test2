@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Kalyna Map Notes - Admin Review</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0; padding: 24px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: #0b0f14; color: #e6edf3;
+    }
+    .wrap { max-width: 980px; margin: 0 auto; }
+    h1 { margin: 0 0 16px; font-size: 20px; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .card {
+      background: #0f1620; border: 1px solid #223042; border-radius: 12px;
+      padding: 14px; margin-top: 14px;
+    }
+    input, button, textarea {
+      font: inherit;
+      border-radius: 10px;
+      border: 1px solid #223042;
+      background: #0b0f14; color: #e6edf3;
+      padding: 10px 12px;
+      outline: none;
+    }
+    input { min-width: 320px; }
+    button { cursor: pointer; }
+    button:hover { border-color: #3a516e; }
+    .btn-ok { border-color: #2f6f3e; }
+    .btn-ok:hover { border-color: #45a05b; }
+    .btn-bad { border-color: #7a2b2b; }
+    .btn-bad:hover { border-color: #b93c3c; }
+    .muted { opacity: .75; }
+    .mono { font-family: inherit; }
+    .note-title { font-weight: 700; font-size: 16px; margin-bottom: 8px; }
+    .note-meta { opacity: .75; font-size: 12px; margin-bottom: 10px; }
+    .note-body { white-space: pre-wrap; line-height: 1.45; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 800px) { .grid2 { grid-template-columns: 1fr; } input { min-width: 220px; } }
+    .pill {
+      display: inline-block; padding: 2px 8px; border-radius: 999px;
+      border: 1px solid #223042; font-size: 12px; opacity: .85;
+    }
+    .danger { border-color: #7a2b2b; color: #ffb4b4; }
+    .ok { border-color: #2f6f3e; color: #b8ffd0; }
+    .warn { border-color: #7a6a2b; color: #ffe7a8; }
+    .topbar { display:flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items:center; }
+    .statusline { margin-top: 10px; font-size: 12px; opacity: .8; }
+    a { color: #9ecbff; }
+    code { background: #0b0f14; border: 1px solid #223042; border-radius: 8px; padding: 2px 6px; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <h1>Map Notes 管理员审核</h1>
+      <div class="muted">接口：<code id="apiShow"></code></div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <label class="muted">ADMIN_TOKEN：</label>
+        <input id="token" placeholder="粘贴你的 ADMIN_TOKEN" />
+        <button id="save">保存</button>
+        <button id="clear" class="btn-bad">清除</button>
+      </div>
+      <div class="statusline" id="tokenStatus"></div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <button id="reload" class="btn-ok">拉取 Pending 列表</button>
+        <button id="reloadAuto">每 10 秒自动刷新：关</button>
+        <span class="muted">共 <b id="count">0</b> 条</span>
+      </div>
+      <div class="statusline" id="status"></div>
+    </div>
+
+    <div id="list"></div>
+  </div>
+
+<script>
+/**
+ * ✅ 你只需要改这里：把它换成你的 Worker 域名
+ * 例如：https://map-api.20060303jjc.workers.dev
+ */
+const MAP_NOTES_API = "https://map-api.20060303jjc.workers.dev";
+
+const LS_KEY = "KALYNA_ADMIN_TOKEN_V1";
+
+const elApiShow = document.getElementById("apiShow");
+const elToken = document.getElementById("token");
+const elTokenStatus = document.getElementById("tokenStatus");
+const elStatus = document.getElementById("status");
+const elList = document.getElementById("list");
+const elCount = document.getElementById("count");
+const btnSave = document.getElementById("save");
+const btnClear = document.getElementById("clear");
+const btnReload = document.getElementById("reload");
+const btnReloadAuto = document.getElementById("reloadAuto");
+
+elApiShow.textContent = MAP_NOTES_API;
+
+function getToken() {
+  return localStorage.getItem(LS_KEY) || "";
+}
+function setToken(v) {
+  localStorage.setItem(LS_KEY, v);
+}
+function clearToken() {
+  localStorage.removeItem(LS_KEY);
+}
+
+function fmtTime(ms) {
+  const d = new Date(Number(ms));
+  if (isNaN(d.getTime())) return String(ms);
+  return d.toLocaleString();
+}
+
+function setStatus(msg) { elStatus.textContent = msg; }
+function setTokenHint() {
+  const t = getToken();
+  elToken.value = t;
+  elTokenStatus.innerHTML = t
+    ? `<span class="pill ok">已保存</span> token 已写入 localStorage（只在你的浏览器里）`
+    : `<span class="pill warn">未设置</span> 请输入 token 才能审核`;
+}
+
+async function apiGetPending() {
+  const token = getToken();
+  if (!token) throw new Error("missing token");
+
+  const res = await fetch(`${MAP_NOTES_API}/api/admin/pending`, {
+    method: "GET",
+    headers: { "X-Admin-Token": token },
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`pending failed: ${res.status} ${text}`);
+  }
+  return res.json();
+}
+
+async function apiApprove(id) {
+  const token = getToken();
+  const res = await fetch(`${MAP_NOTES_API}/api/admin/approve`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Admin-Token": token
+    },
+    body: JSON.stringify({ id })
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`approve failed: ${res.status} ${text}`);
+  }
+  return res.json();
+}
+
+async function apiDelete(id) {
+  const token = getToken();
+  const res = await fetch(`${MAP_NOTES_API}/api/admin/delete`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Admin-Token": token
+    },
+    body: JSON.stringify({ id })
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`delete failed: ${res.status} ${text}`);
+  }
+  return res.json();
+}
+
+function renderNote(n) {
+  const link = (n.link_url && n.link_text)
+    ? `<div class="muted" style="margin-top:8px">🔗 <a href="${escapeHtml(n.link_url)}" target="_blank" rel="noopener">${escapeHtml(n.link_text)}</a></div>`
+    : (n.link_url ? `<div class="muted" style="margin-top:8px">🔗 <a href="${escapeHtml(n.link_url)}" target="_blank" rel="noopener">${escapeHtml(n.link_url)}</a></div>` : "");
+
+  const body = n.body ? `<div class="note-body">${escapeHtml(n.body)}</div>` : `<div class="muted">（无正文）</div>`;
+
+  const html = `
+    <div class="card" data-id="${n.id}">
+      <div class="grid2">
+        <div>
+          <div class="note-title">${escapeHtml(n.title || "(no title)")}</div>
+          <div class="note-meta">
+            <span class="pill warn">pending</span>
+            <span class="muted">id:</span> <code>${escapeHtml(n.id)}</code><br>
+            <span class="muted">坐标:</span> ${Number(n.lat).toFixed(6)}, ${Number(n.lng).toFixed(6)}<br>
+            <span class="muted">提交时间:</span> ${escapeHtml(fmtTime(n.created_at))}
+          </div>
+          ${body}
+          ${link}
+        </div>
+
+        <div>
+          <div class="row" style="justify-content:flex-end">
+            <button class="btn-ok" data-action="approve">✅ Approve</button>
+            <button class="btn-bad" data-action="delete">❌ Delete</button>
+          </div>
+          <div class="statusline muted" style="text-align:right;margin-top:10px">
+            Approve = 变成 approved 并公开显示；Delete = 直接删除
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  return html;
+}
+
+function escapeHtml(s) {
+  return String(s ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+async function reload() {
+  setStatus("正在拉取 pending...");
+  elList.innerHTML = "";
+  elCount.textContent = "0";
+
+  try {
+    const list = await apiGetPending();
+    elCount.textContent = String(list.length);
+
+    if (!list.length) {
+      elList.innerHTML = `<div class="card muted">没有 pending，恭喜。</div>`;
+      setStatus("完成。");
+      return;
+    }
+
+    elList.innerHTML = list.map(renderNote).join("");
+    setStatus(`完成：${list.length} 条 pending。点击 Approve/Delete 处理。`);
+  } catch (e) {
+    setStatus(`错误：${e.message}`);
+    elList.innerHTML = `<div class="card"><span class="pill danger">ERROR</span> <span class="muted">${escapeHtml(e.message)}</span></div>`;
+  }
+}
+
+elList.addEventListener("click", async (ev) => {
+  const btn = ev.target.closest("button");
+  if (!btn) return;
+
+  const card = ev.target.closest("[data-id]");
+  if (!card) return;
+
+  const id = card.getAttribute("data-id");
+  const action = btn.getAttribute("data-action");
+  if (!id || !action) return;
+
+  btn.disabled = true;
+
+  try {
+    if (action === "approve") {
+      setStatus(`正在 approve：${id}`);
+      await apiApprove(id);
+      card.remove();
+      elCount.textContent = String(Math.max(0, Number(elCount.textContent) - 1));
+      setStatus("approve 成功。");
+    } else if (action === "delete") {
+      if (!confirm("确定要删除这条记录？")) { btn.disabled = false; return; }
+      setStatus(`正在 delete：${id}`);
+      await apiDelete(id);
+      card.remove();
+      elCount.textContent = String(Math.max(0, Number(elCount.textContent) - 1));
+      setStatus("delete 成功。");
+    }
+  } catch (e) {
+    alert(e.message);
+    setStatus(`操作失败：${e.message}`);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+btnSave.addEventListener("click", () => {
+  const v = elToken.value.trim();
+  if (!v) { alert("token 不能为空"); return; }
+  setToken(v);
+  setTokenHint();
+});
+
+btnClear.addEventListener("click", () => {
+  clearToken();
+  setTokenHint();
+});
+
+btnReload.addEventListener("click", reload);
+
+let autoTimer = null;
+btnReloadAuto.addEventListener("click", () => {
+  if (autoTimer) {
+    clearInterval(autoTimer);
+    autoTimer = null;
+    btnReloadAuto.textContent = "每 10 秒自动刷新：关";
+  } else {
+    autoTimer = setInterval(reload, 10000);
+    btnReloadAuto.textContent = "每 10 秒自动刷新：开";
+    reload();
+  }
+});
+
+// init
+setTokenHint();
+reload();
+</script>
+</body>
+</html>
