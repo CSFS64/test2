@@ -2368,7 +2368,12 @@ map.on('click', (e) => {
   }
 });
 
-map.on('click', onMapClickCreateMapNote);
+// 关闭 Leaflet 双击放大
+map.doubleClickZoom.disable();
+
+// 双击创建 map notes
+map.off('click', onMapClickCreateMapNote);
+map.on('dblclick', onMapDblClickCreateMapNote);
 
 // ★ 一次性创建右键编辑条
 const _fmtBar = document.createElement('div');
@@ -2676,3 +2681,248 @@ document.addEventListener("click", async (ev) => {
 
   alert("已更新（仍需审核）");
 });
+
+/* ===================== Map Note Modal UI（替代 prompt） ===================== */
+let _mapNoteModalEl = null;
+let _mapNoteModalState = { latlng: null, submitting: false };
+
+function ensureMapNoteModal(){
+  if (_mapNoteModalEl) return _mapNoteModalEl;
+
+  const el = document.createElement('div');
+  el.id = 'mapnote-modal';
+  el.className = 'mn hidden';
+  el.innerHTML = `
+    <div class="mn__backdrop" data-mn-close="1"></div>
+    <div class="mn__card" role="dialog" aria-modal="true" aria-label="Add Map Note">
+      <div class="mn__header">
+        <div class="mn__title">Add Map Note</div>
+        <button class="mn__x" type="button" data-mn-close="1" aria-label="Close">×</button>
+      </div>
+
+      <form class="mn__form" id="mn-form">
+        <label class="mn__label">
+          <span>Title <b style="color:#ef4444">*</b></span>
+          <input id="mn-title" class="mn__input" maxlength="120" placeholder="必填：一句话概括" required />
+        </label>
+
+        <label class="mn__label">
+          <span>Body</span>
+          <textarea id="mn-body" class="mn__textarea" rows="4" maxlength="2000" placeholder="可选：补充说明…"></textarea>
+        </label>
+
+        <div class="mn__grid">
+          <label class="mn__label">
+            <span>Link URL</span>
+            <input id="mn-link-url" class="mn__input" maxlength="500" placeholder="https://…" />
+          </label>
+          <label class="mn__label">
+            <span>Link Text</span>
+            <input id="mn-link-text" class="mn__input" maxlength="120" placeholder="可选：链接显示文字" />
+          </label>
+        </div>
+
+        <div class="mn__hint" id="mn-hint"></div>
+
+        <div class="mn__actions">
+          <button class="mn__btn mn__btn--ghost" type="button" data-mn-close="1">Cancel</button>
+          <button class="mn__btn mn__btn--primary" id="mn-submit" type="submit">Submit</button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(el);
+  _mapNoteModalEl = el;
+
+  // 样式
+  const css = document.createElement('style');
+  css.textContent = `
+    .mn.hidden{display:none}
+    .mn{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center}
+    .mn__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45);backdrop-filter: blur(2px)}
+    .mn__card{position:relative;width:min(560px,92vw);border-radius:16px;background:rgba(17,23,34,.92);
+      color:#e8edf5;box-shadow:0 18px 60px rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.08);overflow:hidden}
+    .mn__header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
+    .mn__title{font:700 16px/1.2 ui-sans-serif,system-ui,Segoe UI,Roboto,Arial}
+    .mn__x{width:32px;height:32px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:transparent;color:#e8edf5;
+      font-size:20px;cursor:pointer}
+    .mn__form{padding:14px 16px 16px}
+    .mn__label{display:block;margin-bottom:10px;font:600 12px/1.2 ui-sans-serif,system-ui}
+    .mn__label span{display:block;margin-bottom:6px;opacity:.9}
+    .mn__input,.mn__textarea{width:100%;box-sizing:border-box;border-radius:12px;border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.25);color:#e8edf5;padding:10px 12px;outline:none}
+    .mn__textarea{resize:vertical;min-height:88px}
+    .mn__input:focus,.mn__textarea:focus{border-color:rgba(255,255,255,.3)}
+    .mn__grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media (max-width:520px){ .mn__grid{grid-template-columns:1fr} }
+    .mn__hint{min-height:18px;margin:6px 2px 10px;font:500 12px/1.2 ui-sans-serif,system-ui;color:#fbbf24}
+    .mn__hint.ok{color:#34d399}
+    .mn__hint.err{color:#fb7185}
+    .mn__actions{display:flex;gap:10px;justify-content:flex-end;margin-top:8px}
+    .mn__btn{border-radius:12px;padding:10px 14px;border:1px solid rgba(255,255,255,.12);cursor:pointer;
+      font:700 13px/1 ui-sans-serif,system-ui}
+    .mn__btn--ghost{background:transparent;color:#e8edf5}
+    .mn__btn--primary{background:rgba(59,130,246,.9);color:white;border-color:rgba(59,130,246,.2)}
+    .mn__btn[disabled]{opacity:.6;cursor:not-allowed}
+  `;
+  document.head.appendChild(css);
+
+  // 关闭逻辑（点遮罩/点 X/Cancel）
+  el.addEventListener('click', (ev) => {
+    const t = ev.target;
+    if (t && t.getAttribute && t.getAttribute('data-mn-close') === '1') {
+      closeMapNoteModal();
+    }
+  });
+
+  // Esc 关闭
+  document.addEventListener('keydown', (ev) => {
+    if (!_mapNoteModalEl || _mapNoteModalEl.classList.contains('hidden')) return;
+    if (ev.key === 'Escape') closeMapNoteModal();
+  });
+
+  // 提交逻辑
+  const form = el.querySelector('#mn-form');
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    if (_mapNoteModalState.submitting) return;
+
+    const titleEl = el.querySelector('#mn-title');
+    const bodyEl  = el.querySelector('#mn-body');
+    const urlEl   = el.querySelector('#mn-link-url');
+    const textEl  = el.querySelector('#mn-link-text');
+    const hintEl  = el.querySelector('#mn-hint');
+    const submit  = el.querySelector('#mn-submit');
+
+    const title = (titleEl.value || '').trim();
+    const body  = (bodyEl.value || '').trim();
+    const link_url  = (urlEl.value || '').trim();
+    const link_text = (textEl.value || '').trim();
+
+    if (!title) {
+      hintEl.textContent = 'Title 为必填。';
+      hintEl.className = 'mn__hint err';
+      titleEl.focus();
+      return;
+    }
+    if (link_url && !/^https?:\/\//i.test(link_url)) {
+      hintEl.textContent = 'Link URL 需要以 http:// 或 https:// 开头。';
+      hintEl.className = 'mn__hint err';
+      urlEl.focus();
+      return;
+    }
+
+    // 提交
+    _mapNoteModalState.submitting = true;
+    submit.disabled = true;
+    submit.textContent = 'Submitting…';
+    hintEl.textContent = '';
+    hintEl.className = 'mn__hint';
+
+    const latlng = _mapNoteModalState.latlng;
+    const payload = {
+      lat: latlng.lat,
+      lng: latlng.lng,
+      title,
+      body,
+      link_url,
+      link_text: link_url ? (link_text || '') : ''
+    };
+
+    let res;
+    try {
+      res = await fetch(`${MAP_NOTES_API}/api/notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        body: JSON.stringify(payload)
+      });
+    } catch (err) {
+      hintEl.textContent = '提交失败：网络错误';
+      hintEl.className = 'mn__hint err';
+      submit.disabled = false;
+      submit.textContent = 'Submit';
+      _mapNoteModalState.submitting = false;
+      return;
+    }
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      hintEl.textContent = `提交失败：HTTP ${res.status} ${txt ? ('· ' + txt.slice(0,120)) : ''}`;
+      hintEl.className = 'mn__hint err';
+      submit.disabled = false;
+      submit.textContent = 'Submit';
+      _mapNoteModalState.submitting = false;
+      return;
+    }
+
+    const created = await res.json().catch(() => null);
+    if (!created || !created.id) {
+      hintEl.textContent = '提交失败：返回数据不正确';
+      hintEl.className = 'mn__hint err';
+      submit.disabled = false;
+      submit.textContent = 'Submit';
+      _mapNoteModalState.submitting = false;
+      return;
+    }
+
+    // edit_token 仍然只放内存
+    if (created.edit_token) noteEditTokens.set(created.id, created.edit_token);
+
+    // 本地显示 pending
+    addPendingNoteMarker({
+      id: created.id,
+      status: "pending",
+      ...payload
+    });
+
+    hintEl.textContent = '已提交（pending）。';
+    hintEl.className = 'mn__hint ok';
+
+    closeMapNoteModal();
+  });
+
+  return el;
+}
+
+function openMapNoteModal(latlng){
+  const el = ensureMapNoteModal();
+  _mapNoteModalState.latlng = latlng;
+  _mapNoteModalState.submitting = false;
+
+  // reset
+  el.querySelector('#mn-title').value = '';
+  el.querySelector('#mn-body').value = '';
+  el.querySelector('#mn-link-url').value = '';
+  el.querySelector('#mn-link-text').value = '';
+  const hintEl = el.querySelector('#mn-hint');
+  hintEl.textContent = '';
+  hintEl.className = 'mn__hint';
+  const submit = el.querySelector('#mn-submit');
+  submit.disabled = false;
+  submit.textContent = 'Submit';
+
+  el.classList.remove('hidden');
+  setTimeout(() => el.querySelector('#mn-title')?.focus(), 0);
+}
+
+function closeMapNoteModal(){
+  if (!_mapNoteModalEl) return;
+  _mapNoteModalEl.classList.add('hidden');
+}
+
+/* ===================== dblclick 创建 Map Note（替代 click） ===================== */
+async function onMapDblClickCreateMapNote(e) {
+  // 1) 不要干扰你现有工具
+  if (rulerActive) return;
+  if (drawActive) return;
+
+  // 2) 如果点到 UI（面板、按钮、popup），别触发新增
+  const t = e.originalEvent?.target;
+  if (t && (t.closest?.('.panel') || t.closest?.('.leaflet-popup') || t.closest?.('.icon-group'))) {
+    return;
+  }
+
+  // 3) 打开更好的输入界面
+  openMapNoteModal(e.latlng);
+}
