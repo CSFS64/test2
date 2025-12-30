@@ -10,11 +10,23 @@ let availableDateStrs = [];     // "YYYY-MM-DD" 字符串数组（用于相邻�
 let serverLatestStr = null;     // 来自 latest.json 的 YYYY-MM-DD
 const LATEST_SEEN_KEY = 'kalyna_latest_seen_date_v1';
 
+// ===================== Map Notes =====================
+const MAP_NOTES_API = "https://map-api.20060303jjc.workers.dev"; // 你的 worker
+
 /* ===================== 地图初始化 ===================== */
 const map = L.map('map', { zoomControl: false, preferCanvas: true }).setView([48.6, 37.9], 10);
 
 // 共享 Canvas 渲染器
 const vecRenderer = L.canvas({ padding: 0.5 });
+
+// ===================== Map Notes State =====================
+const notesLayer = L.layerGroup().addTo(map);
+
+// 仅内存保存 edit_token：刷新就没（符合你之前的设计）
+const noteEditTokens = new Map(); // note_id -> edit_token
+
+// 本地缓存（可选）：避免重复渲染
+let approvedNotesCache = new Map(); // id -> marker
 
 /* ===================== 底图切换（🛠️） ===================== */
 // 1) 定义底图集合（无需密钥）
@@ -148,6 +160,64 @@ function fetchJsonNoCache(url) {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   });
+}
+
+async function loadApprovedNotes() {
+  // 你后端如果按日期分 notes，可把 dateStr 作为 query；这里先做全量
+  const url = `${MAP_NOTES_API}/api/notes?status=approved`;
+
+  let data;
+  try {
+    data = await fetchJsonNoCache(url);
+  } catch (e) {
+    console.warn("[notes] load failed:", e);
+    return;
+  }
+
+  // 假设返回是数组：[{id, lat, lng, title, body, link_text, link_url, status}]
+  if (!Array.isArray(data)) {
+    console.warn("[notes] unexpected response:", data);
+    return;
+  }
+
+  for (const n of data) {
+    if (!n || !n.id) continue;
+    if (approvedNotesCache.has(n.id)) continue;
+
+    const mk = L.circleMarker([n.lat, n.lng], {
+      radius: 7,
+      weight: 2,
+      opacity: 1,
+      fillOpacity: 0.9
+    }).addTo(notesLayer);
+
+    mk.bindPopup(renderNotePopupHTML(n));
+    approvedNotesCache.set(n.id, mk);
+  }
+}
+
+function renderNotePopupHTML(n) {
+  const esc = (s) => String(s ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+
+  const title = esc(n.title || "");
+  const body = esc(n.body || "");
+  const linkText = esc(n.link_text || "");
+  const linkUrl = esc(n.link_url || "");
+
+  const linkHTML = (linkUrl)
+    ? `<div style="margin-top:6px"><a href="${linkUrl}" target="_blank" rel="noopener">${linkText || linkUrl}</a></div>`
+    : "";
+
+  return `
+    <div class="note-popup">
+      <div style="font-weight:700;margin-bottom:6px">${title}</div>
+      ${body ? `<div style="white-space:pre-wrap;opacity:.95">${body}</div>` : ""}
+      ${linkHTML}
+    </div>
+  `;
 }
 
 // 本地存储安全读写（防止隐身/禁用 localStorage 报错）
@@ -323,6 +393,7 @@ function updateDate(date) {
 
 /* ===================== 初始化 ===================== */
 loadAvailableDates();
+loadApprovedNotes();
 
 /* ===================== 相邻“有更新”的日期跳转 ===================== */
 function ensureAvailableDateStrsReady(){
@@ -2296,6 +2367,8 @@ map.on('click', (e) => {
   }
 });
 
+map.on('click', onMapClickCreateMapNote);
+
 // ★ 一次性创建右键编辑条
 const _fmtBar = document.createElement('div');
 _fmtBar.id = 'note-format-bar';
@@ -2464,3 +2537,141 @@ function applyUnderline(){ document.execCommand('underline'); }
     if (noteEditing) saveNoteSelection();
   });
 })();
+
+async function onMapClickCreateMapNote(e) {
+  // 1) 不要干扰你现有工具
+  if (rulerActive) return;
+  if (drawActive) return;
+
+  // 2) 如果点到 UI（面板、按钮、popup），别触发新增
+  const t = e.originalEvent?.target;
+  if (t && (t.closest?.('.panel') || t.closest?.('.leaflet-popup') || t.closest?.('.icon-group'))) {
+    return;
+  }
+
+  // 3) 这里用最粗暴的 prompt；你之后可以换成自定义 modal
+  const title = prompt("新增 Map Note：标题（必填）");
+  if (!title || !title.trim()) return;
+
+  const body = prompt("正文（可选）") || "";
+  const link_url = prompt("链接 URL（可选）") || "";
+  const link_text = link_url ? (prompt("链接文字（可选）") || "") : "";
+
+  const payload = {
+    lat: e.latlng.lat,
+    lng: e.latlng.lng,
+    title: title.trim(),
+    body,
+    link_url,
+    link_text
+  };
+
+  let res;
+  try {
+    res = await fetch(`${MAP_NOTES_API}/api/notes`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+      body: JSON.stringify(payload)
+    });
+  } catch (err) {
+    alert("提交失败：网络错误");
+    return;
+  }
+
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    alert(`提交失败：HTTP ${res.status}\n${txt}`);
+    return;
+  }
+
+  const created = await res.json().catch(() => null);
+  if (!created || !created.id) {
+    alert("提交失败：返回数据不正确");
+    return;
+  }
+
+  // 只在内存保存 edit_token
+  if (created.edit_token) noteEditTokens.set(created.id, created.edit_token);
+
+  // 本地显示一个 pending note（你也可以不显示，等审核）
+  addPendingNoteMarker({
+    id: created.id,
+    status: "pending",
+    ...payload
+  });
+}
+
+function addPendingNoteMarker(n) {
+  const mk = L.circleMarker([n.lat, n.lng], {
+    radius: 7,
+    weight: 2,
+    opacity: 1,
+    fillOpacity: 0.7,
+    dashArray: "4 4" // pending 的视觉区别
+  }).addTo(notesLayer);
+
+  mk.bindPopup(renderPendingPopupHTML(n));
+  mk.openPopup();
+}
+
+function renderPendingPopupHTML(n) {
+  const esc = (s) => String(s ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+
+  const canEdit = noteEditTokens.has(n.id);
+
+  return `
+    <div class="note-popup">
+      <div style="font-weight:700;margin-bottom:6px">${esc(n.title)}</div>
+      <div style="opacity:.75;margin-bottom:6px">状态：pending（待审核）</div>
+      ${n.body ? `<div style="white-space:pre-wrap;opacity:.95">${esc(n.body)}</div>` : ""}
+      ${(n.link_url) ? `<div style="margin-top:6px"><a href="${esc(n.link_url)}" target="_blank" rel="noopener">${esc(n.link_text || n.link_url)}</a></div>` : ""}
+      ${canEdit ? `<button data-note-edit="${esc(n.id)}" style="margin-top:10px">Edit</button>` : ""}
+    </div>
+  `;
+}
+
+document.addEventListener("click", async (ev) => {
+  const btn = ev.target?.closest?.("button[data-note-edit]");
+  if (!btn) return;
+
+  const id = btn.getAttribute("data-note-edit");
+  const token = noteEditTokens.get(id);
+  if (!token) return;
+
+  // 简易：只改 title/body/link
+  const title = prompt("修改标题（必填）");
+  if (!title || !title.trim()) return;
+  const body = prompt("修改正文（可选）") || "";
+  const link_url = prompt("修改链接 URL（可选）") || "";
+  const link_text = link_url ? (prompt("修改链接文字（可选）") || "") : "";
+
+  const patch = { title: title.trim(), body, link_url, link_text };
+
+  let res;
+  try {
+    res = await fetch(`${MAP_NOTES_API}/api/notes/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Edit-Token": token
+      },
+      cache: "no-store",
+      body: JSON.stringify(patch)
+    });
+  } catch {
+    alert("编辑失败：网络错误");
+    return;
+  }
+
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    alert(`编辑失败：HTTP ${res.status}\n${txt}`);
+    return;
+  }
+
+  alert("已更新（仍需审核）");
+});
