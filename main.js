@@ -12,7 +12,7 @@ let serverLatestStr = null;     // 来自 latest.json 的 YYYY-MM-DD
 const LATEST_SEEN_KEY = 'kalyna_latest_seen_date_v1';
 
 /* ===================== 地图初始化 ===================== */
-const map = L.map('map', { zoomControl: false, preferCanvas: true }).setView([48.6, 37.9], 10);
+const map = L.map('map', { zoomControl: false, preferCanvas: true, doubleClickZoom: false }).setView([48.6, 37.9], 10);
 
 // 共享 Canvas 渲染器
 const vecRenderer = L.canvas({ padding: 0.5 });
