@@ -17,7 +17,7 @@ const MAP_NOTES_API = "https://map-api.20060303jjc.workers.dev"; // 你的 worke
 const map = L.map('map', { zoomControl: false, preferCanvas: true }).setView([48.6, 37.9], 10);
 // ===== Map Note: 独立 Pane 置顶，强制 SVG 命中稳定 =====
 const mapNotePane = map.createPane('mapNotePane');
-mapNotePane.style.zIndex = 650;          // 高于 overlayPane(400) / markerPane(600)
+mapNotePane.style.zIndex = 9999;          // 高于 overlayPane(400) / markerPane(600)
 mapNotePane.style.pointerEvents = 'auto';
 
 const mapNoteSvgRenderer = L.svg({ padding: 0.5 });
@@ -191,10 +191,14 @@ async function loadApprovedNotes() {
     if (approvedNotesCache.has(n.id)) continue;
 
     const mk = L.circleMarker([n.lat, n.lng], {
+      pane: 'mapNotePane',                 // ★
+      renderer: mapNoteSvgRenderer,         // ★
       radius: 7,
       weight: 2,
       opacity: 1,
-      fillOpacity: 0.9
+      fillOpacity: 0.7,
+      dashArray: "4 4",
+      interactive: true                    // ★ 明确开启
     }).addTo(notesLayer);
 
     mk.bindPopup(renderNotePopupHTML(n));
