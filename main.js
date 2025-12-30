@@ -2838,14 +2838,14 @@ function ensureMapNoteModal(){
         body: JSON.stringify(payload)
       });
     } catch (err) {
-      hintEl.textContent = '提交失败：网络错误';
+      console.error("[MapNote] fetch failed:", err);
+      hintEl.textContent = '提交失败：网络错误：' + (err?.message || String(err));
       hintEl.className = 'mn__hint err';
       submit.disabled = false;
       submit.textContent = 'Submit';
       _mapNoteModalState.submitting = false;
       return;
     }
-
     if (!res.ok) {
       const txt = await res.text().catch(() => "");
       hintEl.textContent = `提交失败：HTTP ${res.status} ${txt ? ('· ' + txt.slice(0,120)) : ''}`;
