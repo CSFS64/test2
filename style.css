@@ -1172,3 +1172,32 @@ body, html {
 .leaflet-pane.mapNotePane .leaflet-interactive {
   cursor: pointer;
 }
+
+/* ===== Map Note Popup 自适应尺寸 ===== */
+.note-popup {
+  /* 横向策略 */
+  max-width: 520px;            /* 桌面最大宽度（你可调 480–600） */
+  min-width: 220px;            /* 防止太窄 */
+  width: max-content;          /* 内容决定宽度 */
+  max-width: min(520px, 92vw); /* 不超过视口 */
+
+  /* 纵向 */
+  max-height: 60vh;            /* 防止正文过长把屏幕占满 */
+  overflow-y: auto;
+
+  /* 文本表现 */
+  word-break: break-word;      /* 英文/长链接不撑破 */
+  overflow-wrap: anywhere;
+  white-space: normal;
+
+  /* 视觉（可选） */
+  line-height: 1.45;
+}
+
+/* 手机端：略窄于屏幕 */
+@media (max-width: 640px) {
+  .note-popup {
+    max-width: 88vw;           /* 不顶满屏幕 */
+    min-width: unset;
+  }
+}
