@@ -981,3 +981,190 @@ body, html {
 
 
 
+/* ===================== Map Notes Popup ===================== */
+
+.leaflet-note-pin {
+  transform: translate(-50%, -100%);
+  pointer-events: auto;
+}
+
+.leaflet-note-pin .pin {
+  min-width: 22px;
+  min-height: 22px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.92);
+  color: #111;
+  font: 800 12px/18px ui-sans-serif, system-ui;
+  box-shadow: 0 8px 18px rgba(0,0,0,.35);
+  border: 2px solid rgba(0,0,0,.65);
+}
+
+/* Leaflet popup wrapper */
+.leaflet-note-popup .leaflet-popup-content-wrapper {
+  background: rgba(255,255,255,.96);
+  color: #111;
+  border-radius: 14px;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 0 14px 38px rgba(0,0,0,.30);
+}
+
+.leaflet-note-popup .leaflet-popup-tip {
+  background: rgba(255,255,255,.96);
+}
+
+.leaflet-note-popup .leaflet-popup-content {
+  margin: 0;
+  width: 520px;
+  max-width: calc(100vw - 90px);
+}
+
+/* inner layout */
+.note-popup {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 180px;
+}
+
+.note-popup .np-head {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(0,0,0,.08);
+  background: rgba(248,248,250,.95);
+}
+
+.note-popup .np-title {
+  font: 800 18px/1.2 ui-sans-serif, system-ui, Segoe UI, Roboto, Arial;
+  letter-spacing: .2px;
+}
+
+.note-popup .np-body {
+  padding: 14px 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.note-popup .np-text {
+  font: 600 14px/1.55 ui-sans-serif, system-ui;
+  color: rgba(20,20,25,.95);
+  white-space: normal;
+}
+
+.note-popup .np-muted {
+  color: rgba(0,0,0,.55);
+  font-weight: 600;
+}
+
+.note-popup .np-links {
+  border-top: 1px dashed rgba(0,0,0,.14);
+  padding-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.note-popup .np-linkrow {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.note-popup .np-label {
+  font: 800 12px/1 ui-sans-serif, system-ui;
+  color: rgba(0,0,0,.60);
+}
+
+.note-popup .np-a {
+  font: 700 13px/1.2 ui-sans-serif, system-ui;
+  color: #0a58ca;
+  text-decoration: underline;
+  word-break: break-all;
+}
+
+/* footer buttons */
+.note-popup .np-foot {
+  padding: 12px 16px;
+  border-top: 1px solid rgba(0,0,0,.08);
+  background: rgba(248,248,250,.95);
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.note-popup .np-btn {
+  border: 1px solid rgba(0,0,0,.15);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: 800 12px/1 ui-sans-serif, system-ui;
+  cursor: pointer;
+  background: rgba(255,255,255,.9);
+}
+
+.note-popup .np-btn-primary {
+  background: rgba(34,197,94,.16);
+  border-color: rgba(34,197,94,.35);
+}
+
+.note-popup .np-btn-secondary {
+  background: rgba(99,102,241,.12);
+  border-color: rgba(99,102,241,.28);
+}
+
+.note-popup .np-btn-danger {
+  background: rgba(239,68,68,.12);
+  border-color: rgba(239,68,68,.28);
+}
+
+/* inputs */
+.note-popup .np-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(0,0,0,.14);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: 700 14px/1.2 ui-sans-serif, system-ui;
+  background: rgba(255,255,255,.95);
+  outline: none;
+}
+
+.note-popup .np-title-input {
+  font: 900 16px/1.2 ui-sans-serif, system-ui;
+}
+
+.note-popup .np-textarea {
+  width: 100%;
+  min-height: 120px;
+  resize: vertical;
+  box-sizing: border-box;
+  border: 1px solid rgba(0,0,0,.14);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font: 650 14px/1.5 ui-sans-serif, system-ui;
+  background: rgba(255,255,255,.95);
+  outline: none;
+}
+
+.note-popup .np-row {
+  display: grid;
+  gap: 8px;
+}
+
+.note-popup .np-hint {
+  font: 700 12px/1.35 ui-sans-serif, system-ui;
+  color: rgba(0,0,0,.55);
+}
+
+/* optional admin btn */
+.notes-admin-btn {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 99999;
+  border: 1px solid rgba(0,0,0,.18);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font: 900 12px/1 ui-sans-serif, system-ui;
+  background: rgba(255,255,255,.92);
+  cursor: pointer;
+  box-shadow: 0 10px 26px rgba(0,0,0,.25);
+}
