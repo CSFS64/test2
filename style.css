@@ -988,67 +988,48 @@ body, html {
   pointer-events: auto;
 }
 
-/* ===================== Map Notes Popup 自动换行与宽度自适应 ===================== */
-
-/* 1. 强制 Leaflet 容器宽度自适应内容 */
+/* 1. 强制覆盖 Leaflet 默认的固定宽度，允许容器自适应内容 */
 .leaflet-popup-content-wrapper {
-    border-radius: 12px;
-    background: rgba(17, 23, 34, 0.95); /* 匹配你 UI 的深色背景 */
-    color: #e8edf5;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    width: auto !important;
 }
 
 .leaflet-popup-content {
-    /* 关键：取消 Leaflet 默认固定的宽度 */
+    /* 取消默认的 301px 宽度，让它根据内部 .note-popup 撑开 */
     width: auto !important; 
-    margin: 14px 18px;
+    margin: 14px 18px; /* 保持原有的内边距 */
 }
 
-/* 2. 针对 Map Note 内容的排版控制 */
+/* 2. 核心变换逻辑 */
 .note-popup {
-    /* 自动宽度逻辑：
-       - PC端内容少时收缩，内容多时最大 320px
-       - 手机端自动变为屏幕宽度的 80%，防止左右贴边
-    */
+    /* 自动宽度：内容少时收缩，内容多时最大宽度为 300px (可按需调) */
     width: auto;
-    min-width: 140px;
-    max-width: min(320px, 80vw);
-
-    /* 文字换行处理 */
-    white-space: pre-wrap;       /* 保留换行符（回车），并在空间不足时自动折行 */
-    overflow-wrap: break-word;   /* 强制长单词或无空格字符串（如链接）换行 */
-    word-wrap: break-word;       /* 兼容旧版浏览器 */
+    min-width: 120px;
+    max-width: 300px; 
     
-    font-size: 14px;
-    line-height: 1.5;
-    text-align: left;
+    /* 高度随内容自动撑开 */
+    height: auto;
+
+    /* 换行逻辑 */
+    word-wrap: break-word;       /* 兼容旧浏览器 */
+    overflow-wrap: break-word;   /* 现代浏览器：强制长单词换行 */
 }
 
-/* 3. 标题样式 */
-.note-popup div[style*="font-weight:700"],
-.note-popup-title {
-    font-size: 16px;
-    color: #ffffff;
-    margin-bottom: 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding-bottom: 4px;
+/* 3. 正文换行处理 */
+.note-content-body {
+    white-space: pre-wrap;       /* 识别你代码里的回车换行 */
+    word-break: break-word;      /* 确保文本不会溢出边界 */
 }
 
-/* 4. 链接处理：防止超长 URL 撑破容器 */
+/* 4. 链接换行处理 (防止超长 URL 撑爆白色底框) */
 .note-popup a {
-    color: #60a5fa;
-    text-decoration: none;
     display: inline-block;
     max-width: 100%;
-    overflow-wrap: break-word;
-    word-break: break-all; /* 针对超长纯字母链接强制换行 */
+    word-break: break-all;      /* 链接如果是纯字母，强制在任何地方断开换行 */
 }
 
-.note-popup a:hover {
-    text-decoration: underline;
-}
-
-/* 5. 弹窗小三角颜色同步 */
-.leaflet-popup-tip {
-    background: rgba(17, 23, 34, 0.95);
+/* 针对手机端的优化：宽度不超过屏幕的 85% */
+@media (max-width: 480px) {
+    .note-popup {
+        max-width: 85vw;
+    }
 }
