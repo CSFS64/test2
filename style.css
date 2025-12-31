@@ -981,47 +981,76 @@ body, html {
 
 
 
-/* ===================== 电脑端弹窗宽度终极修复 ===================== */
+/* ===================== Map Notes Popup 最终合并修复版 ===================== */
 
-/* 1. 核心：强制撑开 Leaflet 最外层容器 */
+/* 1. 强制覆盖 Leaflet 默认容器逻辑 */
 .leaflet-popup-content-wrapper {
-    /* 必须强制给一个比 301px 大的宽度，文字才能横向展开 */
-    width: 800px !important; 
+    /* 允许容器根据内容宽度伸缩 */
+    width: auto !important;
+    display: table !important; /* 关键：让外壳像表格一样包裹内容，防止强制拉长或变窄 */
     border-radius: 8px;
 }
 
-/* 2. 核心：强制重置 Leaflet 内容区 */
 .leaflet-popup-content {
-    /* 取消 Leaflet JS 动态分配的宽度，强制锁定 */
-    width: 410px !important; 
+    /* 取消 Leaflet 内部 JS 动态分配的宽度 */
+    width: auto !important; 
+    /* 设定电脑端最小和最大宽度 */
+    min-width: 250px !important; 
+    max-width: 800px !important; 
     margin: 15px 20px !important;
+    display: block !important;
 }
 
-/* 3. 批注内容排版 */
+/* 2. 批注内容排版 */
 .note-popup {
-    /* 此时宽度已由父级锁定，这里确保文字铺满 */
-    width: 100% !important;
+    /* 此时宽度会在 250px 到 800px 之间自适应 */
+    width: auto !important;
     display: block;
     overflow-wrap: break-word;
     word-wrap: break-word;
 }
 
-/* 4. 正文换行与间距 */
+/* 3. 正文换行与间距 */
 .note-popup-body, 
 .note-content-body {
-    white-space: pre-wrap;
-    line-height: 1.6;      /* 增加行高，宽屏阅读更舒适 */
+    white-space: pre-wrap; /* 识别代码中的回车换行 */
+    line-height: 1.6;      /* 提升宽屏阅读舒适度 */
     font-size: 14px;
     display: block;
     margin-top: 8px;
+    word-break: normal;    /* 正常单词换行 */
 }
 
-/* 5. 链接处理：防止长链接溢出 */
+/* 4. 链接处理：防止长链接撑破白框 */
 .note-popup a {
     word-break: break-all;
     display: inline-block;
     max-width: 100%;
     color: #0078ff;
+}
+
+/* 5. 移动端自适应 (识别范围到 768px) */
+@media (max-width: 768px) {
+    /* 覆盖上述所有电脑端强制宽度 */
+    .leaflet-popup-content-wrapper {
+        display: block !important; /* 手机端恢复块级布局 */
+        width: auto !important;
+    }
+
+    .leaflet-popup-content {
+        min-width: 120px !important; 
+        max-width: 85vw !important; /* 占用屏幕 85% 宽度 */
+        width: auto !important;
+    }
+
+    .note-popup {
+        max-width: 100% !important;
+    }
+
+    /* 解决手机点击交互 */
+    .leaflet-popup {
+        pointer-events: auto;
+    }
 }
 
 /* 增加识别范围到 768px (覆盖平板和手机) */
