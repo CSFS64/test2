@@ -1040,8 +1040,10 @@ body, html {
 /* 强制增加 SVG 路径的交互范围 */
 .clickable-dot {
     pointer-events: auto !important;
-    /* 即使视觉边框只有 2px，也让浏览器认为它是 20px 宽的物体在接收点击 */
+    /* 1. 依然保持 20px 的热区 */
     stroke-width: 20px; 
-    paint-order: fill; /* 这样 20px 的 stroke 会躲在 fill 下面，不影响视觉 */
-    stroke-opacity: 0; /* 让扩大的边框透明，但它依然能接收点击！ */
+    /* 2. 关键：将 stroke 放在最底层 */
+    paint-order: stroke fill markers; 
+    /* 3. 重点：stroke-opacity 设为 0 会让整个 stroke（包括那 2px 白边）都消失 */
+    /* 所以我们不能设为 0，我们要让它透明，但这样白边就没了。 */
 }
