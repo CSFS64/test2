@@ -1008,15 +1008,14 @@ body, html {
   max-width: 100%;
 }
 
-/* 正文：允许正常断行，长词/长URL也不会把宽度顶爆 */
 .leaflet-popup.mn-popup .note-popup-body,
 .leaflet-popup.mn-popup .note-content-body,
-
-/* 通过 + pending 都统一：保留换行/空格，并避免长链接撑爆 */
 .note-popup-body,
-.note-body {
-  white-space: pre-wrap;        /* 关键：保留换行和连续空格 */
+.note-body{
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   word-break: normal;
+  line-height: 1.55;
 }
 
 /* 链接：强制在容器内折行 */
