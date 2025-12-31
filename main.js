@@ -24,7 +24,7 @@ const NOTE_POPUP_OPTS = {
 const map = L.map('map', { zoomControl: false, preferCanvas: true }).setView([48.6, 37.9], 10);
 // ===== Map Note: 独立 Pane 置顶，强制 SVG 命中稳定 =====
 const mapNotePane = map.createPane('mapNotePane');
-mapNotePane.style.zIndex = 9999;          // 高于 overlayPane(400) / markerPane(600)
+mapNotePane.style.zIndex = 99;          // 高于 overlayPane(400) / markerPane(600)
 mapNotePane.style.pointerEvents = 'none';
 
 const mapNoteSvgRenderer = L.svg({ padding: 0.5 });
@@ -274,7 +274,7 @@ function setUpdateBadge(on) {
       right: 3px;
       width: 8px;
       height: 8px;
-      border-radius: 999px;
+      border-radius: 99px;
       background: #f97316;
       box-shadow: 0 0 0 2px rgba(0,0,0,.7);
     }
