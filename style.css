@@ -981,55 +981,53 @@ body, html {
 
 
 
-/* ===================== Map Notes Popup ===================== */
+/* ===================== Map Notes Popup 统一布局 ===================== */
 
-.leaflet-note-pin {
-  transform: translate(-50%, -100%);
-  pointer-events: auto;
-}
-
-/* 1. 强制覆盖 Leaflet 默认的固定宽度，允许容器自适应内容 */
+/* 1. 强制 Leaflet 容器自适应内部元素宽度 */
 .leaflet-popup-content-wrapper {
     width: auto !important;
 }
 
 .leaflet-popup-content {
-    /* 取消默认的 301px 宽度，让它根据内部 .note-popup 撑开 */
-    width: auto !important; 
-    margin: 14px 18px; /* 保持原有的内边距 */
+    /* 核心：取消 Leaflet 默认的 301px 限制，交给内部 .note-popup 控制 */
+    width: auto !important;
+    margin: 15px 20px;
 }
 
-/* 2. 核心变换逻辑 */
+/* 2. 批注内容核心逻辑 */
 .note-popup {
-    /* 自动宽度：内容少时收缩，内容多时最大宽度为 300px (可按需调) */
+    /* 宽度变换逻辑：内容少时收缩，内容多时优先横向展开直到 350px */
     width: auto;
-    min-width: 120px;
-    max-width: 300px; 
+    min-width: 200px;  /* 增加最小宽度，防止长文时显得过窄 */
+    max-width: 350px;  /* 增加最大宽度，防止卡片变得过长 */
     
-    /* 高度随内容自动撑开 */
-    height: auto;
+    height: auto;      /* 高度随文字自动撑开 */
 
-    /* 换行逻辑 */
-    word-wrap: break-word;       /* 兼容旧浏览器 */
-    overflow-wrap: break-word;   /* 现代浏览器：强制长单词换行 */
+    /* 强制换行防止溢出 */
+    overflow-wrap: break-word;
+    word-wrap: break-word;
 }
 
-/* 3. 正文换行处理 */
+/* 3. 正文与换行处理 */
+.note-popup-body, 
 .note-content-body {
-    white-space: pre-wrap;       /* 识别你代码里的回车换行 */
-    word-break: break-word;      /* 确保文本不会溢出边界 */
+    white-space: pre-wrap; /* 识别代码中的回车换行 */
+    line-height: 1.5;      /* 提升长文阅读舒适度 */
+    font-size: 14px;
+    word-break: break-word;
 }
 
-/* 4. 链接换行处理 (防止超长 URL 撑爆白色底框) */
+/* 4. 链接换行处理 */
 .note-popup a {
     display: inline-block;
     max-width: 100%;
-    word-break: break-all;      /* 链接如果是纯字母，强制在任何地方断开换行 */
+    word-break: break-all; /* 针对超长 URL 强制断行 */
 }
 
-/* 针对手机端的优化：宽度不超过屏幕的 85% */
+/* 5. 移动端自适应：防止在窄屏手机上溢出 */
 @media (max-width: 480px) {
     .note-popup {
-        max-width: 85vw;
+        min-width: 120px;   /* 手机上允许更窄的起步宽度 */
+        max-width: 80vw;    /* 占据屏幕宽度的 80% */
     }
 }
