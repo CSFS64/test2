@@ -199,12 +199,13 @@ async function loadApprovedNotes() {
 
     const mk = L.circleMarker([n.lat, n.lng], {
         pane: 'mapNotePane',
-        renderer: mapNoteSvgRenderer, // 确保这是 L.svg()
-        radius: 10,
-        color: '#ffffff',     // 视觉上的白边颜色
-        weight: 2,            // 视觉上的初始宽度
-        fillColor: '#ffff00', // 黄色填充
-        fillOpacity: 1,
+        renderer: mapNoteSvgRenderer,
+        radius: 10,           // 圆点大小
+        color: '#ffffff',     // 边框颜色：纯白
+        weight: 4,            // ★ 视觉上的白边粗细，想要更粗可以改成 5 或 6
+        opacity: 1,           // 边框不透明度
+        fillColor: '#ffff00', // 填充黄色
+        fillOpacity: 1,       // 填充不透明度
         interactive: true,
         className: 'map-note-dot' 
     }).addTo(notesLayer);
