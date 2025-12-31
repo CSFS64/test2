@@ -986,7 +986,7 @@ body, html {
 /* 1. 核心：强制撑开 Leaflet 最外层容器 */
 .leaflet-popup-content-wrapper {
     /* 必须强制给一个比 301px 大的宽度，文字才能横向展开 */
-    width: 450px !important; 
+    width: 800px !important; 
     border-radius: 8px;
 }
 
