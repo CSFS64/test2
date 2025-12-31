@@ -992,8 +992,6 @@ body, html {
 .leaflet-popup.mn-popup .leaflet-popup-content{
   margin: 12px 14px;          /* 你想要的内边距感（别再 15 20 那么大） */
   width: auto;                /* 让 Leaflet 选项决定宽 */
-  max-width: 960px;           /* 再加一道保险（和 JS maxWidth 对齐） */
-  min-width: 800px;           /* 再加一道保险（和 JS minWidth 对齐） */
   box-sizing: border-box;
 }
 
