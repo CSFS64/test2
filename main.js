@@ -2639,7 +2639,8 @@ function addPendingNoteMarker(n) {
     opacity: 0,          // stroke 完全透明
     fillOpacity: 0,      // 自己也透明
     interactive: true,   // 只有它吃点击
-    className: 'map-note-hit'
+    className: 'map-note-hit',
+    z-index: 99999999999
   }).addTo(notesLayer);
 
   // 2) 视觉层（只负责白圈+黄点）
