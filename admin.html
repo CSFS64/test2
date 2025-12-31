@@ -73,9 +73,10 @@
 
     <div class="card">
       <div class="row">
-        <button id="reload" class="btn-ok">拉取 Pending 列表</button>
+        <button id="reloadPending" class="btn-ok">拉取 Pending 列表</button>
+        <button id="reloadApproved">拉取 Approved 列表</button>
         <button id="reloadAuto">每 10 秒自动刷新：关</button>
-        <span class="muted">共 <b id="count">0</b> 条</span>
+        <span class="muted">当前：<b id="mode">pending</b>｜共 <b id="count">0</b> 条</span>
       </div>
       <div class="statusline" id="status"></div>
     </div>
@@ -100,8 +101,12 @@ const elList = document.getElementById("list");
 const elCount = document.getElementById("count");
 const btnSave = document.getElementById("save");
 const btnClear = document.getElementById("clear");
-const btnReload = document.getElementById("reload");
+const btnReloadPending = document.getElementById("reloadPending");
+const btnReloadApproved = document.getElementById("reloadApproved");
 const btnReloadAuto = document.getElementById("reloadAuto");
+const elMode = document.getElementById("mode");
+
+let currentMode = "pending"; // pending | approved
 
 elApiShow.textContent = MAP_NOTES_API;
 
@@ -147,6 +152,23 @@ async function apiGetPending() {
   return res.json();
 }
 
+async function apiGetApproved() {
+  const token = getToken();
+  if (!token) throw new Error("missing token");
+
+  const res = await fetch(`${MAP_NOTES_API}/api/admin/approved`, {
+    method: "GET",
+    headers: { "X-Admin-Token": token },
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`approved failed: ${res.status} ${text}`);
+  }
+  return res.json();
+}
+
 async function apiApprove(id) {
   const token = getToken();
   const res = await fetch(`${MAP_NOTES_API}/api/admin/approve`, {
@@ -182,11 +204,30 @@ async function apiDelete(id) {
 }
 
 function renderNote(n) {
+  const isApproved = (n.status === "approved") || (currentMode === "approved");
+
   const link = (n.link_url && n.link_text)
     ? `<div class="muted" style="margin-top:8px">🔗 <a href="${escapeHtml(n.link_url)}" target="_blank" rel="noopener">${escapeHtml(n.link_text)}</a></div>`
     : (n.link_url ? `<div class="muted" style="margin-top:8px">🔗 <a href="${escapeHtml(n.link_url)}" target="_blank" rel="noopener">${escapeHtml(n.link_url)}</a></div>` : "");
 
   const body = n.body ? `<div class="note-body">${escapeHtml(n.body)}</div>` : `<div class="muted">（无正文）</div>`;
+
+  const pill = isApproved
+    ? `<span class="pill ok">approved</span>`
+    : `<span class="pill warn">pending</span>`;
+
+  // pending：Approve + Delete
+  // approved：只显示 Delete（你要的“可以删已存在 notes”）
+  const actionsHTML = isApproved
+    ? `<button class="btn-bad" data-action="delete">❌ Delete</button>`
+    : `
+      <button class="btn-ok" data-action="approve">✅ Approve</button>
+      <button class="btn-bad" data-action="delete">❌ Delete</button>
+    `;
+
+  const hintText = isApproved
+    ? "Delete = 直接删除（会从公开地图消失）"
+    : "Approve = 变成 approved 并公开显示；Delete = 直接删除";
 
   const html = `
     <div class="card" data-id="${n.id}">
@@ -194,7 +235,7 @@ function renderNote(n) {
         <div>
           <div class="note-title">${escapeHtml(n.title || "(no title)")}</div>
           <div class="note-meta">
-            <span class="pill warn">pending</span>
+            ${pill}
             <span class="muted">id:</span> <code>${escapeHtml(n.id)}</code><br>
             <span class="muted">坐标:</span> ${Number(n.lat).toFixed(6)}, ${Number(n.lng).toFixed(6)}<br>
             <span class="muted">提交时间:</span> ${escapeHtml(fmtTime(n.created_at))}
@@ -205,11 +246,10 @@ function renderNote(n) {
 
         <div>
           <div class="row" style="justify-content:flex-end">
-            <button class="btn-ok" data-action="approve">✅ Approve</button>
-            <button class="btn-bad" data-action="delete">❌ Delete</button>
+            ${actionsHTML}
           </div>
           <div class="statusline muted" style="text-align:right;margin-top:10px">
-            Approve = 变成 approved 并公开显示；Delete = 直接删除
+            ${hintText}
           </div>
         </div>
       </div>
@@ -228,22 +268,26 @@ function escapeHtml(s) {
 }
 
 async function reload() {
-  setStatus("正在拉取 pending...");
+  elMode.textContent = currentMode;
+  setStatus(`正在拉取 ${currentMode}...`);
   elList.innerHTML = "";
   elCount.textContent = "0";
 
   try {
-    const list = await apiGetPending();
+    const list = (currentMode === "approved")
+      ? await apiGetApproved()
+      : await apiGetPending();
+
     elCount.textContent = String(list.length);
 
     if (!list.length) {
-      elList.innerHTML = `<div class="card muted">没有 pending，恭喜。</div>`;
+      elList.innerHTML = `<div class="card muted">没有 ${escapeHtml(currentMode)}。</div>`;
       setStatus("完成。");
       return;
     }
 
     elList.innerHTML = list.map(renderNote).join("");
-    setStatus(`完成：${list.length} 条 pending。点击 Approve/Delete 处理。`);
+    setStatus(`完成：${list.length} 条 ${currentMode}。`);
   } catch (e) {
     setStatus(`错误：${e.message}`);
     elList.innerHTML = `<div class="card"><span class="pill danger">ERROR</span> <span class="muted">${escapeHtml(e.message)}</span></div>`;
@@ -298,7 +342,15 @@ btnClear.addEventListener("click", () => {
   setTokenHint();
 });
 
-btnReload.addEventListener("click", reload);
+btnReloadPending.addEventListener("click", () => {
+  currentMode = "pending";
+  reload();
+});
+
+btnReloadApproved.addEventListener("click", () => {
+  currentMode = "approved";
+  reload();
+});
 
 let autoTimer = null;
 btnReloadAuto.addEventListener("click", () => {
