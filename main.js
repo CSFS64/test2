@@ -12,6 +12,13 @@ const LATEST_SEEN_KEY = 'kalyna_latest_seen_date_v1';
 
 // ===================== Map Notes =====================
 const MAP_NOTES_API = "https://map-api.20060303jjc.workers.dev"; // 你的 worker
+// popup 参数
+const NOTE_POPUP_OPTS = {
+  className: "mn-popup",
+  minWidth: 260,
+  maxWidth: 720,
+  autoPan: true
+};
 
 /* ===================== 地图初始化 ===================== */
 const map = L.map('map', { zoomControl: false, preferCanvas: true }).setView([48.6, 37.9], 10);
@@ -201,7 +208,7 @@ async function loadApprovedNotes() {
       interactive: true                    // ★ 明确开启
     }).addTo(notesLayer);
 
-    mk.bindPopup(renderNotePopupHTML(n));
+    mk.bindPopup(renderNotePopupHTML(n), NOTE_POPUP_OPTS);
     approvedNotesCache.set(n.id, mk);
   }
 }
@@ -2627,7 +2634,8 @@ function addPendingNoteMarker(n) {
     dashArray: "4 4" // pending 的视觉区别
   }).addTo(notesLayer);
 
-  mk.bindPopup(renderPendingPopupHTML(n));
+  mk.bindPopup(renderPendingPopupHTML(n), NOTE_POPUP_OPTS);
+  
   mk.openPopup();
 }
 
