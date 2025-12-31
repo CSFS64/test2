@@ -1018,6 +1018,16 @@ body, html {
   word-break: break-word;
 }
 
+.leaflet-popup.mn-popup .note-popup{
+  display: inline-block;
+  max-width: 100%;
+}
+
+.leaflet-popup.mn-popup .note-popup-body{
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 /* 4) 手机端：略窄于屏幕（比如 92vw），且不要贴边 */
 @media (max-width: 600px){
   .leaflet-popup.mn-popup .leaflet-popup-content{
