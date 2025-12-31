@@ -1038,32 +1038,27 @@ body, html {
 }
 
 /* 针对圆点的暴力热区扩充 */
-.military-note-dot {
-    /* 1. 核心：40px 隐形点击区（不准动） */
-    pointer-events: auto !important;
+/* 针对圆点的暴力热区扩充 */
+.map-note-dot {
+    /* 1. 覆盖父级 none，强制开启点击 */
+    pointer-events: auto !important; 
     cursor: pointer;
 
-    /* 2. 战术视觉：多重滤镜叠加 */
-    filter: 
-        /* 第一层：黑色硬阴影 - 把它从复杂的地图纹理中“抠”出来 */
-        drop-shadow(0 0 1px rgba(0,0,0,1)) 
-        drop-shadow(0 0 2px rgba(0,0,0,0.8))
-        /* 第二层：纯白光边 - 模拟金属边框或高亮边 */
-        drop-shadow(0 0 1.5px #ffffff) 
-        /* 第三层：战术黄色微光 - 增加“通电”感，像战场显示器上的图标 */
-        drop-shadow(0 0 5px rgba(255, 215, 0, 0.6));
+    /* 2. 关键：把描边宽度设为 40px（这就是你的点击热区） */
+    stroke-width: 40px !important; 
+    
+    /* 3. 重点：虽然描边有 40px 宽，但我们要让它完全透明 */
+    /* 这样它就是一个看不见的巨大按钮，但依然能响应 Leaflet 的点击 */
+    stroke-opacity: 0 !important;
 
-    /* 增加动画：轻微的呼吸感，让它像是在实时传输数据的点 */
-    animation: tactical-pulse 2s infinite ease-in-out;
+    /* 4. 视觉补偿：既然描边被拿去做热区了，白边改用 CSS 的外边框模拟 */
+    /* 这样你的白边极其锐利，且不会随缩放变色 */
+    paint-order: fill;
+    box-shadow: 0 0 0 4px #ffffff; /* 这里 4px 就是你想要的清晰白边 */
+    border-radius: 50%;
 }
 
-@keyframes tactical-pulse {
-    0% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.85; transform: scale(1.05); }
-    100% { opacity: 1; transform: scale(1); }
-}
-
-/* 消除手机点击蓝框 */
+/* 消除手机点击时的系统高亮蓝框，防止误导 */
 .leaflet-container {
     -webkit-tap-highlight-color: transparent;
 }
