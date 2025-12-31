@@ -981,52 +981,51 @@ body, html {
 
 
 
-/* ===== Leaflet popup：不要动 wrapper，让 Leaflet 自己算 ===== */
+/* 1) 不要让 wrapper inline-block/shrink-to-fit */
 .leaflet-popup-content-wrapper{
+  display: block !important;
   width: auto !important;
-  display: block !important;          /* 关键：别 inline-block */
 }
 
-/* Leaflet 默认 content 会被各种规则影响，统一接管宽度 */
+/* 2) 核心：最小宽度 + 最大宽度 + “优先撑宽” */
 .leaflet-popup-content{
   margin: 14px 16px !important;
-
-  /* 关键：给一个“目标宽度”，再设上限/下限 */
-  width: min(560px, 92vw) !important; /* 电脑默认先撑到这个宽度 */
-  max-width: min(760px, 92vw) !important;
-  min-width: 320px !important;        /* 关键：防止竖条 */
   box-sizing: border-box !important;
 
-  overflow: visible !important;       /* 防止内部滚动把宽度算崩 */
+  /* 你要的最小/最大宽度（桌面） */
+  --minW: 360px;
+  --maxW: 760px;
+
+  /* 先尽量撑宽：默认取 maxW，但别超过视口 */
+  width: min(var(--maxW), 92vw) !important;
+
+  /* 同时给出硬边界：防止变细条 */
+  min-width: var(--minW) !important;
+  max-width: min(var(--maxW), 92vw) !important;
+
+  /* 高度不限制：不做内部滚动 */
+  overflow: visible !important;
+  max-height: none !important;
 }
 
-/* 你的内容容器跟着 content 走 */
-.note-popup{
+/* 3) 内容层正常换行：宽度满了就往下长 */
+.note-popup,
+.note-popup-body,
+.note-content-body{
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-}
-
-/* 正文换行策略：正常按词换行；遇到超长串才断 */
-.note-popup-body,
-.note-content-body,
-.note-popup{
   white-space: pre-wrap;
   word-break: normal;
-  overflow-wrap: anywhere;            /* 关键：长串不会撑破 */
+  overflow-wrap: anywhere; /* 超长串也不会撑破宽度 */
   line-height: 1.6;
 }
 
-/* 链接别 break-all（会让排版更碎），用 anywhere 即可 */
-.note-popup a{
-  overflow-wrap: anywhere;
-}
-
-/* 手机端：略窄于屏幕 */
+/* 4) 手机：略窄于屏幕 */
 @media (max-width: 600px){
   .leaflet-popup-content{
     width: 88vw !important;
     max-width: 88vw !important;
-    min-width: 0 !important;          /* 手机允许更窄 */
+    min-width: 0 !important;   /* 手机允许更窄 */
   }
 }
