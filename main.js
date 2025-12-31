@@ -203,7 +203,7 @@ async function loadApprovedNotes() {
         radius: 10,           // 圆点大小
         color: '#ffffff',     // 边框颜色：纯白
         weight: 4,            // ★ 视觉上的白边粗细，想要更粗可以改成 5 或 6
-        opacity: 1,           // 边框不透明度
+        opacity: 0.7,           // 边框不透明度
         fillColor: '#ffff00', // 填充黄色
         fillOpacity: 1,       // 填充不透明度
         interactive: true,
