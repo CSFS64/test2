@@ -1041,7 +1041,7 @@ body, html {
 .clickable-dot {
     pointer-events: auto !important;
     /* 1. 依然保持 20px 的热区 */
-    stroke-width: 20px; 
+    stroke-width: 5px; 
     /* 2. 关键：将 stroke 放在最底层 */
     paint-order: stroke fill markers; 
     /* 3. 重点：stroke-opacity 设为 0 会让整个 stroke（包括那 2px 白边）都消失 */
