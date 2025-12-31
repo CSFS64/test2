@@ -981,51 +981,53 @@ body, html {
 
 
 
-/* 1) 不要让 wrapper inline-block/shrink-to-fit */
+/* ========= 叶子弹窗：短文本窄，长文本先变宽再变高 ========= */
+
+/* 1) 用 wrapper 的 padding 保持 Leaflet 原本那种“内边距感” */
 .leaflet-popup-content-wrapper{
-  display: block !important;
+  padding: 14px 16px !important;   /* 你想要的视觉间距放这里 */
+  display: inline-block !important; /* 让整体能随内容收缩 */
   width: auto !important;
+  max-width: min(760px, 92vw) !important; /* 桌面最大宽度 + 视口兜底 */
+  box-sizing: border-box !important;
 }
 
-/* 2) 核心：最小宽度 + 最大宽度 + “优先撑宽” */
+/* 2) 把 Leaflet 默认给 content 的 margin 干掉，否则会影响“首尾行间距感” */
 .leaflet-popup-content{
-  margin: 14px 16px !important;
+  margin: 0 !important;           /* 关键：避免你说的首尾 margin 变化 */
+  padding: 0 !important;
   box-sizing: border-box !important;
 
-  /* 你要的最小/最大宽度（桌面） */
-  --minW: 360px;
-  --maxW: 760px;
+  /* 核心：宽度随内容，但限制在 min~max */
+  width: fit-content !important;  /* 短文本不再被强行撑宽 */
+  max-width: min(760px, 92vw) !important;
+  min-width: 320px !important;    /* 你要的最小宽度（桌面） */
 
-  /* 先尽量撑宽：默认取 maxW，但别超过视口 */
-  width: min(var(--maxW), 92vw) !important;
-
-  /* 同时给出硬边界：防止变细条 */
-  min-width: var(--minW) !important;
-  max-width: min(var(--maxW), 92vw) !important;
-
-  /* 高度不限制：不做内部滚动 */
-  overflow: visible !important;
+  /* 高度不限制：内容自己往下长 */
   max-height: none !important;
+  overflow: visible !important;
 }
 
-/* 3) 内容层正常换行：宽度满了就往下长 */
+/* 3) 内容换行规则：宽度到上限后就往下长，不溢出 */
 .note-popup,
 .note-popup-body,
 .note-content-body{
-  width: 100%;
   max-width: 100%;
   box-sizing: border-box;
   white-space: pre-wrap;
   word-break: normal;
-  overflow-wrap: anywhere; /* 超长串也不会撑破宽度 */
+  overflow-wrap: anywhere; /* 超长无空格串也不撑破 */
   line-height: 1.6;
 }
 
-/* 4) 手机：略窄于屏幕 */
+/* 4) 手机：略窄于屏幕，并允许更小的最小宽度 */
 @media (max-width: 600px){
+  .leaflet-popup-content-wrapper{
+    max-width: 88vw !important;  /* 略窄于屏幕 */
+    padding: 12px 12px !important;
+  }
   .leaflet-popup-content{
-    width: 88vw !important;
+    min-width: 0 !important;
     max-width: 88vw !important;
-    min-width: 0 !important;   /* 手机允许更窄 */
   }
 }
