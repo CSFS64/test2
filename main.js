@@ -2349,8 +2349,8 @@ map.getContainer().addEventListener('contextmenu', (ev) => {
 }, { passive: false });
 
 // —— 移动端：长按 —— //
-let __lpTimer = null;
-let __lpLatLng = null;
+//let __lpTimer = null;
+//let __lpLatLng = null;
 
 map.on('touchstart', (e) => {
   if (drawActive) return; // 绘图时禁用长按生成坐标
