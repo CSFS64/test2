@@ -981,53 +981,55 @@ body, html {
 
 
 
-/* ========= 叶子弹窗：短文本窄，长文本先变宽再变高 ========= */
+/* ======= 只影响我们的 note popup（通过 className: "mn-popup"）======= */
 
-/* 1) 用 wrapper 的 padding 保持 Leaflet 原本那种“内边距感” */
-.leaflet-popup-content-wrapper{
-  padding: 14px 16px !important;   /* 你想要的视觉间距放这里 */
-  display: inline-block !important; /* 让整体能随内容收缩 */
-  width: auto !important;
-  max-width: min(760px, 92vw) !important; /* 桌面最大宽度 + 视口兜底 */
-  box-sizing: border-box !important;
+/* 1) 不要动 wrapper 的 width，让 Leaflet 用 minWidth/maxWidth 算 */
+.leaflet-popup.mn-popup .leaflet-popup-content-wrapper{
+  border-radius: 10px;
 }
 
-/* 2) 把 Leaflet 默认给 content 的 margin 干掉，否则会影响“首尾行间距感” */
-.leaflet-popup-content{
-  margin: 0 !important;           /* 关键：避免你说的首尾 margin 变化 */
-  padding: 0 !important;
-  box-sizing: border-box !important;
-
-  /* 核心：宽度随内容，但限制在 min~max */
-  width: fit-content !important;  /* 短文本不再被强行撑宽 */
-  max-width: min(760px, 92vw) !important;
-  min-width: 320px !important;    /* 你要的最小宽度（桌面） */
-
-  /* 高度不限制：内容自己往下长 */
-  max-height: none !important;
-  overflow: visible !important;
-}
-
-/* 3) 内容换行规则：宽度到上限后就往下长，不溢出 */
-.note-popup,
-.note-popup-body,
-.note-content-body{
-  max-width: 100%;
+/* 2) 内容区：别用大 margin，避免“第一行/最后一行间距怪” */
+.leaflet-popup.mn-popup .leaflet-popup-content{
+  margin: 12px 14px;          /* 你想要的内边距感（别再 15 20 那么大） */
+  width: auto;                /* 让 Leaflet 选项决定宽 */
+  max-width: 720px;           /* 再加一道保险（和 JS maxWidth 对齐） */
+  min-width: 260px;           /* 再加一道保险（和 JS minWidth 对齐） */
   box-sizing: border-box;
-  white-space: pre-wrap;
-  word-break: normal;
-  overflow-wrap: anywhere; /* 超长无空格串也不撑破 */
-  line-height: 1.6;
 }
 
-/* 4) 手机：略窄于屏幕，并允许更小的最小宽度 */
+/* 3) 让内容“先吃满宽度，再向下长”（核心：正常换行 + 不溢出） */
+.leaflet-popup.mn-popup .note-popup,
+.leaflet-popup.mn-popup .note-popup *{
+  box-sizing: border-box;
+}
+
+.leaflet-popup.mn-popup .note-popup{
+  display: block;
+  max-width: 100%;
+}
+
+/* 正文：允许正常断行，长词/长URL也不会把宽度顶爆 */
+.leaflet-popup.mn-popup .note-popup-body,
+.leaflet-popup.mn-popup .note-content-body,
+.leaflet-popup.mn-popup .note-popup div{
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;     /* 比 break-word 更狠：保证不撑爆 */
+  word-break: normal;
+  line-height: 1.55;
+}
+
+/* 链接：强制在容器内折行 */
+.leaflet-popup.mn-popup a{
+  display: inline;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* 4) 手机端：略窄于屏幕（比如 92vw），且不要贴边 */
 @media (max-width: 600px){
-  .leaflet-popup-content-wrapper{
-    max-width: 88vw !important;  /* 略窄于屏幕 */
-    padding: 12px 12px !important;
-  }
-  .leaflet-popup-content{
-    min-width: 0 !important;
-    max-width: 88vw !important;
+  .leaflet-popup.mn-popup .leaflet-popup-content{
+    max-width: 92vw;
+    min-width: 180px;
+    margin: 10px 12px;
   }
 }
