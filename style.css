@@ -1036,3 +1036,12 @@ body, html {
     margin: 10px 12px;
   }
 }
+
+/* 强制增加 SVG 路径的交互范围 */
+.clickable-dot {
+    pointer-events: auto !important;
+    /* 即使视觉边框只有 2px，也让浏览器认为它是 20px 宽的物体在接收点击 */
+    stroke-width: 20px; 
+    paint-order: fill; /* 这样 20px 的 stroke 会躲在 fill 下面，不影响视觉 */
+    stroke-opacity: 0; /* 让扩大的边框透明，但它依然能接收点击！ */
+}
