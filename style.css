@@ -1039,22 +1039,20 @@ body, html {
 
 /* 针对圆点的暴力热区扩充 */
 .map-note-dot {
-    /* 1. 覆盖父级 none，强制开启点击 */
-    pointer-events: auto !important; 
+    /* 1. 强制开启交互，响应那 40px 的 stroke 区域 */
+    pointer-events: auto !important;
     cursor: pointer;
 
-    /* 2. 关键：把描边宽度设为 40px（这就是你的点击热区） */
-    stroke-width: 20px !important; 
+    /* 2. 关键：利用多重滤镜生成 4px 的清晰纯白边 */
+    /* 0.5px 的模糊度能保证边缘锐利，多重叠加能保证白色纯净 */
+    filter: drop-shadow(0 0 0.5px #ffffff) 
+            drop-shadow(0 0 0.5px #ffffff) 
+            drop-shadow(0 0 0.5px #ffffff)
+            drop-shadow(0 0 0.5px #ffffff)
+            drop-shadow(0 0 0.5px #ffffff);
     
-    /* 3. 重点：虽然描边有 40px 宽，但我们要让它完全透明 */
-    /* 这样它就是一个看不见的巨大按钮，但依然能响应 Leaflet 的点击 */
-    stroke-opacity: 0 !important;
-
-    /* 4. 视觉补偿：既然描边被拿去做热区了，白边改用 CSS 的外边框模拟 */
-    /* 这样你的白边极其锐利，且不会随缩放变色 */
-    paint-order: fill;
-    box-shadow: 0 0 0 4px #ffffff; /* 这里 4px 就是你想要的清晰白边 */
-    border-radius: 50%;
+    /* 3. 确保在移动端点击时不闪烁 */
+    -webkit-tap-highlight-color: transparent;
 }
 
 /* 消除手机点击时的系统高亮蓝框，防止误导 */
