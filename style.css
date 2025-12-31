@@ -1053,3 +1053,29 @@ body, html {
     /* 4. 消除移动端点击高亮蓝框（可选，为了美观） */
     -webkit-tap-highlight-color: transparent;
 }
+
+/* 针对 PNG Marker 的超大点击热区优化 */
+.mn-png-marker {
+  /* 1. 核心：通过 padding 撑开透明点击区域 */
+  padding: 20px !important;
+  
+  /* 2. 修正：因为增加了 20px padding，必须重新计算偏移量 */
+  /* 计算公式：-(iconSize的一半 + padding) = -(16 + 20) = -36 */
+  margin-left: -36px !important; 
+  margin-top: -36px !important; 
+  
+  pointer-events: auto !important;
+  cursor: pointer;
+  
+  /* 3. 消除手机端点击时的系统高亮色 */
+  -webkit-tap-highlight-color: transparent;
+  
+  /* 4. (可选) 增加一点阴影让白边更好看 */
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+
+/* 手机端点击反馈 */
+.mn-png-marker:active {
+  transform: scale(0.9) !important;
+  opacity: 0.8;
+}
