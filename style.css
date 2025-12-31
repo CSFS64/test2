@@ -998,8 +998,8 @@ body, html {
 .note-popup {
     /* 宽度变换逻辑：内容少时收缩，内容多时优先横向展开直到 350px */
     width: auto;
-    min-width: 200px;  /* 增加最小宽度，防止长文时显得过窄 */
-    max-width: 350px;  /* 增加最大宽度，防止卡片变得过长 */
+    min-width: 150px;  /* 增加最小宽度，防止长文时显得过窄 */
+    max-width: 750px;  /* 增加最大宽度，防止卡片变得过长 */
     
     height: auto;      /* 高度随文字自动撑开 */
 
