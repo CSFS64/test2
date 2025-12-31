@@ -15,7 +15,8 @@ const MAP_NOTES_API = "https://map-api.20060303jjc.workers.dev"; // 你的 worke
 // popup 参数
 const NOTE_POPUP_OPTS = {
   className: "mn-popup",
-  maxWidth: 480,
+  minWidth: 480,
+  maxWidth: 900,
   autoPan: true
 };
 
