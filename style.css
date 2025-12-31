@@ -1022,7 +1022,6 @@ body, html {
 .note-popup-body,
 .note-body {
   white-space: pre-wrap;        /* 关键：保留换行和连续空格 */
-  overflow-wrap: anywhere;      /* 关键：长 URL/长词不会顶爆 */
   word-break: normal;
 }
 
