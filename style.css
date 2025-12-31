@@ -981,74 +981,55 @@ body, html {
 
 
 
-/* ===================== Map Notes Popup 最终合并修复版 ===================== */
+/* ===================== 电脑端弹窗：自动伸缩逻辑修复 ===================== */
 
-/* 1. 强制覆盖 Leaflet 默认容器逻辑 */
+/* 1. 允许最外层容器根据内容宽度自动伸缩，但设定上限 */
 .leaflet-popup-content-wrapper {
-    /* 允许容器根据内容宽度伸缩 */
-    width: auto !important;
-    display: table !important; /* 关键：让外壳像表格一样包裹内容，防止强制拉长或变窄 */
+    /* 关键：使用 min-content 结合宽度自适应 */
+    width: auto !important; 
+    display: inline-block !important; /* 允许容器根据内部元素宽度收缩 */
     border-radius: 8px;
 }
 
 .leaflet-popup-content {
-    /* 取消 Leaflet 内部 JS 动态分配的宽度 */
-    width: auto !important; 
-    /* 设定电脑端最小和最大宽度 */
-    min-width: 250px !important; 
-    max-width: 800px !important; 
+    /* 关键：取消固定宽度，改用 max-width */
+    width: auto !important;
+    min-width: 150px !important;  /* 设置最小宽度，防止极短文本时太寒酸 */
+    max-width: 550px !important;  /* 这是你想要的“再大一点”的电脑端上限 */
     margin: 15px 20px !important;
     display: block !important;
 }
 
-/* 2. 批注内容排版 */
+/* 2. 批注内容层 */
 .note-popup {
-    /* 此时宽度会在 250px 到 800px 之间自适应 */
-    width: auto !important;
+    /* 确保内部容器不会强制撑开父级，而是适应父级 */
     display: block;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
+    width: auto;
 }
 
-/* 3. 正文换行与间距 */
+/* 3. 正文与换行 */
 .note-popup-body, 
 .note-content-body {
-    white-space: pre-wrap; /* 识别代码中的回车换行 */
-    line-height: 1.6;      /* 提升宽屏阅读舒适度 */
+    white-space: pre-wrap;
+    line-height: 1.6;
     font-size: 14px;
+    /* 核心逻辑：允许文字在达到 max-width 之前尽可能在一行展示 */
     display: block;
-    margin-top: 8px;
-    word-break: normal;    /* 正常单词换行 */
+    word-break: normal;       /* 正常单词换行 */
+    overflow-wrap: break-word; /* 防止长单词溢出 */
 }
 
-/* 4. 链接处理：防止长链接撑破白框 */
+/* 4. 链接处理 */
 .note-popup a {
     word-break: break-all;
     display: inline-block;
     max-width: 100%;
-    color: #0078ff;
 }
 
-/* 5. 移动端自适应 (识别范围到 768px) */
-@media (max-width: 768px) {
-    /* 覆盖上述所有电脑端强制宽度 */
-    .leaflet-popup-content-wrapper {
-        display: block !important; /* 手机端恢复块级布局 */
-        width: auto !important;
-    }
-
+/* 5. 手机端逻辑：依然保持屏幕 85% */
+@media (max-width: 600px) {
     .leaflet-popup-content {
-        min-width: 120px !important; 
-        max-width: 85vw !important; /* 占用屏幕 85% 宽度 */
-        width: auto !important;
-    }
-
-    .note-popup {
-        max-width: 100% !important;
-    }
-
-    /* 解决手机点击交互 */
-    .leaflet-popup {
-        pointer-events: auto;
+        max-width: 85vw !important;
+        min-width: 120px !important;
     }
 }
