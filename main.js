@@ -2629,11 +2629,16 @@ async function onMapClickCreateMapNote(e) {
 
 function addPendingNoteMarker(n) {
   const mk = L.circleMarker([n.lat, n.lng], {
-    radius: 7,
-    weight: 2,
-    opacity: 1,
-    fillOpacity: 0.7,
-    dashArray: "4 4" // pending 的视觉区别
+      pane: 'mapNotePane',
+      renderer: mapNoteSvgRenderer,
+      radius: 10,
+      color: '#ffffff',     // 纯白边
+      weight: 4,            // 清晰的 4px 粗度
+      opacity: 1,
+      fillColor: '#ffff00', 
+      fillOpacity: 1,
+      interactive: true,
+      className: 'map-note-dot' 
   }).addTo(notesLayer);
 
   mk.bindPopup(renderPendingPopupHTML(n), NOTE_POPUP_OPTS);
