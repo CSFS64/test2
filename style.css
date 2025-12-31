@@ -1038,20 +1038,9 @@ body, html {
 }
 
 .map-note-dot {
-    /* 1. 确保它是交互核心 */
     pointer-events: auto !important;
     cursor: pointer;
-
-    /* 2. 强制让描边（白边）在手机端变得极其灵敏 */
-    /* 我们把 stroke-width 设大，但在视觉上我们要处理它 */
-    stroke-width: 20px !important; 
-
-    /* 3. 关键：确保黄色圆点压在白边上面，防止白边向内扩张蚕食黄色部分 */
+    stroke-width: 10px !important; 
     paint-order: stroke fill;
-
-    /* 4. 如何让 25px 的 stroke 看起来只有 4px 且清晰？ */
-    /* 我们利用一个简单的技巧：让 stroke 带上一层极淡的透明度，或者直接利用颜色重叠 */
-    /* 最稳妥的清晰方案：直接让边框保持白色，但通过 clip-path 是做不到的。 */
-    /* 推荐：直接让 stroke 变成半透明，这样圆心边缘是实白，外围是淡白热区 */
     stroke-opacity: 0.5 !important; 
 }
