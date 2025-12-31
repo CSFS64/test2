@@ -981,53 +981,61 @@ body, html {
 
 
 
-/* ===================== Map Notes Popup 统一布局 ===================== */
+/* ===================== Map Notes Popup 修复版 ===================== */
 
-/* 1. 强制 Leaflet 容器自适应内部元素宽度 */
+/* 1. 强制 Leaflet 容器自适应内部宽度 */
 .leaflet-popup-content-wrapper {
     width: auto !important;
 }
 
 .leaflet-popup-content {
-    /* 核心：取消 Leaflet 默认的 301px 限制，交给内部 .note-popup 控制 */
     width: auto !important;
     margin: 15px 20px;
 }
 
-/* 2. 批注内容核心逻辑 */
+/* 2. 核心变换逻辑 */
 .note-popup {
-    /* 宽度变换逻辑：内容少时收缩，内容多时优先横向展开直到 350px */
+    /* 电脑端逻辑 */
     width: auto;
-    min-width: 500px;  /* 增加最小宽度，防止长文时显得过窄 */
-    max-width: 750px;  /* 增加最大宽度，防止卡片变得过长 */
+    /* 最小宽度不要设太大，否则容易在小屏上崩溃 */
+    min-width: 250px;   
+    /* 你想要电脑端大一点，这里设为 750px */
+    max-width: 750px;   
     
-    height: auto;      /* 高度随文字自动撑开 */
-
-    /* 强制换行防止溢出 */
+    height: auto;
     overflow-wrap: break-word;
     word-wrap: break-word;
 }
 
-/* 3. 正文与换行处理 */
+/* 3. 正文处理 */
 .note-popup-body, 
 .note-content-body {
-    white-space: pre-wrap; /* 识别代码中的回车换行 */
-    line-height: 1.5;      /* 提升长文阅读舒适度 */
+    white-space: pre-wrap; 
+    line-height: 1.5;      
     font-size: 14px;
     word-break: break-word;
 }
 
-/* 4. 链接换行处理 */
+/* 4. 链接处理 */
 .note-popup a {
     display: inline-block;
     max-width: 100%;
-    word-break: break-all; /* 针对超长 URL 强制断行 */
+    word-break: break-all;
 }
 
-/* 5. 移动端自适应：防止在窄屏手机上溢出 */
-@media (max-width: 480px) {
+/* 5. 移动端强制适配 - 解决手机点不开和变窄的问题 */
+/* 增加识别范围到 768px (覆盖平板和手机) */
+@media (max-width: 768px) {
     .note-popup {
-        min-width: 120px;   /* 手机上允许更窄的起步宽度 */
-        max-width: 80vw;    /* 占据屏幕宽度的 80% */
+        /* 手机端必须重置掉 500px 的限制 */
+        min-width: 120px !important; 
+        width: auto !important;
+        /* 响应你之前的要求：85% 宽度 */
+        max-width: 85vw !important; 
+    }
+    
+    /* 解决手机点击：确保弹窗和 Pin 不拦截点击事件 */
+    .leaflet-popup {
+        pointer-events: auto;
     }
 }
