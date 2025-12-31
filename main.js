@@ -2632,12 +2632,13 @@ function addPendingNoteMarker(n) {
       pane: 'mapNotePane',
       renderer: mapNoteSvgRenderer,
       radius: 10,
-      stroke: true,      // 必须开启 stroke，CSS 才能扩充热区
-      weight: 0,         // JS 不画边框，交给 CSS 的 box-shadow
+      stroke: true,      
+      weight: 40,        // ★ 核心：这就是你的 40px 巨型点击热区
+      color: 'transparent', // 让热区透明，不挡住视线
       fillColor: '#ffff00', 
       fillOpacity: 1,
       interactive: true,
-      className: 'map-note-dot' // 关键类名
+      className: 'map-note-dot' 
   }).addTo(notesLayer);
 
   mk.bindPopup(renderPendingPopupHTML(n), NOTE_POPUP_OPTS);
