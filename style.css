@@ -981,55 +981,52 @@ body, html {
 
 
 
-/* ===================== 电脑端弹窗：自动伸缩逻辑修复 ===================== */
-
-/* 1. 允许最外层容器根据内容宽度自动伸缩，但设定上限 */
-.leaflet-popup-content-wrapper {
-    /* 关键：使用 min-content 结合宽度自适应 */
-    width: auto !important; 
-    display: inline-block !important; /* 允许容器根据内部元素宽度收缩 */
-    border-radius: 8px;
+/* ===== Leaflet popup：不要动 wrapper，让 Leaflet 自己算 ===== */
+.leaflet-popup-content-wrapper{
+  width: auto !important;
+  display: block !important;          /* 关键：别 inline-block */
 }
 
-.leaflet-popup-content {
-    /* 关键：取消固定宽度，改用 max-width */
-    width: auto !important;
-    min-width: 150px !important;  /* 设置最小宽度，防止极短文本时太寒酸 */
-    max-width: 1000px !important;  /* 这是你想要的“再大一点”的电脑端上限 */
-    margin: 15px 20px !important;
-    display: block !important;
+/* Leaflet 默认 content 会被各种规则影响，统一接管宽度 */
+.leaflet-popup-content{
+  margin: 14px 16px !important;
+
+  /* 关键：给一个“目标宽度”，再设上限/下限 */
+  width: min(560px, 92vw) !important; /* 电脑默认先撑到这个宽度 */
+  max-width: min(760px, 92vw) !important;
+  min-width: 320px !important;        /* 关键：防止竖条 */
+  box-sizing: border-box !important;
+
+  overflow: visible !important;       /* 防止内部滚动把宽度算崩 */
 }
 
-/* 2. 批注内容层 */
-.note-popup {
-    /* 确保内部容器不会强制撑开父级，而是适应父级 */
-    display: block;
-    width: auto;
+/* 你的内容容器跟着 content 走 */
+.note-popup{
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
-/* 3. 正文与换行 */
-.note-popup-body, 
-.note-content-body {
-    white-space: pre-wrap;
-    line-height: 1.6;
-    font-size: 14px;
-    /* 核心逻辑：允许文字在达到 max-width 之前尽可能在一行展示 */
-    display: block;
-    word-break: normal;       /* 正常单词换行 */
-    overflow-wrap: break-word; /* 防止长单词溢出 */
+/* 正文换行策略：正常按词换行；遇到超长串才断 */
+.note-popup-body,
+.note-content-body,
+.note-popup{
+  white-space: pre-wrap;
+  word-break: normal;
+  overflow-wrap: anywhere;            /* 关键：长串不会撑破 */
+  line-height: 1.6;
 }
 
-/* 4. 链接处理 */
-.note-popup a {
-    word-break: break-all;
-    display: inline-block;
-    max-width: 100%;
+/* 链接别 break-all（会让排版更碎），用 anywhere 即可 */
+.note-popup a{
+  overflow-wrap: anywhere;
 }
 
-/* 5. 手机端逻辑：依然保持屏幕 85% */
-@media (max-width: 600px) {
-    .leaflet-popup-content {
-        max-width: 85vw !important;
-        min-width: 120px !important;
-    }
+/* 手机端：略窄于屏幕 */
+@media (max-width: 600px){
+  .leaflet-popup-content{
+    width: 88vw !important;
+    max-width: 88vw !important;
+    min-width: 0 !important;          /* 手机允许更窄 */
+  }
 }
