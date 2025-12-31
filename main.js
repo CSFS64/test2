@@ -217,14 +217,15 @@ function renderNotePopupHTML(n) {
   const linkText = esc(n.link_text || "");
   const linkUrl = esc(n.link_url || "");
 
+  // 如果有链接，生成链接 HTML，类名方便 CSS 控制换行
   const linkHTML = (linkUrl)
-    ? `<div style="margin-top:6px"><a href="${linkUrl}" target="_blank" rel="noopener">${linkText || linkUrl}</a></div>`
+    ? `<div class="note-popup-link"><a href="${linkUrl}" target="_blank" rel="noopener">${linkText || linkUrl}</a></div>`
     : "";
 
   return `
     <div class="note-popup">
-      <div style="font-weight:700;margin-bottom:6px">${title}</div>
-      ${body ? `<div style="white-space:pre-wrap;opacity:.95">${body}</div>` : ""}
+      <div class="note-popup-title">${title}</div>
+      ${body ? `<div class="note-popup-body">${body}</div>` : ""}
       ${linkHTML}
     </div>
   `;
