@@ -200,7 +200,7 @@ async function loadApprovedNotes() {
     const mk = L.circleMarker([n.lat, n.lng], {
         pane: 'mapNotePane',
         renderer: mapNoteSvgRenderer,
-        radius: 14,
+        radius: 10,
         weight: 15,            // ★ 技巧：增大 weight
         color: 'transparent',  // ★ 把加宽的边框设为透明，作为隐藏的点击热区
         fillColor: '#ff0000',  // 你的实际颜色
