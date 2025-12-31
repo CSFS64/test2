@@ -201,18 +201,12 @@ async function loadApprovedNotes() {
         pane: 'mapNotePane',
         renderer: mapNoteSvgRenderer,
         radius: 10,
-        
-        // 边框设置
-        color: '#FFFFFF',      // 白色边框
-        weight: 3,             // 边框宽度（如果你仍需要超大热区，可以设大，但颜色就不能是白色了）
-        opacity: 1,            // 边框不透明度
-        
-        // 填充设置
-        fillColor: '#FFD700',  // 金黄色 (或用 'yellow')
-        fillOpacity: 0.8,      // 填充不透明度
-        
+        color: '#ffffff',
+        weight: 2,           // 视觉上的细白边
+        fillColor: '#ffff00',
+        fillOpacity: 0.8,
         interactive: true,
-        bubblingMouseEvents: true
+        className: 'clickable-dot' // 关键：添加类名
     }).addTo(notesLayer);
 
     mk.bindPopup(renderNotePopupHTML(n), NOTE_POPUP_OPTS);
