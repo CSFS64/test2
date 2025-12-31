@@ -1052,19 +1052,3 @@ body, html {
         pointer-events: auto;
     }
 }
-
-/* 增加识别范围到 768px (覆盖平板和手机) */
-@media (max-width: 768px) {
-    .note-popup {
-        /* 手机端必须重置掉 500px 的限制 */
-        min-width: 120px !important; 
-        width: auto !important;
-        /* 响应你之前的要求：85% 宽度 */
-        max-width: 85vw !important; 
-    }
-    
-    /* 解决手机点击：确保弹窗和 Pin 不拦截点击事件 */
-    .leaflet-popup {
-        pointer-events: auto;
-    }
-}
