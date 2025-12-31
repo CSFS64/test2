@@ -797,7 +797,7 @@ if (closeGeoBtn){
     const css = document.createElement('style');
     css.textContent = `
     .trench-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-      z-index:99;pointer-events:none;opacity:0;transition:opacity .25s ease}
+      z-index:9999;pointer-events:none;opacity:0;transition:opacity .25s ease}
     .trench-loading.show{opacity:1}
     .trench-loading.hidden{display:none}
     .trench-loading__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.35);backdrop-filter: blur(3px)}
