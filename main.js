@@ -2643,7 +2643,7 @@ function renderPendingPopupHTML(n) {
     <div class="note-popup">
       <div style="font-weight:700;margin-bottom:6px">${esc(n.title)}</div>
       <div style="opacity:.75;margin-bottom:6px">状态：pending（待审核）</div>
-      ${n.body ? `<div style="white-space:pre-wrap;opacity:.95">${esc(n.body)}</div>` : ""}
+      ${n.body ? `<pre class="note-body" style="opacity:.95;margin:6px 0 0;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;">${esc(n.body)}</pre>` : ""}
       ${(n.link_url) ? `<div style="margin-top:6px"><a href="${esc(n.link_url)}" target="_blank" rel="noopener">${esc(n.link_text || n.link_url)}</a></div>` : ""}
       ${canEdit ? `<button data-note-edit="${esc(n.id)}" style="margin-top:10px">Edit</button>` : ""}
     </div>
@@ -2805,7 +2805,7 @@ function ensureMapNoteModal(){
     const submit  = el.querySelector('#mn-submit');
 
     const title = (titleEl.value || '').trim();
-    const body  = (bodyEl.value || '').trim();
+    const body = bodyEl.value ?? "";
     const link_url  = (urlEl.value || '').trim();
     const link_text = (textEl.value || '').trim();
 
