@@ -2631,14 +2631,14 @@ function addPendingNoteMarker(n) {
   const mk = L.circleMarker([n.lat, n.lng], {
       pane: 'mapNotePane',
       renderer: mapNoteSvgRenderer,
-      radius: 10,
+      radius: 8,          // 稍微缩小一点，显得更精细
       stroke: true,      
-      weight: 40,        // ★ 核心：这就是你的 40px 巨型点击热区
-      color: 'transparent', // 让热区透明，不挡住视线
-      fillColor: '#ffff00', 
+      weight: 40,         // ★ 保持 40px 手机巨型热区
+      color: 'transparent', 
+      fillColor: '#FFD700', // 使用更亮一点的战术金黄
       fillOpacity: 1,
       interactive: true,
-      className: 'map-note-dot' 
+      className: 'military-note-dot' // 换个类名
   }).addTo(notesLayer);
 
   mk.bindPopup(renderPendingPopupHTML(n), NOTE_POPUP_OPTS);
