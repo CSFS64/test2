@@ -981,58 +981,55 @@ body, html {
 
 
 
-/* ======= 只影响我们的 note popup（通过 className: "mn-popup"）======= */
-
-/* 1) 不要动 wrapper 的 width，让 Leaflet 用 minWidth/maxWidth 算 */
-.leaflet-popup.mn-popup .leaflet-popup-content-wrapper{
+/* 1) 基础容器修正 */
+.leaflet-popup.mn-popup .leaflet-popup-content-wrapper {
   border-radius: 10px;
+  /* 移除阴影或背景限制，保持默认或自定义 */
 }
 
-/* 2) 内容区：别用大 margin，避免“第一行/最后一行间距怪” */
-.leaflet-popup.mn-popup .leaflet-popup-content{
-  margin: 12px 14px;          /* 你想要的内边距感（别再 15 20 那么大） */
-  width: auto;                /* 让 Leaflet 选项决定宽 */
+/* 2) 核心：强制宽度自适应内容 */
+.leaflet-popup.mn-popup .leaflet-popup-content {
+  margin: 12px 14px;
+  /* 必须加 !important，因为 Leaflet 会用 JS 计算一个固定宽度并写在 style 标签上 */
+  width: auto !important; 
+  min-width: 120px; /* 设定一个感官上的最小宽度，避免只有一个字时太丑 */
   box-sizing: border-box;
 }
 
-/* 3) 让内容“先吃满宽度，再向下长”（核心：正常换行 + 不溢出） */
-.leaflet-popup.mn-popup .note-popup,
-.leaflet-popup.mn-popup .note-popup *{
-  box-sizing: border-box;
+/* 3) 内容块 */
+.leaflet-popup.mn-popup .note-popup {
+  display: block; /* 改为 block，让它具备填充父级的倾向 */
+  width: 100%;
 }
 
 .leaflet-popup.mn-popup .note-popup-body,
-.leaflet-popup.mn-popup .note-content-body,
 .note-popup-body,
-.note-body{
+.note-body {
   white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  word-break: normal;
+  overflow-wrap: break-word; /* 改为 break-word 更有利于文本排版，anywhere 会在不该断的地方断开 */
+  word-wrap: break-word;
   line-height: 1.55;
+  margin-top: 8px;
 }
 
-/* 链接：强制在容器内折行 */
-.leaflet-popup.mn-popup a{
-  display: inline;
+/* 4) 链接处理 */
+.leaflet-popup.mn-popup a {
+  display: inline-block; /* 改为 inline-block 方便控制 margin */
+  max-width: 100%;       /* 限制宽度防止溢出 */
   overflow-wrap: anywhere;
-  word-break: break-word;
+  word-break: break-all;
+  vertical-align: top;
 }
 
-.leaflet-popup.mn-popup .note-popup{
-  display: inline-block;
-  max-width: 100%;
-}
-
-.leaflet-popup.mn-popup .note-popup-body{
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-/* 4) 手机端：略窄于屏幕（比如 92vw），且不要贴边 */
-@media (max-width: 600px){
-  .leaflet-popup.mn-popup .leaflet-popup-content{
-    max-width: 92vw;
-    min-width: 180px;
+/* 5) 移动端适配：确保不溢出屏幕 */
+@media (max-width: 600px) {
+  .leaflet-popup.mn-popup {
+    /* 限制整个 popup 容器的最大宽度，留出屏幕边距 */
+    max-width: 90vw !important; 
+  }
+  .leaflet-popup.mn-popup .leaflet-popup-content {
     margin: 10px 12px;
+    /* 确保在小屏下至少有一定宽度 */
+    min-width: 150px; 
   }
 }
