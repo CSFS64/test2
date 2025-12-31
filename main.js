@@ -198,14 +198,15 @@ async function loadApprovedNotes() {
     if (approvedNotesCache.has(n.id)) continue;
 
     const mk = L.circleMarker([n.lat, n.lng], {
-      pane: 'mapNotePane',                 // ★
-      renderer: mapNoteSvgRenderer,         // ★
-      radius: 14,
-      weight: 2,
-      opacity: 1,
-      fillOpacity: 0.7,
-      dashArray: "4 4",
-      interactive: true                    // ★ 明确开启
+        pane: 'mapNotePane',
+        renderer: mapNoteSvgRenderer,
+        radius: 14,
+        weight: 15,            // ★ 技巧：增大 weight
+        color: 'transparent',  // ★ 把加宽的边框设为透明，作为隐藏的点击热区
+        fillColor: '#ff0000',  // 你的实际颜色
+        fillOpacity: 0.7,
+        interactive: true,
+        bubblingMouseEvents: true // 确保事件正确冒泡
     }).addTo(notesLayer);
 
     mk.bindPopup(renderNotePopupHTML(n), NOTE_POPUP_OPTS);
