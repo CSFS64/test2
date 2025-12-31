@@ -218,13 +218,13 @@ function renderNotePopupHTML(n) {
   const linkUrl = esc(n.link_url || "");
 
   const linkHTML = (linkUrl)
-    ? `<div style="margin-top:6px"><a href="${linkUrl}" target="_blank" rel="noopener">${linkText || linkUrl}</a></div>`
+    ? `<div style="margin-top:8px"><a href="${linkUrl}" target="_blank" rel="noopener">${linkText || linkUrl}</a></div>`
     : "";
 
   return `
     <div class="note-popup">
-      <div style="font-weight:700;margin-bottom:6px">${title}</div>
-      ${body ? `<div class="note-content-body" style="opacity:.95">${body}</div>` : ""}
+      <div style="font-weight:700; margin-bottom:8px; font-size:16px;">${title}</div>
+      ${body ? `<div class="note-popup-body" style="opacity:.95;">${body}</div>` : ""}
       ${linkHTML}
     </div>
   `;
