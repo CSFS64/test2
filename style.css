@@ -1001,11 +1001,6 @@ body, html {
   box-sizing: border-box;
 }
 
-.leaflet-popup.mn-popup .note-popup{
-  display: block;
-  max-width: 100%;
-}
-
 .leaflet-popup.mn-popup .note-popup-body,
 .leaflet-popup.mn-popup .note-content-body,
 .note-popup-body,
