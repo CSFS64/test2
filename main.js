@@ -24,7 +24,7 @@ const NOTE_POPUP_OPTS = {
 const map = L.map('map', { tap: false, zoomControl: false, preferCanvas: true }).setView([48.6, 37.9], 10);
 // ===== Map Note: 独立 Pane 置顶，强制 SVG 命中稳定 =====
 const mapNotePane = map.createPane('mapNotePane');
-mapNotePane.style.zIndex = 99;          // 高于 overlayPane(400) / markerPane(600)
+mapNotePane.style.zIndex = 9999;          // 高于 overlayPane(400) / markerPane(600)
 mapNotePane.style.pointerEvents = 'none';
 
 const mapNoteSvgRenderer = L.svg({ padding: 0.5 });
