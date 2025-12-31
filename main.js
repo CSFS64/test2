@@ -2628,45 +2628,21 @@ async function onMapClickCreateMapNote(e) {
 }
 
 function addPendingNoteMarker(n) {
-  // 1) 热区层（只负责点击）
-  const hit = L.circleMarker([n.lat, n.lng], {
-    pane: 'mapNotePane',
-    renderer: mapNoteSvgRenderer,
-    radius: 10,
-    stroke: true,
-    weight: 40,          // 热区
-    color: '#000',       // 随便
-    opacity: 0,          // stroke 完全透明
-    fillOpacity: 0,      // 自己也透明
-    interactive: true,   // 只有它吃点击
-    className: 'map-note-hit',
+  const mk = L.circleMarker([n.lat, n.lng], {
+      pane: 'mapNotePane',
+      renderer: mapNoteSvgRenderer,
+      radius: 10,
+      stroke: true,      // 必须开启 stroke，CSS 才能扩充热区
+      weight: 0,         // JS 不画边框，交给 CSS 的 box-shadow
+      fillColor: '#ffff00', 
+      fillOpacity: 1,
+      interactive: true,
+      className: 'map-note-dot' // 关键类名
   }).addTo(notesLayer);
 
-  // 2) 视觉层（只负责白圈+黄点）
-  const vis = L.circleMarker([n.lat, n.lng], {
-    pane: 'mapNotePane',
-    renderer: mapNoteSvgRenderer,
-    radius: 10,
-    stroke: true,
-    weight: 3,            // 白圈厚度
-    color: '#fff',
-    opacity: 1,
-    fillColor: '#ffff00',
-    fillOpacity: 1,
-    interactive: false,   // 不吃点击，避免抢事件
-    className: 'map-note-vis'
-  }).addTo(notesLayer);
-
-  // popup 绑定在 hit 上（或者两者都绑定也行）
-  hit.bindPopup(renderPendingPopupHTML(n), NOTE_POPUP_OPTS);
-  hit.openPopup();
-
-  // （可选）把 vis 带着走：如果你后续会 move/remove，需要一起处理
-  hit._vis = vis;
-
-  return hit;
+  mk.bindPopup(renderPendingPopupHTML(n), NOTE_POPUP_OPTS);
+  mk.openPopup();
 }
-
 
 function renderPendingPopupHTML(n) {
   const esc = (s) => String(s ?? "")
