@@ -1047,9 +1047,9 @@ body, html {
     
     /* 步骤 C: 使用 CSS 的 filter 在黄色圆圈边缘“画”出一圈 2px 的白边 */
     /* 这样白边是滤镜生成的，不会被 stroke-width 影响，永远是细的 */
-    filter: drop-shadow(0 0 0.5px #ffffff) 
-            drop-shadow(0 0 0.5px #ffffff) 
-            drop-shadow(0 0 0.5px #ffffff);
+    filter: drop-shadow(0 0 1.0px #ffffff) 
+            drop-shadow(0 0 1.0px #ffffff) 
+            drop-shadow(0 0 1.0px #ffffff);
     
     /* 解决部分手机浏览器滤镜模糊问题 */
     transform: translateZ(0);
