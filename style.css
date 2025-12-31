@@ -1038,25 +1038,20 @@ body, html {
 }
 
 .map-note-dot {
+    /* 1. 确保它是交互核心 */
     pointer-events: auto !important;
-    
-    /* 增加点击感知：即使视觉上没有那么宽，outline 也能捕捉点击 */
-    outline: 20px solid transparent; 
-}
+    cursor: pointer;
 
-/* 针对部分不支持 outline 捕获 SVG 点击的移动端浏览器 */
-.map-note-dot:after {
-    /* 伪类在 SVG 上不生效，所以我们换个思路：直接操作渲染顺序 */
-}
+    /* 2. 强制让描边（白边）在手机端变得极其灵敏 */
+    /* 我们把 stroke-width 设大，但在视觉上我们要处理它 */
+    stroke-width: 20px !important; 
 
-/* 最终方案：利用 stroke-opacity 为 0 但依然保持可交互性 */
-.map-note-dot {
-    stroke-width: 30px !important; /* 巨大的感应区 */
-    /* 某些浏览器在 stroke-opacity 为 0 时会取消点击，所以我们设为一个极小值 */
-    stroke-opacity: 0.01 !important; 
-    
-    /* 视觉补偿：既然 stroke 被我们拿去做热区了，白边改用 CSS 的外边框模拟 */
-    /* 这一步生成的边框极其锐利 */
-    box-shadow: 0 0 0 4px #ffffff; 
-    border-radius: 50%;
+    /* 3. 关键：确保黄色圆点压在白边上面，防止白边向内扩张蚕食黄色部分 */
+    paint-order: stroke fill;
+
+    /* 4. 如何让 25px 的 stroke 看起来只有 4px 且清晰？ */
+    /* 我们利用一个简单的技巧：让 stroke 带上一层极淡的透明度，或者直接利用颜色重叠 */
+    /* 最稳妥的清晰方案：直接让边框保持白色，但通过 clip-path 是做不到的。 */
+    /* 推荐：直接让 stroke 变成半透明，这样圆心边缘是实白，外围是淡白热区 */
+    stroke-opacity: 0.5 !important; 
 }
