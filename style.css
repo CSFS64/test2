@@ -995,7 +995,7 @@ body, html {
     /* 关键：取消固定宽度，改用 max-width */
     width: auto !important;
     min-width: 150px !important;  /* 设置最小宽度，防止极短文本时太寒酸 */
-    max-width: 550px !important;  /* 这是你想要的“再大一点”的电脑端上限 */
+    max-width: 750px !important;  /* 这是你想要的“再大一点”的电脑端上限 */
     margin: 15px 20px !important;
     display: block !important;
 }
