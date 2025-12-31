@@ -1054,10 +1054,6 @@ body, html {
     transition: transform 0.2s ease;
 }
 
-.map-note-dot:active {
-    transform: scale(0.9); /* 点击时缩小的反馈 */
-}
-
 /* 4) 手机端：略窄于屏幕（比如 92vw），且不要贴边 */
 @media (max-width: 600px){
   .leaflet-popup.mn-popup .leaflet-popup-content{
