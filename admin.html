@@ -267,6 +267,11 @@ function escapeHtml(s) {
     .replaceAll("'", "&#039;");
 }
 
+function updateAutoButtonText(){
+  if (!autoTimer) btnReloadAuto.textContent = "每 10 秒自动刷新：关";
+  else btnReloadAuto.textContent = `每 10 秒自动刷新（${currentMode}）：开`;
+}
+
 async function reload() {
   elMode.textContent = currentMode;
   setStatus(`正在拉取 ${currentMode}...`);
@@ -344,11 +349,13 @@ btnClear.addEventListener("click", () => {
 
 btnReloadPending.addEventListener("click", () => {
   currentMode = "pending";
+  updateAutoButtonText();
   reload();
 });
 
 btnReloadApproved.addEventListener("click", () => {
   currentMode = "approved";
+  updateAutoButtonText();
   reload();
 });
 
@@ -360,7 +367,7 @@ btnReloadAuto.addEventListener("click", () => {
     btnReloadAuto.textContent = "每 10 秒自动刷新：关";
   } else {
     autoTimer = setInterval(reload, 10000);
-    btnReloadAuto.textContent = "每 10 秒自动刷新：开";
+    btnReloadAuto.textContent = `每 10 秒自动刷新（${currentMode}）：开`;
     reload();
   }
 });
