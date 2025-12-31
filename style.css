@@ -1011,12 +1011,6 @@ body, html {
 /* 正文：允许正常断行，长词/长URL也不会把宽度顶爆 */
 .leaflet-popup.mn-popup .note-popup-body,
 .leaflet-popup.mn-popup .note-content-body,
-.leaflet-popup.mn-popup .note-popup div{
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;     /* 比 break-word 更狠：保证不撑爆 */
-  word-break: normal;
-  line-height: 1.55;
-}
 
 /* 通过 + pending 都统一：保留换行/空格，并避免长链接撑爆 */
 .note-popup-body,
