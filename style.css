@@ -1018,6 +1018,14 @@ body, html {
   line-height: 1.55;
 }
 
+/* 通过 + pending 都统一：保留换行/空格，并避免长链接撑爆 */
+.note-popup-body,
+.note-body {
+  white-space: pre-wrap;        /* 关键：保留换行和连续空格 */
+  overflow-wrap: anywhere;      /* 关键：长 URL/长词不会顶爆 */
+  word-break: normal;
+}
+
 /* 链接：强制在容器内折行 */
 .leaflet-popup.mn-popup a{
   display: inline;
