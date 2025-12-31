@@ -200,7 +200,7 @@ async function loadApprovedNotes() {
     const mk = L.circleMarker([n.lat, n.lng], {
       pane: 'mapNotePane',                 // ★
       renderer: mapNoteSvgRenderer,         // ★
-      radius: 7,
+      radius: 14,
       weight: 2,
       opacity: 1,
       fillOpacity: 0.7,
