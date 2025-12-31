@@ -1038,9 +1038,18 @@ body, html {
 }
 
 .map-note-dot {
+    /* 1. 确保基础交互开启 */
     pointer-events: auto !important;
     cursor: pointer;
-    stroke-width: 10px !important; 
-    paint-order: stroke fill;
-    stroke-opacity: 0.5 !important; 
+
+    /* 2. 这里的 paint-order 保持不变，确保白边在黄色之上 */
+    paint-order: fill stroke; 
+
+    /* 3. ★ 核心：使用 outline 增加点击热区 ★ */
+    /* 我们画一个 20px 宽的完全透明边框 */
+    /* outline 不会遮挡白边，也不会改变圆圈大小，但它会接收点击 */
+    outline: 20px solid transparent !important;
+    
+    /* 4. 消除移动端点击高亮蓝框（可选，为了美观） */
+    -webkit-tap-highlight-color: transparent;
 }
