@@ -1039,18 +1039,24 @@ body, html {
 
 .map-note-dot {
     pointer-events: auto !important;
-    /* 步骤 A: 这里的 stroke-width 决定了“点击灵敏度” */
-    stroke-width: 20px !important; 
     
-    /* 步骤 B: 让描边颜色完全透明，这样 30px 的热区看不见，但能点到 */
-    stroke: rgba(255, 255, 255, 0) !important;
+    /* 增加点击感知：即使视觉上没有那么宽，outline 也能捕捉点击 */
+    outline: 20px solid transparent; 
+}
+
+/* 针对部分不支持 outline 捕获 SVG 点击的移动端浏览器 */
+.map-note-dot:after {
+    /* 伪类在 SVG 上不生效，所以我们换个思路：直接操作渲染顺序 */
+}
+
+/* 最终方案：利用 stroke-opacity 为 0 但依然保持可交互性 */
+.map-note-dot {
+    stroke-width: 30px !important; /* 巨大的感应区 */
+    /* 某些浏览器在 stroke-opacity 为 0 时会取消点击，所以我们设为一个极小值 */
+    stroke-opacity: 0.01 !important; 
     
-    /* 步骤 C: 使用 CSS 的 filter 在黄色圆圈边缘“画”出一圈 2px 的白边 */
-    /* 这样白边是滤镜生成的，不会被 stroke-width 影响，永远是细的 */
-    filter: drop-shadow(0 0 1.0px #ffffff) 
-            drop-shadow(0 0 1.0px #ffffff) 
-            drop-shadow(0 0 1.0px #ffffff);
-    
-    /* 解决部分手机浏览器滤镜模糊问题 */
-    transform: translateZ(0);
+    /* 视觉补偿：既然 stroke 被我们拿去做热区了，白边改用 CSS 的外边框模拟 */
+    /* 这一步生成的边框极其锐利 */
+    box-shadow: 0 0 0 4px #ffffff; 
+    border-radius: 50%;
 }
