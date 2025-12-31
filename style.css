@@ -1028,29 +1028,34 @@ body, html {
   overflow-wrap: anywhere;
 }
 
-/* 针对圆点的暴力热区扩充 */
 .map-note-dot {
-    /* 1. 覆盖父级 none，强制开启点击 */
-    pointer-events: auto !important; 
+    /* 1. 核心：40px 隐形点击热区（保持不变，确保好点） */
+    pointer-events: auto !important;
     cursor: pointer;
-
-    /* 2. 关键：把描边宽度设为 40px（这就是你的点击热区） */
     stroke-width: 40px !important; 
-    
-    /* 3. 重点：虽然描边有 40px 宽，但我们要让它完全透明 */
-    /* 这样它就是一个看不见的巨大按钮，但依然能响应 Leaflet 的点击 */
     stroke-opacity: 0 !important;
 
-    /* 4. 视觉补偿：既然描边被拿去做热区了，白边改用 CSS 的外边框模拟 */
-    /* 这样你的白边极其锐利，且不会随缩放变色 */
-    paint-order: fill;
-    box-shadow: 0 0 0 4px #ffffff; /* 这里 4px 就是你想要的清晰白边 */
-    border-radius: 50%;
+    /* 2. 视觉魔法：复合战术外框 */
+    /* 我们通过 4 层滤镜叠加出：深色外描边 + 亮白内框 */
+    filter: 
+        /* 第一层：最外层的黑色硬边，把图标从复杂背景中抠出来 */
+        drop-shadow(0 0 1px #000000) 
+        drop-shadow(0 0 1px #000000)
+        /* 第二层：亮白色边框（这就是你想要的外框感） */
+        drop-shadow(0 0 2px #ffffff) 
+        drop-shadow(0 0 2px #ffffff)
+        /* 第三层：底部的深色投影，增加立体感 */
+        drop-shadow(0 3px 5px rgba(0,0,0,0.5));
+
+    /* 3. 绘制顺序：确保填充色在最上层 */
+    paint-order: stroke fill;
+    
+    /* 4. 增加一点微弱的旋转或脉冲效果（可选，增加动态感） */
+    transition: transform 0.2s ease;
 }
 
-/* 消除手机点击时的系统高亮蓝框，防止误导 */
-.leaflet-container {
-    -webkit-tap-highlight-color: transparent;
+.map-note-dot:active {
+    transform: scale(0.9); /* 点击时缩小的反馈 */
 }
 
 /* 4) 手机端：略窄于屏幕（比如 92vw），且不要贴边 */
