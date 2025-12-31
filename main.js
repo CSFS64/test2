@@ -175,15 +175,6 @@ function fetchJsonNoCache(url) {
   });
 }
 
-// 定义 PNG 图标配置
-const NOTE_ICON_OPTS = L.icon({
-  iconUrl: './marker.png',   // 直接读取根目录下的 marker.png
-  iconSize: [32, 32],        // 视觉显示大小
-  iconAnchor: [16, 16],      // 锚点设为中心
-  popupAnchor: [0, -14],     // 弹出窗口位置
-  className: 'mn-png-marker' // 对应下方 CSS
-});
-
 async function loadApprovedNotes() {
   // 你后端如果按日期分 notes，可把 dateStr 作为 query；这里先做全量
   const url = `${MAP_NOTES_API}/api/notes?status=approved`;
@@ -206,11 +197,17 @@ async function loadApprovedNotes() {
     if (!n || !n.id) continue;
     if (approvedNotesCache.has(n.id)) continue;
 
-    const mk = L.marker([n.lat, n.lng], {
-      icon: NOTE_ICON_OPTS,
-      pane: 'mapNotePane',
-      interactive: true,
-      riseOnHover: true
+    const mk = L.circleMarker([n.lat, n.lng], {
+        pane: 'mapNotePane',
+        renderer: mapNoteSvgRenderer,
+        radius: 10,           // 圆点大小
+        color: '#ffffff',     // 边框颜色：纯白
+        weight: 4,            // ★ 视觉上的白边粗细，想要更粗可以改成 5 或 6
+        opacity: 0.7,           // 边框不透明度
+        fillColor: '#ffff00', // 填充黄色
+        fillOpacity: 1,       // 填充不透明度
+        interactive: true,
+        className: 'map-note-dot' 
     }).addTo(notesLayer);
 
     mk.bindPopup(renderNotePopupHTML(n), NOTE_POPUP_OPTS);
