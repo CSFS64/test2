@@ -2729,25 +2729,25 @@ document.addEventListener("click", async (ev) => {
     const url = out.url
       ? (out.url.startsWith("http") ? out.url : `${MAP_NOTES_API}${out.url}`)
       : `${MAP_NOTES_API}/public/image?key=${encodeURIComponent(out.key)}`;
-
+    
     const arr = noteImagesMem.get(id) || [];
     arr.push({ key: out.key, url });
     noteImagesMem.set(id, arr);
-
+    
     if (hintEl) hintEl.textContent = "已上传（待审核）";
     upBtn.disabled = false;
-
-    // 让当前打开的 popup 刷新内容（关键：立刻看到图片）
-    // Leaflet popup 里找当前 note id 的 popup，简单做法：重新打开 popup
-    try {
-      // 找到这个 marker：pending marker 没缓存的话就用 DOM 更新
-      const popup = upBtn.closest(".leaflet-popup-content");
-      if (popup) {
-        // 强制触发 Leaflet 重新计算尺寸（图片加载会撑开）
-        setTimeout(() => map?.invalidateSize?.(), 50);
-      }
-    } catch {}
-
+    
+    // ★ 关键：刷新这个 pending note 的 popup（立刻出现图片）
+    const mk = pendingNotesCache.get(id);
+    if (mk) {
+      mk.setPopupContent(renderPendingPopupHTML(mk._noteData));
+      mk.openPopup();
+    
+      setTimeout(() => {
+        mk.getPopup()?.update?.();
+      }, 80);
+    }
+    
     return;
   }
 
