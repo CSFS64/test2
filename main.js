@@ -22,6 +22,31 @@ const NOTE_POPUP_OPTS = {
 
 /* ===================== 地图初始化 ===================== */
 const map = L.map('map', { tap: false, zoomControl: false, preferCanvas: true }).setView([48.6, 37.9], 10);
+
+// ========== Map Notes (NEW MODULE) ==========
+const notesLayer = (window.notesLayer) ? window.notesLayer : L.layerGroup().addTo(map);
+map.createPane("mapNotePane");
+map.getPane("mapNotePane").style.zIndex = 650;
+
+// 如果你之前有 mapNoteSvgRenderer，就传进去；没有就写 null
+window.MapNotes.init({
+  map,
+  L,
+  apiBase: MAP_NOTES_API,
+  notesLayer,
+  mapNotePane: "mapNotePane",
+  renderer: (typeof mapNoteSvgRenderer !== "undefined" ? mapNoteSvgRenderer : null),
+  popupOpts: (typeof NOTE_POPUP_OPTS !== "undefined" ? NOTE_POPUP_OPTS : null),
+});
+
+// 拉取 approved notes
+window.MapNotes.loadApprovedNotes().catch(console.warn);
+
+// 绑定“添加 note”的按钮（你现在 HTML 里没有这个按钮 id，所以你要自己选一个）
+// 例如你可以把侧栏 ✏️ 那个加 id="btnAddNote"
+const btn = document.getElementById("btnAddNote");
+if (btn) btn.addEventListener("click", () => window.MapNotes.enableAddMode());
+
 // ===== Map Note: 独立 Pane 置顶，强制 SVG 命中稳定 =====
 const mapNotePane = map.createPane('mapNotePane');
 mapNotePane.style.zIndex = 9999;          // 高于 overlayPane(400) / markerPane(600)
