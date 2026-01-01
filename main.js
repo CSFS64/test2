@@ -2813,18 +2813,33 @@ document.addEventListener("click", async (ev) => {
     if (hintEl) hintEl.textContent = "已上传（待审核）";
     upBtn.disabled = false;
     
-    // ★ 关键：刷新这个 pending note 的 popup（立刻出现图片）
+    // ★ 关键：把图片写进 marker 的 note 数据 + 刷新 popup（立刻出现图片）
     const mk = pendingNotesCache.get(id);
-    if (mk) {
+    if (mk && mk._noteData) {
+      // 1) 把 out.key 写进 mk._noteData.images_json / images
+      let keys = [];
+      try {
+        if (Array.isArray(mk._noteData.images)) {
+          keys = mk._noteData.images.slice();
+        } else if (typeof mk._noteData.images_json === "string" && mk._noteData.images_json.trim()) {
+          keys = JSON.parse(mk._noteData.images_json);
+        }
+      } catch {}
+      if (!Array.isArray(keys)) keys = [];
+    
+      if (!keys.includes(out.key)) keys.push(out.key);
+    
+      // 写回：两种字段都写，最稳
+      mk._noteData.images = keys;
+      mk._noteData.images_json = JSON.stringify(keys);
+    
+      // 2) 刷新 popup 内容
       mk.setPopupContent(renderPendingPopupHTML(mk._noteData));
       mk.openPopup();
     
-      setTimeout(() => {
-        mk.getPopup()?.update?.();
-      }, 80);
+      // 3) 图片加载后更新 popup 尺寸
+      setTimeout(() => mk.getPopup()?.update?.(), 120);
     }
-    
-    return;
   }
 
   // ========== 2) Edit（你原来的逻辑） ==========
