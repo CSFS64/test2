@@ -35,6 +35,75 @@ const vecRenderer = L.canvas({ padding: 0.5 });
 // ===================== Map Notes State =====================
 const notesLayer = L.layerGroup().addTo(map);
 
+// ===================== Map Notes Images =====================
+// note_id -> [ {key, url} ]  (只用于 pending 本地预览，不写入 localStorage)
+const noteImagesMem = new Map();
+
+function parseImagesFromNote(n) {
+  // 后端如果返回 images_json: '["notes/...","notes/..."]'
+  let keys = [];
+  try {
+    if (Array.isArray(n.images)) keys = n.images; // 兼容你未来可能直接返回数组
+    else if (typeof n.images_json === "string" && n.images_json.trim()) keys = JSON.parse(n.images_json);
+  } catch {}
+  if (!Array.isArray(keys)) keys = [];
+
+  // 统一成 url
+  return keys.map(k => ({
+    key: k,
+    url: `${MAP_NOTES_API}/public/image?key=${encodeURIComponent(k)}`
+  }));
+}
+
+function getAllImagesForNote(n) {
+  const fromDb = parseImagesFromNote(n);              // approved / server
+  const fromMem = noteImagesMem.get(n.id) || [];      // pending local uploaded
+  // 合并去重（按 key）
+  const seen = new Set();
+  const out = [];
+  for (const it of [...fromDb, ...fromMem]) {
+    if (!it || !it.key || seen.has(it.key)) continue;
+    seen.add(it.key);
+    out.push(it);
+  }
+  return out;
+}
+
+function renderImagesHTML(n) {
+  const imgs = getAllImagesForNote(n);
+  if (!imgs.length) return "";
+
+  const items = imgs.map(it => {
+    const u = it.url;
+    return `
+      <a class="mn-img-a" href="${u}" target="_blank" rel="noopener">
+        <img class="mn-img" src="${u}" loading="lazy" alt="note image">
+      </a>
+    `;
+  }).join("");
+
+  return `<div class="mn-imgs">${items}</div>`;
+}
+
+// 注入一点样式（只注入一次）
+(function ensureMnImgCSS(){
+  if (document.getElementById("mn-img-css")) return;
+  const css = document.createElement("style");
+  css.id = "mn-img-css";
+  css.textContent = `
+    .mn-imgs{margin-top:10px;display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+    .mn-img-a{display:block}
+    .mn-img{width:100%;height:120px;object-fit:cover;border-radius:10px;border:1px solid rgba(255,255,255,.10);background:rgba(0,0,0,.2)}
+    @media (max-width:520px){ .mn-imgs{grid-template-columns:1fr} .mn-img{height:160px} }
+    .mn-upload{margin-top:10px;display:flex;gap:8px;align-items:center}
+    .mn-upload input[type="file"]{max-width:210px}
+    .mn-upload button{padding:6px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;cursor:pointer}
+    .mn-upload button[disabled]{opacity:.6;cursor:not-allowed}
+    .mn-upload .mn-uphint{font-size:12px;opacity:.8}
+  `;
+  document.head.appendChild(css);
+})();
+
 // 仅内存保存 edit_token：刷新就没（符合你之前的设计）
 const noteEditTokens = new Map(); // note_id -> edit_token
 
@@ -2652,7 +2721,14 @@ function addPendingNoteMarker(n) {
 }
 
 function renderPendingPopupHTML(n) {
-    const uploadHTML = canEdit ? `
+  const esc = (s) => String(s ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+
+  const canEdit = noteEditTokens.has(n.id);
+
+  const uploadHTML = canEdit ? `
     <div class="mn-upload">
       <input type="file" accept="image/*" data-note-file="${esc(n.id)}">
       <button data-note-upload="${esc(n.id)}">Upload</button>
@@ -3037,72 +3113,3 @@ async function onMapDblClickCreateMapNote(e) {
   // 3) 打开更好的输入界面
   openMapNoteModal(e.latlng);
 }
-
-// ===================== Map Notes Images =====================
-// note_id -> [ {key, url} ]  (只用于 pending 本地预览，不写入 localStorage)
-const noteImagesMem = new Map();
-
-function parseImagesFromNote(n) {
-  // 后端如果返回 images_json: '["notes/...","notes/..."]'
-  let keys = [];
-  try {
-    if (Array.isArray(n.images)) keys = n.images; // 兼容你未来可能直接返回数组
-    else if (typeof n.images_json === "string" && n.images_json.trim()) keys = JSON.parse(n.images_json);
-  } catch {}
-  if (!Array.isArray(keys)) keys = [];
-
-  // 统一成 url
-  return keys.map(k => ({
-    key: k,
-    url: `${MAP_NOTES_API}/public/image?key=${encodeURIComponent(k)}`
-  }));
-}
-
-function getAllImagesForNote(n) {
-  const fromDb = parseImagesFromNote(n);              // approved / server
-  const fromMem = noteImagesMem.get(n.id) || [];      // pending local uploaded
-  // 合并去重（按 key）
-  const seen = new Set();
-  const out = [];
-  for (const it of [...fromDb, ...fromMem]) {
-    if (!it || !it.key || seen.has(it.key)) continue;
-    seen.add(it.key);
-    out.push(it);
-  }
-  return out;
-}
-
-function renderImagesHTML(n) {
-  const imgs = getAllImagesForNote(n);
-  if (!imgs.length) return "";
-
-  const items = imgs.map(it => {
-    const u = it.url;
-    return `
-      <a class="mn-img-a" href="${u}" target="_blank" rel="noopener">
-        <img class="mn-img" src="${u}" loading="lazy" alt="note image">
-      </a>
-    `;
-  }).join("");
-
-  return `<div class="mn-imgs">${items}</div>`;
-}
-
-// 注入一点样式（只注入一次）
-(function ensureMnImgCSS(){
-  if (document.getElementById("mn-img-css")) return;
-  const css = document.createElement("style");
-  css.id = "mn-img-css";
-  css.textContent = `
-    .mn-imgs{margin-top:10px;display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-    .mn-img-a{display:block}
-    .mn-img{width:100%;height:120px;object-fit:cover;border-radius:10px;border:1px solid rgba(255,255,255,.10);background:rgba(0,0,0,.2)}
-    @media (max-width:520px){ .mn-imgs{grid-template-columns:1fr} .mn-img{height:160px} }
-    .mn-upload{margin-top:10px;display:flex;gap:8px;align-items:center}
-    .mn-upload input[type="file"]{max-width:210px}
-    .mn-upload button{padding:6px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;cursor:pointer}
-    .mn-upload button[disabled]{opacity:.6;cursor:not-allowed}
-    .mn-upload .mn-uphint{font-size:12px;opacity:.8}
-  `;
-  document.head.appendChild(css);
-})();
