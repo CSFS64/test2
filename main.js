@@ -2688,7 +2688,7 @@ async function onMapClickCreateMapNote(e) {
   }
 
   // 只在内存保存 edit_token
-  if (created.edit_token) noteEditTokens.set(created.id, created.edit_token);
+  if (created.edit_token) noteEditTokens.set(String(created.id), created.edit_token);
 
   // 本地显示一个 pending note（你也可以不显示，等审核）
   addPendingNoteMarker({
@@ -2717,10 +2717,11 @@ function addPendingNoteMarker(n) {
   mk.bindPopup(renderPendingPopupHTML(mk._noteData), NOTE_POPUP_OPTS);
   mk.openPopup();
 
-  pendingNotesCache.set(n.id, mk);
+  pendingNotesCache.set(String(n.id), mk);
 }
 
 function renderPendingPopupHTML(n) {
+  n.id = String(n.id); // ★ 确保 id 统一
   const esc = (s) => String(s ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
@@ -2753,12 +2754,14 @@ document.addEventListener("click", async (ev) => {
   // ========== 1) Upload 图片 ==========
   const upBtn = ev.target?.closest?.("button[data-note-upload]");
   if (upBtn) {
-    const id = upBtn.getAttribute("data-note-upload");
+    const id = String(upBtn.getAttribute("data-note-upload")); // ★ String
     const token = noteEditTokens.get(id);
     if (!token) return;
-
-    const fileInput = document.querySelector(`input[data-note-file="${CSS.escape(id)}"]`);
-    const hintEl = document.querySelector(`span[data-note-uphint="${CSS.escape(id)}"]`);
+    
+    // ★ 只在当前 popup 里找，避免关开 popup 后 query 错 DOM
+    const popupRoot = upBtn.closest(".leaflet-popup") || document;
+    const fileInput = popupRoot.querySelector(`input[data-note-file="${CSS.escape(id)}"]`);
+    const hintEl = popupRoot.querySelector(`span[data-note-uphint="${CSS.escape(id)}"]`);
 
     const file = fileInput?.files?.[0];
     if (!file) {
@@ -2813,10 +2816,12 @@ document.addEventListener("click", async (ev) => {
     if (hintEl) hintEl.textContent = "已上传（待审核）";
     upBtn.disabled = false;
     
-    // ★ 关键：把图片写进 marker 的 note 数据 + 刷新 popup（立刻出现图片）
+    // ★ 刷新这个 pending note：把图片 key 写入 mk._noteData，再刷新 popup
     const mk = pendingNotesCache.get(id);
     if (mk && mk._noteData) {
-      // 1) 把 out.key 写进 mk._noteData.images_json / images
+      mk._noteData.id = String(mk._noteData.id); // ★ 再保险
+    
+      // 1) 把 out.key 合并进 note 数据（images + images_json）
       let keys = [];
       try {
         if (Array.isArray(mk._noteData.images)) {
@@ -2829,16 +2834,15 @@ document.addEventListener("click", async (ev) => {
     
       if (!keys.includes(out.key)) keys.push(out.key);
     
-      // 写回：两种字段都写，最稳
-      mk._noteData.images = keys;
+      mk._noteData.images = keys;                 // ★ 两种字段都写
       mk._noteData.images_json = JSON.stringify(keys);
     
       // 2) 刷新 popup 内容
       mk.setPopupContent(renderPendingPopupHTML(mk._noteData));
       mk.openPopup();
     
-      // 3) 图片加载后更新 popup 尺寸
-      setTimeout(() => mk.getPopup()?.update?.(), 120);
+      // 3) 更新 popup 尺寸（图片加载后）
+      setTimeout(() => mk.getPopup()?.update?.(), 150);
     }
   }
 
@@ -3069,7 +3073,7 @@ function ensureMapNoteModal(){
     }
 
     // edit_token 仍然只放内存
-    if (created.edit_token) noteEditTokens.set(created.id, created.edit_token);
+    if (created.edit_token) noteEditTokens.set(String(created.id), created.edit_token);
 
     // 本地显示 pending
     addPendingNoteMarker({
