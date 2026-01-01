@@ -52,9 +52,6 @@ const mapNoteSvgRenderer = L.svg({ padding: 0.5 });
 // 共享 Canvas 渲染器
 const vecRenderer = L.canvas({ padding: 0.5 });
 
-// ===================== Map Notes State =====================
-const notesLayer = L.layerGroup().addTo(map);
-
 // ===================== Map Notes Images =====================
 // note_id -> [ {key, url} ]  (只用于 pending 本地预览，不写入 localStorage)
 const noteImagesMem = new Map();
