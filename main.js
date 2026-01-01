@@ -2821,7 +2821,10 @@ document.addEventListener("click", async (ev) => {
     if (mk && mk._noteData) {
       mk._noteData.id = String(mk._noteData.id); // ★ 再保险
     
-      // 1) 把 out.key 合并进 note 数据（images + images_json）
+      // 1) 合并 key 到 note 数据里（兼容 images_json / images）
+      const k = String(out.key);
+    
+      // a) mk._noteData.images_json 维护为 JSON 字符串
       let keys = [];
       try {
         if (Array.isArray(mk._noteData.images)) {
@@ -2831,18 +2834,23 @@ document.addEventListener("click", async (ev) => {
         }
       } catch {}
       if (!Array.isArray(keys)) keys = [];
+      if (!keys.includes(k)) keys.push(k);
     
-      if (!keys.includes(out.key)) keys.push(out.key);
-    
-      mk._noteData.images = keys;                 // ★ 两种字段都写
+      // 两种字段都写一下，避免你后端将来改返回格式导致前端断
+      mk._noteData.images = keys.slice();
       mk._noteData.images_json = JSON.stringify(keys);
     
-      // 2) 刷新 popup 内容
-      mk.setPopupContent(renderPendingPopupHTML(mk._noteData));
-      mk.openPopup();
+      // b) 同时把内存预览 noteImagesMem 也去重一下（以 key 为准）
+      const mem = noteImagesMem.get(id) || [];
+      if (!mem.some(x => x && x.key === k)) mem.push({ key: k, url });
+      noteImagesMem.set(id, mem);
     
-      // 3) 更新 popup 尺寸（图片加载后）
-      setTimeout(() => mk.getPopup()?.update?.(), 150);
+      // 2) 刷新 popup 内容（保持打开状态）
+      const html = renderPendingPopupHTML(mk._noteData);
+      mk.setPopupContent(html);
+    
+      // 如果你希望上传后“立刻看到新图”，确保 popup 是开的
+      if (!mk.isPopupOpen()) mk.openPopup();
     }
   }
 
