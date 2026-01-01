@@ -23,12 +23,6 @@ const NOTE_POPUP_OPTS = {
 /* ===================== 地图初始化 ===================== */
 const map = L.map('map', { tap: false, zoomControl: false, preferCanvas: true }).setView([48.6, 37.9], 10);
 
-// ========== Map Notes (NEW MODULE) ==========
-const notesLayer = (window.notesLayer) ? window.notesLayer : L.layerGroup().addTo(map);
-map.createPane("mapNotePane");
-map.getPane("mapNotePane").style.zIndex = 650;
-
-// 如果你之前有 mapNoteSvgRenderer，就传进去；没有就写 null
 window.MapNotes.init({
   map,
   L,
@@ -38,6 +32,11 @@ window.MapNotes.init({
   renderer: (typeof mapNoteSvgRenderer !== "undefined" ? mapNoteSvgRenderer : null),
   popupOpts: (typeof NOTE_POPUP_OPTS !== "undefined" ? NOTE_POPUP_OPTS : null),
 });
+
+// ========== Map Notes (NEW MODULE) ==========
+const notesLayer = (window.notesLayer) ? window.notesLayer : L.layerGroup().addTo(map);
+map.createPane("mapNotePane");
+map.getPane("mapNotePane").style.zIndex = 650;
 
 // 拉取 approved notes
 window.MapNotes.loadApprovedNotes().catch(console.warn);
