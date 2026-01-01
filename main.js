@@ -501,7 +501,6 @@ function updateDate(date) {
 
 /* ===================== 初始化 ===================== */
 loadAvailableDates();
-loadApprovedNotes();
 
 /* ===================== 相邻“有更新”的日期跳转 ===================== */
 function ensureAvailableDateStrsReady(){
