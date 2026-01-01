@@ -22,25 +22,6 @@ const NOTE_POPUP_OPTS = {
 
 /* ===================== 地图初始化 ===================== */
 const map = L.map('map', { tap: false, zoomControl: false, preferCanvas: true }).setView([48.6, 37.9], 10);
-
-window.MapNotes.init({
-  map,
-  L,
-  apiBase: MAP_NOTES_API,
-  notesLayer,
-  mapNotePane: "mapNotePane",
-  renderer: (typeof mapNoteSvgRenderer !== "undefined" ? mapNoteSvgRenderer : null),
-  popupOpts: (typeof NOTE_POPUP_OPTS !== "undefined" ? NOTE_POPUP_OPTS : null),
-});
-
-// ========== Map Notes (NEW MODULE) ==========
-const notesLayer = (window.notesLayer) ? window.notesLayer : L.layerGroup().addTo(map);
-map.createPane("mapNotePane");
-map.getPane("mapNotePane").style.zIndex = 650;
-
-// 拉取 approved notes
-window.MapNotes.loadApprovedNotes().catch(console.warn);
-
 // ===== Map Note: 独立 Pane 置顶，强制 SVG 命中稳定 =====
 const mapNotePane = map.createPane('mapNotePane');
 mapNotePane.style.zIndex = 9999;          // 高于 overlayPane(400) / markerPane(600)
@@ -51,81 +32,14 @@ const mapNoteSvgRenderer = L.svg({ padding: 0.5 });
 // 共享 Canvas 渲染器
 const vecRenderer = L.canvas({ padding: 0.5 });
 
-// ===================== Map Notes Images =====================
-// note_id -> [ {key, url} ]  (只用于 pending 本地预览，不写入 localStorage)
-const noteImagesMem = new Map();
-
-function parseImagesFromNote(n) {
-  // 后端如果返回 images_json: '["notes/...","notes/..."]'
-  let keys = [];
-  try {
-    if (Array.isArray(n.images)) keys = n.images; // 兼容你未来可能直接返回数组
-    else if (typeof n.images_json === "string" && n.images_json.trim()) keys = JSON.parse(n.images_json);
-  } catch {}
-  if (!Array.isArray(keys)) keys = [];
-
-  // 统一成 url
-  return keys.map(k => ({
-    key: k,
-    url: `${MAP_NOTES_API}/public/image?key=${encodeURIComponent(k)}`
-  }));
-}
-
-function getAllImagesForNote(n) {
-  const fromDb = parseImagesFromNote(n);              // approved / server
-  const fromMem = noteImagesMem.get(n.id) || [];      // pending local uploaded
-  // 合并去重（按 key）
-  const seen = new Set();
-  const out = [];
-  for (const it of [...fromDb, ...fromMem]) {
-    if (!it || !it.key || seen.has(it.key)) continue;
-    seen.add(it.key);
-    out.push(it);
-  }
-  return out;
-}
-
-function renderImagesHTML(n) {
-  const imgs = getAllImagesForNote(n);
-  if (!imgs.length) return "";
-
-  const items = imgs.map(it => {
-    const u = it.url;
-    return `
-      <a class="mn-img-a" href="${u}" target="_blank" rel="noopener">
-        <img class="mn-img" src="${u}" loading="lazy" alt="note image">
-      </a>
-    `;
-  }).join("");
-
-  return `<div class="mn-imgs">${items}</div>`;
-}
-
-// 注入一点样式（只注入一次）
-(function ensureMnImgCSS(){
-  if (document.getElementById("mn-img-css")) return;
-  const css = document.createElement("style");
-  css.id = "mn-img-css";
-  css.textContent = `
-    .mn-imgs{margin-top:10px;display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-    .mn-img-a{display:block}
-    .mn-img{width:100%;height:120px;object-fit:cover;border-radius:10px;border:1px solid rgba(255,255,255,.10);background:rgba(0,0,0,.2)}
-    @media (max-width:520px){ .mn-imgs{grid-template-columns:1fr} .mn-img{height:160px} }
-    .mn-upload{margin-top:10px;display:flex;gap:8px;align-items:center}
-    .mn-upload input[type="file"]{max-width:210px}
-    .mn-upload button{padding:6px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;cursor:pointer}
-    .mn-upload button[disabled]{opacity:.6;cursor:not-allowed}
-    .mn-upload .mn-uphint{font-size:12px;opacity:.8}
-  `;
-  document.head.appendChild(css);
-})();
+// ===================== Map Notes State =====================
+const notesLayer = L.layerGroup().addTo(map);
 
 // 仅内存保存 edit_token：刷新就没（符合你之前的设计）
 const noteEditTokens = new Map(); // note_id -> edit_token
 
 // 本地缓存（可选）：避免重复渲染
 let approvedNotesCache = new Map(); // id -> marker
-let pendingNotesCache = new Map(); // id -> marker
 
 /* ===================== 底图切换（🛠️） ===================== */
 // 1) 定义底图集合（无需密钥）
@@ -321,7 +235,6 @@ function renderNotePopupHTML(n) {
       <div style="font-weight:700; margin-bottom:8px; font-size:16px;">${title}</div>
       ${body ? `<div class="note-popup-body" style="opacity:.95;">${body}</div>` : ""}
       ${linkHTML}
-      ${renderImagesHTML(n)}
     </div>
   `;
 }
@@ -500,6 +413,7 @@ function updateDate(date) {
 
 /* ===================== 初始化 ===================== */
 loadAvailableDates();
+loadApprovedNotes();
 
 /* ===================== 相邻“有更新”的日期跳转 ===================== */
 function ensureAvailableDateStrsReady(){
@@ -2437,8 +2351,8 @@ map.getContainer().addEventListener('contextmenu', (ev) => {
 }, { passive: false });
 
 // —— 移动端：长按 —— //
-let __lpTimer = null;
-let __lpLatLng = null;
+//let __lpTimer = null;
+//let __lpLatLng = null;
 
 map.on('touchstart', (e) => {
   if (drawActive) return; // 绘图时禁用长按生成坐标
@@ -2703,7 +2617,7 @@ async function onMapClickCreateMapNote(e) {
   }
 
   // 只在内存保存 edit_token
-  if (created.edit_token) noteEditTokens.set(String(created.id), created.edit_token);
+  if (created.edit_token) noteEditTokens.set(created.id, created.edit_token);
 
   // 本地显示一个 pending note（你也可以不显示，等审核）
   addPendingNoteMarker({
@@ -2715,28 +2629,22 @@ async function onMapClickCreateMapNote(e) {
 
 function addPendingNoteMarker(n) {
   const mk = L.circleMarker([n.lat, n.lng], {
-    pane: 'mapNotePane',
-    renderer: mapNoteSvgRenderer,
-    radius: 10,
-    stroke: true,      // 必须开启 stroke，CSS 才能扩充热区
-    weight: 0,         // JS 不画边框，交给 CSS 的 box-shadow
-    fillColor: '#ffff00',
-    fillOpacity: 1,
-    interactive: true,
-    className: 'map-note-dot' // 关键类名
+      pane: 'mapNotePane',
+      renderer: mapNoteSvgRenderer,
+      radius: 10,
+      stroke: true,      // 必须开启 stroke，CSS 才能扩充热区
+      weight: 0,         // JS 不画边框，交给 CSS 的 box-shadow
+      fillColor: '#ffff00', 
+      fillOpacity: 1,
+      interactive: true,
+      className: 'map-note-dot' // 关键类名
   }).addTo(notesLayer);
 
-  // ★ 关键：把 note 数据挂在 marker 上，之后 upload/edit 成功可以刷新 popup
-  mk._noteData = { ...n };
-
-  mk.bindPopup(renderPendingPopupHTML(mk._noteData), NOTE_POPUP_OPTS);
+  mk.bindPopup(renderPendingPopupHTML(n), NOTE_POPUP_OPTS);
   mk.openPopup();
-
-  pendingNotesCache.set(String(n.id), mk);
 }
 
 function renderPendingPopupHTML(n) {
-  n.id = String(n.id); // ★ 确保 id 统一
   const esc = (s) => String(s ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
@@ -2744,132 +2652,18 @@ function renderPendingPopupHTML(n) {
 
   const canEdit = noteEditTokens.has(n.id);
 
-  const uploadHTML = canEdit ? `
-    <div class="mn-upload">
-      <input type="file" accept="image/*" data-note-file="${esc(n.id)}">
-      <button data-note-upload="${esc(n.id)}">Upload</button>
-      <span class="mn-uphint" data-note-uphint="${esc(n.id)}"></span>
-    </div>
-  ` : "";
-
   return `
     <div class="note-popup">
       <div style="font-weight:700;margin-bottom:6px">${esc(n.title)}</div>
       <div style="opacity:.75;margin-bottom:6px">状态：pending（待审核）</div>
       ${n.body ? `<pre class="note-body" style="opacity:.95;margin:6px 0 0;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;">${esc(n.body)}</pre>` : ""}
       ${(n.link_url) ? `<div style="margin-top:6px"><a href="${esc(n.link_url)}" target="_blank" rel="noopener">${esc(n.link_text || n.link_url)}</a></div>` : ""}
-      ${renderImagesHTML(n)}
-      ${uploadHTML}
       ${canEdit ? `<button data-note-edit="${esc(n.id)}" style="margin-top:10px">Edit</button>` : ""}
     </div>
   `;
 }
 
 document.addEventListener("click", async (ev) => {
-  // ========== 1) Upload 图片 ==========
-  const upBtn = ev.target?.closest?.("button[data-note-upload]");
-  if (upBtn) {
-    const id = String(upBtn.getAttribute("data-note-upload")); // ★ String
-    const token = noteEditTokens.get(id);
-    if (!token) return;
-    
-    // ★ 只在当前 popup 里找，避免关开 popup 后 query 错 DOM
-    const popupRoot = upBtn.closest(".leaflet-popup") || document;
-    const fileInput = popupRoot.querySelector(`input[data-note-file="${CSS.escape(id)}"]`);
-    const hintEl = popupRoot.querySelector(`span[data-note-uphint="${CSS.escape(id)}"]`);
-
-    const file = fileInput?.files?.[0];
-    if (!file) {
-      if (hintEl) hintEl.textContent = "先选择图片";
-      return;
-    }
-
-    // UI 状态
-    upBtn.disabled = true;
-    if (hintEl) hintEl.textContent = "上传中…";
-
-    const fd = new FormData();
-    fd.append("file", file);
-
-    let res, out;
-    try {
-      res = await fetch(`${MAP_NOTES_API}/api/notes/${encodeURIComponent(id)}/image`, {
-        method: "POST",
-        headers: { "X-Edit-Token": token },
-        cache: "no-store",
-        body: fd
-      });
-    } catch (e) {
-      if (hintEl) hintEl.textContent = "上传失败：网络错误";
-      upBtn.disabled = false;
-      return;
-    }
-
-    if (!res.ok) {
-      const txt = await res.text().catch(() => "");
-      if (hintEl) hintEl.textContent = `上传失败：HTTP ${res.status} ${txt ? txt.slice(0,80) : ""}`;
-      upBtn.disabled = false;
-      return;
-    }
-
-    out = await res.json().catch(() => null);
-    if (!out?.ok || !out.key) {
-      if (hintEl) hintEl.textContent = "上传失败：返回不正确";
-      upBtn.disabled = false;
-      return;
-    }
-
-    // 记录到内存，用于 pending popup 立即预览
-    const url = out.url
-      ? (out.url.startsWith("http") ? out.url : `${MAP_NOTES_API}${out.url}`)
-      : `${MAP_NOTES_API}/public/image?key=${encodeURIComponent(out.key)}`;
-    
-    const arr = noteImagesMem.get(id) || [];
-    arr.push({ key: out.key, url });
-    noteImagesMem.set(id, arr);
-    
-    if (hintEl) hintEl.textContent = "已上传（待审核）";
-    upBtn.disabled = false;
-    
-    // ★ 刷新这个 pending note：把图片 key 写入 mk._noteData，再刷新 popup
-    const mk = pendingNotesCache.get(id);
-    if (mk && mk._noteData) {
-      mk._noteData.id = String(mk._noteData.id); // ★ 再保险
-    
-      // 1) 合并 key 到 note 数据里（兼容 images_json / images）
-      const k = String(out.key);
-    
-      // a) mk._noteData.images_json 维护为 JSON 字符串
-      let keys = [];
-      try {
-        if (Array.isArray(mk._noteData.images)) {
-          keys = mk._noteData.images.slice();
-        } else if (typeof mk._noteData.images_json === "string" && mk._noteData.images_json.trim()) {
-          keys = JSON.parse(mk._noteData.images_json);
-        }
-      } catch {}
-      if (!Array.isArray(keys)) keys = [];
-      if (!keys.includes(k)) keys.push(k);
-    
-      // 两种字段都写一下，避免你后端将来改返回格式导致前端断
-      mk._noteData.images = keys.slice();
-      mk._noteData.images_json = JSON.stringify(keys);
-    
-      // b) 同时把内存预览 noteImagesMem 也去重一下（以 key 为准）
-      const mem = noteImagesMem.get(id) || [];
-      if (!mem.some(x => x && x.key === k)) mem.push({ key: k, url });
-      noteImagesMem.set(id, mem);
-    
-      // 2) 刷新 popup 内容（保持打开状态）
-      const html = renderPendingPopupHTML(mk._noteData);
-      mk.setPopupContent(html);
-    
-      // 如果你希望上传后“立刻看到新图”，确保 popup 是开的
-      if (!mk.isPopupOpen()) mk.openPopup();
-    }
-  }
-
-  // ========== 2) Edit（你原来的逻辑） ==========
   const btn = ev.target?.closest?.("button[data-note-edit]");
   if (!btn) return;
 
@@ -2877,7 +2671,7 @@ document.addEventListener("click", async (ev) => {
   const token = noteEditTokens.get(id);
   if (!token) return;
 
-  // 下面保持你原来的 edit prompt 代码不变……
+  // 简易：只改 title/body/link
   const title = prompt("修改标题（必填）");
   if (!title || !title.trim()) return;
   const body = prompt("修改正文（可选）") || "";
@@ -3096,7 +2890,7 @@ function ensureMapNoteModal(){
     }
 
     // edit_token 仍然只放内存
-    if (created.edit_token) noteEditTokens.set(String(created.id), created.edit_token);
+    if (created.edit_token) noteEditTokens.set(created.id, created.edit_token);
 
     // 本地显示 pending
     addPendingNoteMarker({
