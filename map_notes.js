@@ -81,6 +81,12 @@
 
     injectCssOnce();
 
+    // 双击地图：打开 Add Note 面板
+    S.map.on("dblclick", (e) => {
+      // 避免和别的 dblclick 功能冲突时可以加判断
+      openAddPanel(e.latlng);
+    });
+    
     return window.MapNotes;
   }
 
@@ -196,28 +202,6 @@
 
     arr.forEach(addApprovedMarker);
     return arr;
-  }
-
-  // -------------------------
-  // Add-mode: click to open add panel
-  // -------------------------
-  function enableAddMode() {
-    if (S.addMode) return;
-    S.addMode = true;
-
-    // cursor hint
-    try { S.map.getContainer().style.cursor = "crosshair"; } catch (e) {}
-
-    S.addClickHandler = (e) => {
-      const latlng = e.latlng;
-      openAddPanel(latlng);
-    };
-
-    S.map.on("click", S.addClickHandler);
-
-    toast("点击地图选择位置以添加 Map Note（Esc 取消）");
-
-    window.addEventListener("keydown", onEscCancel, { once: true });
   }
 
   function disableAddMode() {
@@ -446,7 +430,5 @@
   window.MapNotes = {
     init,
     loadApprovedNotes,
-    enableAddMode,
-    disableAddMode,
   };
 })();
