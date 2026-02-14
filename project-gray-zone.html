@@ -387,24 +387,30 @@
     // ====== 中英文切换 ======
     const btnLang = document.getElementById('btnLang');
     const q = document.getElementById('q');
-
-    function setLang(lang){
-      lang = newLang;
+    
+    let lang = (localStorage.getItem('pgz_lang') || (root.classList.contains('lang-zh') ? 'zh' : 'en'));
+    
+    function setLang(newLang){
+      lang = (newLang === 'zh') ? 'zh' : 'en'; // 只允许 zh/en
+    
       root.classList.toggle('lang-zh', lang === 'zh');
       root.classList.toggle('lang-en', lang === 'en');
-
+    
       // placeholder 切换
       q.placeholder = (lang === 'zh') ? q.dataset.phZh : q.dataset.phEn;
-
+    
+      // 清理搜索高亮（避免切换后 mark 在隐藏文本里）
       clearHighlights();
       updateMeta(0,0);
+    
+      // 记住用户选择（可选但推荐）
+      localStorage.setItem('pgz_lang', lang);
     }
-
-    let lang = root.classList.contains('lang-zh') ? 'zh' : 'en';
+    
     setLang(lang);
+    
     btnLang.addEventListener('click', function(){
-      lang = (lang === 'zh') ? 'en' : 'zh';
-      setLang(lang);
+      setLang(lang === 'zh' ? 'en' : 'zh');
     });
 
     document.getElementById('btnPdf').addEventListener('click', function(){
@@ -539,9 +545,6 @@
     btnPrev.addEventListener('click', () => setActive(activeIdx - 1));
     btnNext.addEventListener('click', () => setActive(activeIdx + 1));
     btnClear.addEventListener('click', () => { q.value=''; clearHighlights(); updateMeta(0,0); });
-
-    // 初始化 placeholder
-    setLang('en');
   })();
 </script>
 
