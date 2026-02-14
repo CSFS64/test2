@@ -5,46 +5,79 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Project Gray Zone</title>
   <style>
-    /* 只做布局，不做“现代化皮肤” */
-    body { margin: 0; font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Arial, sans-serif; }
-    header { padding: 12px 14px; border-bottom: 1px solid #ccc; }
-    .wrap { display: flex; gap: 14px; padding: 12px 14px; }
-    nav { width: 260px; flex: 0 0 260px; }
-    main { flex: 1 1 auto; max-width: 900px; }
-    /* 小屏直接上下排 */
+    /* “远古谷歌风”：白底、少样式、蓝链、朴素排版 */
+    body { margin: 0; background: #fff; color: #000; font: 16px/1.5 Arial, Helvetica, sans-serif; }
+    a { color: #00c; text-decoration: underline; }
+    a:visited { color: #551a8b; }
+    a:hover { color: #00c; }
+    .top { padding: 10px 12px; border-bottom: 1px solid #ccc; }
+    .brand { font-size: 20px; font-weight: bold; }
+    .hint { margin-top: 4px; color: #555; font-size: 13px; }
+    .wrap { display: table; width: 100%; border-collapse: collapse; }
+    .left { display: table-cell; width: 260px; vertical-align: top; padding: 10px 12px; border-right: 1px solid #ddd; }
+    .right { display: table-cell; vertical-align: top; padding: 10px 14px; }
+    .boxTitle { font-size: 13px; font-weight: bold; margin: 0 0 6px; }
+    .small { font-size: 13px; color: #555; }
+    ul { margin: 6px 0 0 18px; padding: 0; }
+    li { margin: 4px 0; }
+    h1 { font-size: 22px; margin: 6px 0 6px; }
+    h2 { font-size: 18px; margin: 22px 0 8px; }
+    hr { border: 0; border-top: 1px solid #ddd; margin: 14px 0; }
+    .metaLine { color: #777; font-size: 12px; margin-top: 2px; }
+    /* 小屏：上下布局 */
     @media (max-width: 900px) {
       .wrap { display: block; }
-      nav { width: auto; }
-      main { max-width: none; }
+      .left, .right { display: block; width: auto; border-right: 0; }
+      .left { border-bottom: 1px solid #ddd; }
     }
-    /* 轻微可读性优化：不改色、不做卡片 */
-    h1 { margin: 0 0 6px; font-size: 22px; }
-    h2 { margin-top: 26px; }
   </style>
 </head>
 
 <body>
-  <header>
-    <h1>Project Gray Zone</h1>
-    <div>灰色地带的含义正在变化：我们希望推动新的理解方式。</div>
-  </header>
+  <div class="top">
+    <div class="brand">Project Gray Zone</div>
+    <div class="hint">灰色地带的含义正在变化。我们希望推动更准确、更符合当下战场现实的理解方式。</div>
+    <div class="metaLine">CSFS64/test2 · 项目页面</div>
+  </div>
 
   <div class="wrap">
-    <nav>
-      <details open>
-        <summary>目录</summary>
-        <ul>
-          <li><a href="#about">项目简介</a></li>
-          <li><a href="#why">为什么需要更新“灰色地带”概念</a></li>
-          <li><a href="#how">我们将如何呈现与澄清</a></li>
-          <li><a href="#terms">术语与判定口径</a></li>
-          <li><a href="#sources">来源与引用</a></li>
-          <li><a href="#updates">更新记录</a></li>
-        </ul>
-      </details>
-    </nav>
+    <!-- 左侧目录（非常朴素） -->
+    <div class="left">
+      <div class="boxTitle">目录</div>
+      <div class="small">点击跳转到对应部分：</div>
+      <ul>
+        <li><a href="#about">项目简介</a></li>
+        <li><a href="#why">为什么需要更新“灰色地带”概念</a></li>
+        <li><a href="#how">我们将如何呈现与澄清</a></li>
+        <li><a href="#terms">术语与判定口径</a></li>
+        <li><a href="#sources">来源与引用</a></li>
+        <li><a href="#updates">更新记录</a></li>
+      </ul>
 
-    <main>
+      <hr />
+
+      <div class="boxTitle">快速链接</div>
+      <ul>
+        <li><a href="#sources">跳到来源</a></li>
+        <li><a href="#updates">跳到更新记录</a></li>
+      </ul>
+
+      <hr />
+
+      <div class="small">
+        提示：新增章节只需：<br/>
+        1）目录加一行链接<br/>
+        2）右侧加一个 section
+      </div>
+    </div>
+
+    <!-- 右侧正文 -->
+    <div class="right">
+      <h1>Project Gray Zone</h1>
+      <div class="small">这是项目说明页（内容可持续扩展）。页面尽量保持“老网页”风格，方便维护与快速更新。</div>
+
+      <hr />
+
       <section id="about">
         <h2>项目简介</h2>
         <p>（待补充：用一段话说明项目目的、面向读者、输出形式。）</p>
@@ -68,17 +101,24 @@
       <section id="sources">
         <h2>来源与引用</h2>
         <ul>
-          <li><a href="https://x.com/TuiteroMartin/status/2021980963253756136?s=20" target="_blank">TuiteroMartin 原帖</a></li>
+          <li>X / Twitter：<a href="https://x.com/TuiteroMartin/status/2021980963253756136?s=20" target="_blank">TuiteroMartin 原帖</a></li>
         </ul>
+        <div class="small">建议：每条关键结论都配一个来源链接，后续复核会非常省事。</div>
       </section>
 
       <section id="updates">
         <h2>更新记录</h2>
         <ul>
-          <li>2026-02-14：页面结构初始化。</li>
+          <li>2026-02-14：页面结构初始化（Project Gray Zone）。</li>
         </ul>
       </section>
-    </main>
+
+      <hr />
+
+      <div class="small">
+        返回：<a href="./">仓库主页（GitHub Pages 根目录）</a>
+      </div>
+    </div>
   </div>
 </body>
 </html>
