@@ -223,33 +223,10 @@
 
   .scrollPane{ align-items: flex-start; }
   .doc{ align-self: flex-start; }
-  
-  .doc::-webkit-scrollbar{
-    width: 10px;
-  }
-  .doc::-webkit-scrollbar-track{
-    background: transparent;
-  }
-  .doc::-webkit-scrollbar-thumb{
-    background: #b5b5b5;
-    border-radius: 10px;
-    border: 2px solid transparent;
-    background-clip: content-box;
-  }
-  .doc::-webkit-scrollbar-thumb:hover{
-    background: #9f9f9f;
-    background-clip: content-box;
-  }
-  
-  /* Firefox */
-  .doc{
-    scrollbar-width: thin;
-    scrollbar-color: #b5b5b5 transparent;
-  }
 </style>
 </head>
 
-<body class="lang-zh" id="appRoot">
+<body class="lang-en" id="appRoot">
   <div class="top">
     <div class="brand">Project Gray Zone</div>
     <div class="hint" data-lang="zh">灰色地带的含义正在变化。我们希望推动更准确、更符合当下战场现实的理解方式。</div>
@@ -259,7 +236,7 @@
   <div class="page">
     <div class="wrap">
 
-      <!-- 左侧：阅读器侧栏 + 工具 -->
+      <!-- 侧栏 -->
       <div class="left">
         <div class="leftInner">
 
@@ -310,64 +287,76 @@
         </div>
       </div>
 
-      <!-- 右侧：只有这里滚动 -->
+      <!-- 文本区域 -->
       <div class="right">
         <div class="scrollPane" id="scrollPane">
           <div class="doc" role="document" id="doc">
-
-            <h1 data-lang="zh">Project Gray Zone</h1>
-            <h1 data-lang="en">Project Gray Zone</h1>
-
+      
+            <h1 id="topTitle">
+              <span data-lang="zh">Project Gray Zone</span>
+              <span data-lang="en">Project Gray Zone</span>
+            </h1>
+      
             <p data-lang="zh">Project Gray Zone是Kalyna OSINT于2026年2月12日启动的项目。灰色地带概念已经随战争形态变化而发生偏移，而我们的目标是更新公众对“灰色地带”的理解框架，推动OSINT社区转变在开源分析中对“灰色地带”的定义。本页将持续汇总定义、口径、案例与来源。</p>
-            <p data-lang="en">Project Gray Zone is a Kalyna OSINT initiative launched on Feb 12, 2026. As the concept of “gray zones” has shifted with changes in the character of war, our goal is to update the public framework and encourage the OSINT community to revise how “gray zones” are defined in open-source analysis. This page will continuously consolidate definitions, criteria, cases, and sources.</p>
-
+            <p data-lang="en">Project Gray Zone is a Kalyna OSINT initiative launched on February 12, 2026. As the concept of “gray zones” has shifted with changes in the character of war, our goal is to update the public framework for understanding them and to encourage the OSINT community to refine how “gray zones” are defined in open-source analysis. This page will be continuously maintained as a living reference, consolidating definitions, analytic criteria, cases, and sources.</p>
+      
             <p data-lang="zh">该分析将随着研究和更多数据而持续更新，你所看到的并不是最终内容。你可以从Kalyna OSINT官方网站“项目”部分再次进入。</p>
-            <p data-lang="en">This analysis will be updated as research progresses and more data becomes available; what you see is not the final version. You can re-enter via the “Projects” section on the official Kalyna OSINT website.</p>
-
-            <h2 id="effect" data-lang="zh">新的地图参考标准</h2>
-            <h2 id="effect" data-lang="en">New Mapping Reference Standard</h2>
-
+            <p data-lang="en">This analysis will be updated as research progresses and additional data becomes available; what you are reading is not the final version. You can revisit the latest iteration via the “Projects” section on the official Kalyna OSINT website.</p>
+      
+            <h2 id="effect">
+              <span data-lang="zh">新的地图参考标准</span>
+              <span data-lang="en">New Mapping Reference Standard</span>
+            </h2>
+      
             <p data-lang="zh">随着我们更新对灰色地带的定义，我们的互动地图Kalyna Battle Map所绘制的前线也将参照这一标准发生改变。目前，我们将在第聂伯彼得罗浮斯克和扎波罗热地区率先使用这一标准。</p>
-            <p data-lang="en">As we update the definition of gray zones, the front line depicted on our interactive map (Kalyna Battle Map) will also be adjusted accordingly. We will first apply this standard in Dnipropetrovsk and Zaporizhzhia regions.</p>
-
+            <p data-lang="en">As we revise our definition of gray zones, the front line depicted on our interactive map (Kalyna Battle Map) will be updated accordingly. We will apply this standard first in Dnipropetrovsk and Zaporizhzhia regions.</p>
+      
             <p data-lang="zh">新的前线取消了灰色地带，只由红蓝控制区和它们重叠的部分构成，下文将详细解释这样做的含义。</p>
-            <p data-lang="en">The new front line removes the “gray zone” layer and consists only of red/blue control areas and their overlap. The rationale is explained below.</p>
-
-            <h2 id="intro" data-lang="zh">灰色地带在过去的定义</h2>
-            <h2 id="intro" data-lang="en">Previous Definition of the Gray Zone</h2>
-
+            <p data-lang="en">Under the new approach, the “gray zone” layer is removed. The front line will consist only of red and blue control areas and the portions where these areas overlap. The implications of this change are explained below.</p>
+      
+            <h2 id="intro">
+              <span data-lang="zh">灰色地带在过去的定义</span>
+              <span data-lang="en">Previous Definitions of the Gray Zone</span>
+            </h2>
+      
             <p data-lang="zh">在过去，特别是2023-2024年间，战争研究机构和开源分析社区对于灰色地带的定义主要是两种区域的叠加或其中一种：灰色地带和交战区。灰色地带代表着一片不存在战争双方阵地的区域；而交战区则代表着一片双方士兵都能临时进入并接触，但难以站稳脚跟的区域。</p>
-            <p data-lang="en">Previously—especially in 2023–2024—research institutions and the OSINT community often used two related notions: a “gray zone” and a “contested zone.” The gray zone indicated areas without established positions by either side, while the contested zone indicated areas where troops might temporarily enter and make contact but could not firmly hold ground.</p>
-
+            <p data-lang="en">In earlier periods—especially across 2023–2024—research institutions and the OSINT community commonly used two related notions: a “gray zone” and a “contested zone.” The gray zone referred to areas where neither side held established positions, while the contested zone referred to areas where forces could temporarily enter and make contact but could not reliably consolidate control.</p>
+      
             <p data-lang="zh">相对的，双方都存在稳定的控制线，在控制线内友军士兵占据所有阵地，控制所有增援路线，形成对区域的稳定控制，几乎无需担心存在敌方渗透。因此，在那一段时间通过地理定位来证实前线变化是十分容易的，受到对方攻击的定位代表友方稳定控制，受到友方攻击的定位代表敌方稳定控制，双方袭击频繁的区域则为交战区。</p>
-            <p data-lang="en">By contrast, both sides could maintain stable control lines: inside a control line, friendly troops held positions and controlled reinforcement routes, leaving little concern for deep infiltration. In that period, geolocation-based verification was comparatively straightforward: locations attacked by the enemy implied friendly control; locations attacked by friendly forces implied enemy control; and areas with frequent mutual strikes were treated as contested.</p>
-
-            <h2 id="now" data-lang="zh">现在的“灰色地带”</h2>
-            <h2 id="now" data-lang="en">The “Gray Zone” Today</h2>
-
+            <p data-lang="en">By contrast, both sides could maintain relatively stable control lines. Within these lines, friendly forces held positions and controlled reinforcement routes, leaving limited room for deep infiltration. As a result, geolocation-based verification of front-line changes was often straightforward: strikes attributed to the enemy typically indicated friendly control, strikes attributed to friendly forces often indicated enemy control, and areas with frequent mutual strikes were treated as contested.</p>
+      
+            <h2 id="now">
+              <span data-lang="zh">现在的“灰色地带”</span>
+              <span data-lang="en">What “Gray Zone” Means Today</span>
+            </h2>
+      
             <p data-lang="zh">在2025年间，由于缺少真正的突破力量、实现目标所需要的人力和迫于宣传需要，俄罗斯军队大规模通过自杀式袭击或渗透的方式将步兵送入目标地点展示旗帜。这些士兵通过上述手段进入到目标地点并藏匿，他们无法得到来自稳定控制区的增援和补给，也难以仅凭自己站稳脚跟，他们的唯一任务是生存下去，而不是交战，甚至在一些情况下最好避免交战。</p>
-            <p data-lang="en">In 2025, due to limited breakthrough capacity, manpower constraints, and propaganda pressures, Russian forces increasingly inserted infantry into target locations via suicidal assaults or infiltration to “show the flag.” These troops entered and concealed themselves, often without reliable reinforcement or resupply from stable control areas. They could not realistically hold ground on their own; their primary task became survival rather than fighting—sometimes avoiding contact entirely.</p>
-
+            <p data-lang="en">In 2025, limited breakthrough capacity, manpower constraints, and propaganda pressures led Russian forces to insert infantry into target locations at scale—often through high-risk assaults or infiltration intended to “show the flag.” After entering, these troops frequently concealed themselves without reliable reinforcement or resupply from stable control areas. In many cases, they could not realistically consolidate control on their own; their primary objective became survival rather than sustained combat—and sometimes avoiding contact altogether.</p>
+      
             <p data-lang="zh">这是我们有关俄军<a href="https://www.zhihu.com/pin/1946648821078684789" target="_blank">第一次渗透波克罗夫斯克的报告</a>，以便你可以更好的理解上文所描述的现状。这种情况在几乎所有前线发生，相信大部分人都已有所耳闻。</p>
-            <p data-lang="en">See our report on the Russian forces’ <a href="https://www.zhihu.com/pin/1946648821078684789" target="_blank">first infiltration into Pokrovsk</a> to better understand the situation described above. Similar dynamics appear across much of the front, and many observers have already heard of them.</p>
-
+            <p data-lang="en">For additional context, see our report on the Russian forces’ <a href="https://www.zhihu.com/pin/1946648821078684789" target="_blank">first infiltration into Pokrovsk</a>, which illustrates the dynamics described above. Variations of this pattern have appeared across much of the front, and many observers have already encountered similar accounts.</p>
+      
             <p data-lang="zh">不仅如此，恶劣的天气和无人机的大量使用也让步兵渗透更加容易。</p>
-            <p data-lang="en">Additionally, poor weather and extensive drone usage can make infantry infiltration easier.</p>
-
-            <h2 id="sources" data-lang="zh">来源与引用</h2>
-            <h2 id="sources" data-lang="en">Sources</h2>
-
+            <p data-lang="en">Moreover, adverse weather and the widespread use of drones have further altered the tactical environment, often making infantry infiltration easier than before.</p>
+      
+            <h2 id="sources">
+              <span data-lang="zh">来源与引用</span>
+              <span data-lang="en">Sources</span>
+            </h2>
+      
             <div class="refs">
               <p data-lang="zh">Martin. (n.d.). Post on X (Twitter). <a href="https://x.com/TuiteroMartin/status/2021980963253756136?s=20" target="_blank">https://x.com/TuiteroMartin/status/2021980963253756136?s=20</a></p>
               <p data-lang="en">Martin. (n.d.). Post on X (Twitter). <a href="https://x.com/TuiteroMartin/status/2021980963253756136?s=20" target="_blank">https://x.com/TuiteroMartin/status/2021980963253756136?s=20</a></p>
             </div>
-
-            <h2 id="updates" data-lang="zh">更新记录</h2>
-            <h2 id="updates" data-lang="en">Updates</h2>
-
+      
+            <h2 id="updates">
+              <span data-lang="zh">更新记录</span>
+              <span data-lang="en">Update Log</span>
+            </h2>
+      
             <p data-lang="zh">2026-02-14：页面结构初始化（左侧目录 + 右侧 Word/APA 文档滚动区）。</p>
-            <p data-lang="en">2026-02-14: Initial page structure (left contents + right Word/APA document pane).</p>
-
+            <p data-lang="en">2026-02-14: Initial page structure (left-side contents + right-side Word/APA-style document pane).</p>
+      
           </div>
         </div>
       </div>
@@ -381,7 +370,7 @@
     const pane = document.getElementById('scrollPane');
     const doc  = document.getElementById('doc');
 
-    // ====== 目录锚点：在右侧容器内滚动 ======
+    // ====== 目录锚点 ======
     document.querySelectorAll('a[href^="#"]').forEach(function(a){
       a.addEventListener('click', function(e){
         const href = a.getAttribute('href');
@@ -406,7 +395,6 @@
       // placeholder 切换
       q.placeholder = (lang === 'zh') ? q.dataset.phZh : q.dataset.phEn;
 
-      // 清掉搜索高亮（避免中英文切换后标记乱）
       clearHighlights();
       updateMeta(0,0);
     }
@@ -417,12 +405,11 @@
       setLang(lang);
     });
 
-    // ====== PDF 下载：走浏览器打印 -> 另存为 PDF ======
     document.getElementById('btnPdf').addEventListener('click', function(){
       window.print();
     });
 
-    // ====== 文内搜索 + 高亮 + Prev/Next ======
+    // ====== 文内搜索 + 高亮 ======
     const btnFind  = document.getElementById('btnFind');
     const btnPrev  = document.getElementById('btnPrev');
     const btnNext  = document.getElementById('btnNext');
@@ -441,7 +428,6 @@
     }
 
     function clearHighlights(){
-      // 把 mark.hl 去掉，恢复纯文本
       const marks = doc.querySelectorAll('mark.hl');
       marks.forEach(m => {
         const text = document.createTextNode(m.textContent);
@@ -456,7 +442,6 @@
     }
 
     function getSearchRoot(){
-      // 只在当前语言可见的文本里找
       const selector = (root.classList.contains('lang-en')) ? '[data-lang="en"]' : '[data-lang="zh"]';
       return doc.querySelectorAll(selector);
     }
@@ -554,7 +539,7 @@
     btnClear.addEventListener('click', () => { q.value=''; clearHighlights(); updateMeta(0,0); });
 
     // 初始化 placeholder
-    setLang('zh');
+    setLang('en');
   })();
 </script>
 
