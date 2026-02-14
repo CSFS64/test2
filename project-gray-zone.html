@@ -367,187 +367,262 @@
   </div>
 
 <script>
-  (function(){
-    const root = document.getElementById('appRoot');
-    const pane = document.getElementById('scrollPane');
-    const doc  = document.getElementById('doc');
+(function () {
+  'use strict';
 
-    // ====== 目录锚点 ======
-    document.querySelectorAll('a[href^="#"]').forEach(function(a){
-      a.addEventListener('click', function(e){
-        const href = a.getAttribute('href');
-        if(!href || href === '#') return;
-        const id = href.slice(1);
-        const target = document.getElementById(id);
-        if(!target) return;
-        e.preventDefault();
-        history.replaceState(null, '', '#' + id);
-        target.scrollIntoView({behavior:'smooth', block:'start'});
-      });
+  // =========================
+  // 0) DOM refs（全局只取一次）
+  // =========================
+  const root = document.getElementById('appRoot');
+  const pane = document.getElementById('scrollPane');
+  const doc  = document.getElementById('doc');
+
+  const q        = document.getElementById('q');
+  const meta     = document.getElementById('searchMeta');
+
+  const btnFind  = document.getElementById('btnFind');
+  const btnPrev  = document.getElementById('btnPrev');
+  const btnNext  = document.getElementById('btnNext');
+  const btnClear = document.getElementById('btnClear');
+
+  const btnLang  = document.getElementById('btnLang');
+  const btnPdf   = document.getElementById('btnPdf');
+
+  // =========================
+  // 1) State（统一放这）
+  // =========================
+  const STATE = {
+    lang: 'en',
+    hits: [],
+    activeIdx: -1
+  };
+
+  // =========================
+  // 2) Helpers
+  // =========================
+  function setText(el, s) {
+    if (el) el.textContent = s;
+  }
+
+  function clampMod(i, n) {
+    if (n <= 0) return -1;
+    return ((i % n) + n) % n;
+  }
+
+  function normalizeQuery(s) {
+    return (s || '').trim();
+  }
+
+  // =========================
+  // 3) Anchors（目录跳转）
+  // =========================
+  function onAnchorClick(e) {
+    const a = e.currentTarget;
+    const href = a.getAttribute('href');
+    if (!href || href === '#' || !href.startsWith('#')) return;
+
+    const id = href.slice(1);
+    const target = document.getElementById(id);
+    if (!target) return;
+
+    e.preventDefault();
+    history.replaceState(null, '', '#' + id);
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function bindAnchors() {
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', onAnchorClick);
     });
+  }
 
-    // ====== 中英文切换 ======
-    const btnLang = document.getElementById('btnLang');
-    const q = document.getElementById('q');
-    
-    let lang = (localStorage.getItem('pgz_lang') || (root.classList.contains('lang-zh') ? 'zh' : 'en'));
-    
-    function setLang(newLang){
-      lang = (newLang === 'zh') ? 'zh' : 'en'; // 只允许 zh/en
-    
-      root.classList.toggle('lang-zh', lang === 'zh');
-      root.classList.toggle('lang-en', lang === 'en');
-    
-      // placeholder 切换
-      q.placeholder = (lang === 'zh') ? q.dataset.phZh : q.dataset.phEn;
-    
-      // 清理搜索高亮（避免切换后 mark 在隐藏文本里）
-      clearHighlights();
-      updateMeta(0,0);
-    
-      // 记住用户选择（可选但推荐）
-      localStorage.setItem('pgz_lang', lang);
+  // =========================
+  // 4) Search / Highlight
+  // =========================
+  function updateMeta(found, idx) {
+    if (!meta) return;
+
+    if (found === 0) {
+      setText(meta, STATE.lang === 'zh' ? '0 个结果' : '0 results');
+    } else {
+      setText(meta, `${idx + 1} / ${found} ${STATE.lang === 'zh' ? '处匹配' : 'matches'}`);
     }
-    
-    setLang(lang);
-    
-    btnLang.addEventListener('click', function(){
-      setLang(lang === 'zh' ? 'en' : 'zh');
+  }
+
+  function clearHighlights() {
+    doc.querySelectorAll('mark.hl').forEach(m => {
+      m.replaceWith(document.createTextNode(m.textContent));
     });
+    STATE.hits = [];
+    STATE.activeIdx = -1;
+  }
 
-    document.getElementById('btnPdf').addEventListener('click', function(){
-      window.print();
-    });
+  function getSearchRootElements() {
+    const selector = root.classList.contains('lang-en') ? '[data-lang="en"]' : '[data-lang="zh"]';
+    return Array.from(doc.querySelectorAll(selector));
+  }
 
-    // ====== 文内搜索 + 高亮 ======
-    const btnFind  = document.getElementById('btnFind');
-    const btnPrev  = document.getElementById('btnPrev');
-    const btnNext  = document.getElementById('btnNext');
-    const btnClear = document.getElementById('btnClear');
-    const meta = document.getElementById('searchMeta');
+  function walkTextNodes(el, out) {
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
 
-    let hits = [];
-    let activeIdx = -1;
-
-    function updateMeta(found, idx){
-      if(found === 0){
-        meta.textContent = '0 results';
-      }else{
-        meta.textContent = (idx+1) + ' / ' + found + ' matches';
+        const p = node.parentElement;
+        if (p && (p.tagName === 'SCRIPT' || p.tagName === 'STYLE')) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
       }
-    }
-
-    function clearHighlights(){
-      const marks = doc.querySelectorAll('mark.hl');
-      marks.forEach(m => {
-        const text = document.createTextNode(m.textContent);
-        m.replaceWith(text);
-      });
-      hits = [];
-      activeIdx = -1;
-    }
-
-    function normalizeQuery(s){
-      return (s || '').trim();
-    }
-
-    function getSearchRoot(){
-      const selector = (root.classList.contains('lang-en')) ? '[data-lang="en"]' : '[data-lang="zh"]';
-      return doc.querySelectorAll(selector);
-    }
-
-    function walkTextNodes(el, out){
-      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
-        acceptNode(node){
-          if(!node.nodeValue) return NodeFilter.FILTER_REJECT;
-          // 跳过空白
-          if(!node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
-          // 跳过脚本等
-          if(node.parentElement && (node.parentElement.tagName === 'SCRIPT' || node.parentElement.tagName === 'STYLE')) {
-            return NodeFilter.FILTER_REJECT;
-          }
-          return NodeFilter.FILTER_ACCEPT;
-        }
-      });
-      let n;
-      while((n = walker.nextNode())) out.push(n);
-    }
-
-    function highlightAll(query){
-      clearHighlights();
-      const q2 = normalizeQuery(query);
-      if(!q2) { updateMeta(0,0); return; }
-
-      const targets = Array.from(getSearchRoot());
-      const textNodes = [];
-      targets.forEach(el => walkTextNodes(el, textNodes));
-
-      const needle = q2.toLowerCase();
-
-      textNodes.forEach(node => {
-        const hay = node.nodeValue;
-        const low = hay.toLowerCase();
-        const idx = low.indexOf(needle);
-        if(idx === -1) return;
-
-        // 多次匹配：循环拆分
-        let curNode = node;
-        let start = 0;
-        let parent = curNode.parentNode;
-        let frag = document.createDocumentFragment();
-
-        while(true){
-          const pos = low.indexOf(needle, start);
-          if(pos === -1) break;
-
-          // 前段
-          if(pos > start){
-            frag.appendChild(document.createTextNode(hay.slice(start, pos)));
-          }
-
-          // 命中段
-          const m = document.createElement('mark');
-          m.className = 'hl';
-          m.textContent = hay.slice(pos, pos + q2.length);
-          frag.appendChild(m);
-          hits.push(m);
-
-          start = pos + q2.length;
-        }
-
-        // 尾段
-        if(start < hay.length){
-          frag.appendChild(document.createTextNode(hay.slice(start)));
-        }
-
-        parent.replaceChild(frag, curNode);
-      });
-
-      if(hits.length){
-        setActive(0);
-      }else{
-        updateMeta(0,0);
-      }
-    }
-
-    function setActive(i){
-      if(!hits.length){ activeIdx = -1; updateMeta(0,0); return; }
-      hits.forEach(m => m.classList.remove('active'));
-      activeIdx = (i + hits.length) % hits.length;
-      const m = hits[activeIdx];
-      m.classList.add('active');
-      m.scrollIntoView({behavior:'smooth', block:'center'});
-      updateMeta(hits.length, activeIdx);
-    }
-
-    btnFind.addEventListener('click', () => highlightAll(q.value));
-    q.addEventListener('keydown', (e) => {
-      if(e.key === 'Enter'){ e.preventDefault(); highlightAll(q.value); }
     });
-    btnPrev.addEventListener('click', () => setActive(activeIdx - 1));
-    btnNext.addEventListener('click', () => setActive(activeIdx + 1));
-    btnClear.addEventListener('click', () => { q.value=''; clearHighlights(); updateMeta(0,0); });
-  })();
+
+    let n;
+    while ((n = walker.nextNode())) out.push(n);
+  }
+
+  function setActive(i) {
+    const hits = STATE.hits;
+    if (!hits.length) {
+      STATE.activeIdx = -1;
+      updateMeta(0, 0);
+      return;
+    }
+
+    hits.forEach(m => m.classList.remove('active'));
+    STATE.activeIdx = clampMod(i, hits.length);
+
+    const m = hits[STATE.activeIdx];
+    m.classList.add('active');
+    m.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    updateMeta(hits.length, STATE.activeIdx);
+  }
+
+  function highlightAll(query) {
+    clearHighlights();
+
+    const q2 = normalizeQuery(query);
+    if (!q2) {
+      updateMeta(0, 0);
+      return;
+    }
+
+    const needle = q2.toLowerCase();
+    const targets = getSearchRootElements();
+
+    const textNodes = [];
+    targets.forEach(el => walkTextNodes(el, textNodes));
+
+    const hits = [];
+
+    textNodes.forEach(node => {
+      const hay = node.nodeValue;
+      const low = hay.toLowerCase();
+      if (low.indexOf(needle) === -1) return;
+
+      let start = 0;
+      const parent = node.parentNode;
+      const frag = document.createDocumentFragment();
+
+      while (true) {
+        const pos = low.indexOf(needle, start);
+        if (pos === -1) break;
+
+        if (pos > start) frag.appendChild(document.createTextNode(hay.slice(start, pos)));
+
+        const m = document.createElement('mark');
+        m.className = 'hl';
+        m.textContent = hay.slice(pos, pos + q2.length);
+        frag.appendChild(m);
+        hits.push(m);
+
+        start = pos + q2.length;
+      }
+
+      if (start < hay.length) frag.appendChild(document.createTextNode(hay.slice(start)));
+      parent.replaceChild(frag, node);
+    });
+
+    STATE.hits = hits;
+
+    if (hits.length) setActive(0);
+    else updateMeta(0, 0);
+  }
+
+  function bindSearch() {
+    if (btnFind) btnFind.addEventListener('click', () => highlightAll(q.value));
+    if (q) {
+      q.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          highlightAll(q.value);
+        }
+      });
+    }
+    if (btnPrev) btnPrev.addEventListener('click', () => setActive(STATE.activeIdx - 1));
+    if (btnNext) btnNext.addEventListener('click', () => setActive(STATE.activeIdx + 1));
+    if (btnClear) btnClear.addEventListener('click', () => {
+      q.value = '';
+      clearHighlights();
+      updateMeta(0, 0);
+    });
+  }
+
+  // =========================
+  // 5) Language
+  // =========================
+  function applyLang(lang) {
+    STATE.lang = (lang === 'zh') ? 'zh' : 'en';
+
+    root.classList.toggle('lang-zh', STATE.lang === 'zh');
+    root.classList.toggle('lang-en', STATE.lang === 'en');
+
+    // placeholder
+    if (q) q.placeholder = (STATE.lang === 'zh') ? q.dataset.phZh : q.dataset.phEn;
+
+    clearHighlights();
+    updateMeta(0, 0);
+
+    // persist
+    try { localStorage.setItem('pgz_lang', STATE.lang); } catch (e) {}
+  }
+
+  function toggleLang() {
+    applyLang(STATE.lang === 'zh' ? 'en' : 'zh');
+  }
+
+  function bindLang() {
+    if (btnLang) btnLang.addEventListener('click', toggleLang);
+  }
+
+  // =========================
+  // 6) PDF (Print)
+  // =========================
+  function bindPdf() {
+    if (btnPdf) btnPdf.addEventListener('click', () => window.print());
+  }
+
+  // =========================
+  // 7) init（唯一入口）
+  // =========================
+  function init() {
+    if (!root || !doc) return;
+
+    let saved = null;
+    try { saved = localStorage.getItem('pgz_lang'); } catch (e) {}
+    const initial = (saved === 'zh' || saved === 'en') ? saved : 'en';
+
+    bindAnchors();
+    bindSearch();
+    bindLang();
+    bindPdf();
+
+    applyLang(initial);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
 </script>
 
 </body>
