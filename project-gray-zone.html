@@ -6,7 +6,6 @@
 <title>Project Gray Zone</title>
 
 <style>
-  /* ===== 老网页基础（保留原结构） ===== */
   body{
     margin:0;
     background:#f2f2f2;
@@ -57,7 +56,6 @@
   li{ margin:4px 0; }
   hr{ border:0; border-top:1px solid #ddd; margin:14px 0; }
 
-  /* 复古蓝按钮（融合版） */
   .btn{
     display:inline-block;
     padding:4px 10px;
@@ -80,31 +78,26 @@
   }
   .btnRow .btn{ margin-right:6px; margin-bottom:6px; }
 
-  /* ===== 关键：只有右侧滚动，且滚动区内只有“一个白色文档容器” ===== */
   .scrollPane{
     height: calc(100vh - 170px);
     overflow-y: auto;
-    overflow-x: hidden;      /* ✅ 禁止左右滑动 */
-    display: flex;           /* ✅ 让内部 doc 通过 flex 居中 */
-    justify-content: center; /* ✅ 水平居中 */
+    overflow-x: hidden;      /* 禁止左右滑动 */
+    display: flex;           /* 让内部 doc 通过 flex 居中 */
+    justify-content: center; /* 水平居中 */
   }
 
-  /* 这个 .doc 就是你要的“单个白色容器” */
   .doc{
     background:#fff;
     width: min(8.5in, 100%);
     max-width: calc(100% - 24px); 
-    margin: 0 auto;           /* 保持在滚动区中部 */
-    padding: 1in;             /* Word/APA 常见 1 inch 页边距 */
+    margin: 0 auto;
+    padding: 1in;
 
     /* APA/Word 排版 */
     font-family: "Times New Roman", Times, "Courier New", monospace;
     font-size: 12pt;
     line-height: 2;           /* 双倍行距 */
     color:#000;
-  }
-  :lang(zh), :lang(zh-CN){
-    font-family: "Courier New", monospace;  /* 中文等宽 */
   }
 
   /* APA：段落首行缩进 0.5 inch */
@@ -113,7 +106,6 @@
     text-indent: 0.5in;
   }
 
-  /* 标题不缩进 */
   .doc h1, .doc h2, .doc h3{
     text-indent: 0;
     margin: 0 0 0.6em 0;
@@ -136,7 +128,6 @@
     margin: 0 0 0.5em 0;
   }
 
-  /* 锚点跳转在 doc 里不贴边 */
   .doc [id]{ scroll-margin-top: 12px; }
 
   @media (max-width:900px){
@@ -144,7 +135,7 @@
     .left,.right{ display:block; width:auto; border-right:0; }
     .left{ border-bottom:1px solid #d2d2d2; }
     .scrollPane{ height:auto; overflow:visible; }
-    .doc{ width:100%; padding: 24px; } /* 小屏别用 1in，太挤 */
+    .doc{ width:100%; padding: 24px; }
   }
 </style>
 </head>
@@ -230,7 +221,6 @@
   </div>
 
 <script>
-  // 让目录锚点在右侧 scrollPane 内滚动（而不是整页跳）
   (function () {
     var pane = document.getElementById('scrollPane');
     if (!pane) return;
