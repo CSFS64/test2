@@ -1927,7 +1927,7 @@ if (updateList) {
   updates.forEach(item => {
     const div = document.createElement('div');
     div.className = 'update-item';
-    div.textContent = `${item.date}：${item.summary}`;
+    div.innerHTML = `${item.date}：${item.summary}`;
     makePressable(div); // ← 按压效果
     div.onclick = () => {
       const [yyyy, mm, dd] = item.date.split('-');
