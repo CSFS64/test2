@@ -6,229 +6,120 @@
 <title>Project Gray Zone</title>
 
 <style>
-  /* ===== 复古站点：浅灰背景 + 内容框 ===== */
+  /* ===== 页面只做“居中 + 背景”，不做额外框架 ===== */
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
   body{
-    margin:0;
-    background:#f2f2f2;
-    color:#000;
-    font:16px/1.55 Arial, Helvetica, sans-serif;
-  }
-  a{ color:#00c; text-decoration:underline; }
-  a:visited{ color:#551a8b; }
-
-  /* 顶栏固定（不动） */
-  .top{
-    padding:10px 12px;
-    background:#e9e9e9;
-    border-bottom:1px solid #c9c9c9;
-  }
-  .brand{ font-size:20px; font-weight:bold; }
-  .hint{ margin-top:4px; color:#444; font-size:13px; }
-  .metaLine{ color:#666; font-size:12px; margin-top:2px; }
-
-  .page{
-    max-width: 1100px;
-    margin: 14px auto;
-    padding: 0 10px;
+    background: #f2f2f2; /* 像旧系统/文档工作区 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 
-  .frame{
-    background:#fff;
-    border:1px solid #bfbfbf;
-  }
-
-  /* 老式 table 布局 */
-  .wrap{ display:table; width:100%; border-collapse:collapse; }
-  .left{
-    display:table-cell;
-    width:260px;
-    vertical-align:top;
-    background:#f7f7f7;
-    border-right:1px solid #d2d2d2;
-    padding:10px 12px;
-  }
-  .right{
-    display:table-cell;
-    vertical-align:top;
-    padding:10px 12px;
-  }
-
-  .boxTitle{ font-size:13px; font-weight:bold; margin:0 0 6px; }
-  .small{ font-size:13px; color:#444; }
-  ul{ margin:6px 0 0 18px; padding:0; }
-  li{ margin:4px 0; }
-  h1{ font-size:22px; margin:6px 0 6px; }
-  h2{ font-size:18px; margin:22px 0 8px; }
-  hr{ border:0; border-top:1px solid #ddd; margin:14px 0; }
-
-  /* 复古蓝按钮（更融入面板） */
-  .btn{
-    display:inline-block;
-    padding:4px 10px;
-    font-size:13px;
-    color:#003399;
-    text-decoration:none;
-    border:1px solid #8aa9d6;
-    border-radius:10px;
-    background: linear-gradient(#f4f8ff, #dbe8ff);
-    box-shadow: inset 0 1px 0 #ffffff, 0 1px 0 rgba(0,0,0,0.05);
-  }
-  .btn:hover{
-    border-color:#6f94cc;
-    background: linear-gradient(#ffffff, #dbe8ff);
-    color:#002a80;
-  }
-  .btn:active{
-    background: linear-gradient(#dbe8ff, #f4f8ff);
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.18);
-  }
-  .btnRow .btn{ margin-right:6px; margin-bottom:6px; }
-
-  /* ===== “Word滚动内容区”核心 =====
-     右侧不是整页滚动，而是 main 自己滚动 */
-  .docWrap{
-    border:1px solid #cfcfcf;
-    background:#ffffff;
-    padding: 10px 12px;
-    height: calc(100vh - 170px);  /* 视口高度 - 顶部与外边距，近似 Word 视窗 */
+  /* ===== 唯一白色滚动容器（Word 视窗） ===== */
+  .doc {
+    background: #fff;
+    width: min(8.5in, calc(100vw - 24px)); /* 近似 Letter 页宽 */
+    height: min(90vh, 11in);               /* 近似 Letter 页高（屏幕内） */
     overflow: auto;
+
+    /* Word/APA 常见页边距 1 inch */
+    padding: 1in;
+
+    /* 轻微阴影，像“纸”浮在工作区（不现代化很强） */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.18);
   }
 
-  /* 让锚点跳转不会被标题贴边 */
-  .docWrap section{ scroll-margin-top: 12px; }
-
-  /* 移动端：恢复为页面滚动（因为小屏里“局部滚动”体验差） */
-  @media (max-width:900px){
-    .wrap{ display:block; }
-    .left,.right{ display:block; width:auto; border-right:0; }
-    .left{ border-bottom:1px solid #d2d2d2; }
-    .docWrap{ height: auto; overflow: visible; } /* 小屏改回正常滚动 */
+  /* ===== 字体策略 =====
+     - 英文默认 Times New Roman
+     - 回退等宽
+     - 中文强制等宽（你要求“中文也是等宽”）
+  */
+  .doc {
+    font-family: "Times New Roman", Times, "Courier New", monospace;
+    font-size: 12pt;        /* APA 常用 12pt */
+    line-height: 2;         /* 双倍行距 */
+    color: #000;
   }
+  :lang(zh), :lang(zh-CN) {
+    font-family: "Courier New", monospace; /* 中文等宽 */
+  }
+
+  /* ===== APA 段落：首行缩进 0.5 inch ===== */
+  p {
+    margin: 0 0 0.5em 0;     /* 双倍行距下不需要太大段间距 */
+    text-indent: 0.5in;
+  }
+
+  /* 标题尽量朴素 */
+  h1, h2, h3 {
+    margin: 0 0 0.6em 0;
+    font-weight: bold;
+    line-height: 1.3; /* 标题不强制双倍行距那么夸张 */
+    text-indent: 0;
+  }
+  h1 { font-size: 14pt; text-align: center; }
+  h2 { font-size: 12pt; margin-top: 1.2em; }
+  h3 { font-size: 12pt; margin-top: 1.0em; }
+
+  /* 列表也按双倍行距走，但不要首行缩进 */
+  ul, ol { margin: 0 0 0.8em 1.2em; padding: 0; }
+  li { margin: 0 0 0.2em 0; }
+
+  /* 链接：老网页蓝色 */
+  a { color: #00c; text-decoration: underline; }
+  a:visited { color: #551a8b; }
+
+  /* 分隔线朴素 */
+  hr { border: 0; border-top: 1px solid #000; margin: 1em 0; }
+
+  /* ===== 参考文献：悬挂缩进（首行不缩进，后续行缩进） ===== */
+  .refs p{
+    text-indent: -0.5in;    /* 负缩进制造悬挂 */
+    padding-left: 0.5in;    /* 把整体推回去 */
+    margin: 0 0 0.5em 0;
+  }
+
+  /* 防止锚点跳转时标题贴边 */
+  [id] { scroll-margin-top: 12px; }
 </style>
 </head>
 
 <body>
-  <div class="top">
-    <div class="brand">Project Gray Zone</div>
-    <div class="hint">灰色地带的含义正在变化。我们希望推动更准确、更符合当下战场现实的理解方式。</div>
-    <div class="metaLine">CSFS64/test2 · 项目页面</div>
+
+<div class="doc" role="document">
+
+  <h1>Project Gray Zone</h1>
+
+  <p>（这里是项目导语：说明灰色地带概念已经随战争形态变化而发生偏移，我们需要更新公众对“灰色地带”的理解框架。本页将持续汇总定义、口径、案例与来源。）</p>
+
+  <h2 id="about">项目简介</h2>
+  <p>（待补充：项目目标、读者对象、输出形式，例如“澄清前线状态、统一口径、解释灰色地带的新形态”。）</p>
+
+  <h2 id="claim">核心主张</h2>
+  <p>（待补充：一句话总结你希望大家改变的旧认知，以及新的认知是什么。）</p>
+
+  <h2 id="method">方法与呈现</h2>
+  <p>（待补充：你如何做澄清：使用证据链、时间戳、卫星图/地面视频/战报交叉验证、明确“不确定性范围”等。）</p>
+
+  <h2 id="terms">术语与判定口径</h2>
+  <p>（待补充：比如“控制线/接触线/渗透/交错阵地/无人机主导交战”等术语你怎么定义。）</p>
+
+  <h2 id="sources">来源与引用</h2>
+  <p>本项目引用的关键来源之一如下：</p>
+
+  <div class="refs">
+    <p>Martin. (n.d.). Post on X (Twitter). <a href="https://x.com/TuiteroMartin/status/2021980963253756136?s=20" target="_blank">https://x.com/TuiteroMartin/status/2021980963253756136?s=20</a></p>
   </div>
 
-  <div class="page">
-    <div class="frame">
-      <div class="wrap">
+  <hr />
 
-        <!-- 左侧：固定不动（因为页面不滚动，只有 docWrap 滚动） -->
-        <div class="left">
-          <div class="boxTitle">目录</div>
-          <ul>
-            <li><a href="#about">项目简介</a></li>
-            <li><a href="#why">概念为何变化</a></li>
-            <li><a href="#how">呈现方式</a></li>
-            <li><a href="#terms">术语口径</a></li>
-            <li><a href="#sources">来源</a></li>
-            <li><a href="#updates">更新</a></li>
-          </ul>
+  <h2 id="updates">更新记录</h2>
+  <p>2026-02-14：页面结构初始化（Word/APA 排版 + 悬挂缩进）。</p>
 
-          <hr>
-
-          <div class="boxTitle">快速操作</div>
-          <div class="btnRow">
-            <a class="btn" href="#about">进入项目</a>
-            <a class="btn" href="#sources">查看来源</a>
-            <a class="btn" href="#updates">查看更新</a>
-          </div>
-
-          <hr>
-
-          <div class="small">
-            新增章节最省事：<br>
-            1）目录加一行链接<br>
-            2）右侧加一个 section
-          </div>
-        </div>
-
-        <!-- 右侧：只有这里滚动 -->
-        <div class="right">
-          <div class="docWrap" id="doc">
-            <h1>Project Gray Zone</h1>
-            <div class="small">说明“灰色地带”随着战争形态演进而发生的变化，并呼吁更新大众认知。</div>
-
-            <hr>
-
-            <section id="about">
-              <h2>项目简介</h2>
-              <p>（待你补充）</p>
-              <div class="btnRow">
-                <a class="btn" href="#why">阅读概念变化</a>
-              </div>
-            </section>
-
-            <section id="why">
-              <h2>为什么灰色地带正在变化</h2>
-              <p>（待你补充）</p>
-            </section>
-
-            <section id="how">
-              <h2>我们将如何呈现与澄清</h2>
-              <p>（待你补充）</p>
-            </section>
-
-            <section id="terms">
-              <h2>术语与判定口径</h2>
-              <p>（待你补充）</p>
-            </section>
-
-            <section id="sources">
-              <h2>来源与引用</h2>
-              <ul>
-                <li><a href="https://x.com/TuiteroMartin/status/2021980963253756136?s=20" target="_blank">TuiteroMartin 原帖</a></li>
-              </ul>
-            </section>
-
-            <section id="updates">
-              <h2>更新记录</h2>
-              <ul>
-                <li>2026-02-14：Project Gray Zone 页面结构建立（目录 + 文档滚动区）。</li>
-              </ul>
-              <div class="btnRow">
-                <a class="btn" href="./">返回主页</a>
-              </div>
-            </section>
-
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-<script>
-  // 让左侧目录点击时，在“docWrap”里滚动，而不是整页跳转
-  (function () {
-    var doc = document.getElementById('doc');
-    if (!doc) return;
-
-    document.querySelectorAll('a[href^="#"]').forEach(function (a) {
-      a.addEventListener('click', function (e) {
-        var href = a.getAttribute('href');
-        if (!href || href === '#') return;
-
-        var id = href.slice(1);
-        var target = document.getElementById(id);
-        if (!target) return;
-
-        e.preventDefault();
-
-        // 更新 URL hash（可选，便于复制链接）
-        history.replaceState(null, '', '#' + id);
-
-        // 在 doc 容器内平滑滚动到目标
-        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-    });
-  })();
-</script>
+</div>
 
 </body>
 </html>
