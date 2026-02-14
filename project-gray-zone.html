@@ -6,162 +6,193 @@
 <title>Project Gray Zone</title>
 
 <style>
-/* ===== 老网页基础 ===== */
-body { margin:0; background:#fff; color:#000; font:16px/1.5 Arial, Helvetica, sans-serif; }
-a { color:#00c; text-decoration:underline; }
-a:visited { color:#551a8b; }
+  /* ===== 复古站点：浅灰背景 + 面板布局（让按钮不突兀） ===== */
+  body{
+    margin:0;
+    background:#f2f2f2;               /* 轻灰底：老网页常见 */
+    color:#000;
+    font:16px/1.55 Arial, Helvetica, sans-serif;
+  }
 
-.top { padding:10px 12px; border-bottom:1px solid #ccc; }
-.brand { font-size:20px; font-weight:bold; }
-.hint { margin-top:4px; color:#555; font-size:13px; }
-.metaLine { color:#777; font-size:12px; margin-top:2px; }
+  a{ color:#00c; text-decoration:underline; }
+  a:visited{ color:#551a8b; }
 
-.wrap { display:table; width:100%; border-collapse:collapse; }
-.left { display:table-cell; width:260px; vertical-align:top; padding:10px 12px; border-right:1px solid #ddd; }
-.right { display:table-cell; vertical-align:top; padding:10px 14px; }
+  /* 顶栏：淡灰条 + 细边框 */
+  .top{
+    padding:10px 12px;
+    background:#e9e9e9;
+    border-bottom:1px solid #c9c9c9;
+  }
+  .brand{ font-size:20px; font-weight:bold; }
+  .hint{ margin-top:4px; color:#444; font-size:13px; }
+  .metaLine{ color:#666; font-size:12px; margin-top:2px; }
 
-.boxTitle { font-size:13px; font-weight:bold; margin:0 0 6px; }
-.small { font-size:13px; color:#555; }
-ul { margin:6px 0 0 18px; padding:0; }
-li { margin:4px 0; }
-h1 { font-size:22px; margin:6px 0 6px; }
-h2 { font-size:18px; margin:22px 0 8px; }
-hr { border:0; border-top:1px solid #ddd; margin:14px 0; }
+  /* 主容器：居中“老网站内容框” */
+  .page{
+    max-width: 1100px;
+    margin: 14px auto;
+    padding: 0 10px;
+  }
 
-/* ===== 复古蓝按钮（重点） ===== */
-.btn {
-  display:inline-block;
-  padding:3px 10px;
-  font-size:13px;
-  color:#003399;
-  text-decoration:none;
-  border:1px solid #7aa7e6;
-  border-radius:12px;
-  background: linear-gradient(#e8f0ff, #cfe0ff);
-  box-shadow: inset 0 1px 0 #ffffff;
-}
+  /* 框体：像旧论坛/旧 CMS 的 content box */
+  .frame{
+    background:#fff;
+    border:1px solid #bfbfbf;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.8) inset;
+  }
 
-.btn:hover {
-  background: linear-gradient(#f2f6ff, #dbe8ff);
-  border-color:#5a8fdc;
-  color:#002a80;
-}
+  /* 用 table 风格布局很“老” */
+  .wrap{ display:table; width:100%; border-collapse:collapse; }
+  .left{
+    display:table-cell;
+    width:260px;
+    vertical-align:top;
+    background:#f7f7f7;              /* 左栏浅灰，让按钮融进 UI */
+    border-right:1px solid #d2d2d2;
+    padding:10px 12px;
+  }
+  .right{
+    display:table-cell;
+    vertical-align:top;
+    padding:10px 14px 18px;
+  }
 
-.btn:active {
-  background: linear-gradient(#cfe0ff, #e8f0ff);
-  box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
-}
+  .boxTitle{ font-size:13px; font-weight:bold; margin:0 0 6px; }
+  .small{ font-size:13px; color:#444; }
+  ul{ margin:6px 0 0 18px; padding:0; }
+  li{ margin:4px 0; }
+  h1{ font-size:22px; margin:6px 0 6px; }
+  h2{ font-size:18px; margin:22px 0 8px; }
+  hr{ border:0; border-top:1px solid #ddd; margin:14px 0; }
 
-/* 小屏 */
-@media (max-width:900px){
-  .wrap{display:block;}
-  .left,.right{display:block;width:auto;border-right:0;}
-  .left{border-bottom:1px solid #ddd;}
-}
+  /* ===== 复古按钮：降低“亮蓝”，使用更灰一点的蓝，和面板同体系 ===== */
+  .btn{
+    display:inline-block;
+    padding:4px 10px;
+    font-size:13px;
+    color:#003399;
+    text-decoration:none;            /* 按钮不要下划线 */
+    border:1px solid #8aa9d6;        /* 边框与面板一致的“旧蓝灰” */
+    border-radius:10px;
+    background: linear-gradient(#f4f8ff, #dbe8ff); /* 轻渐变 */
+    box-shadow:
+      inset 0 1px 0 #ffffff,
+      0 1px 0 rgba(0,0,0,0.05);      /* 微立体：不现代 */
+  }
+  .btn:hover{
+    border-color:#6f94cc;
+    background: linear-gradient(#ffffff, #dbe8ff);
+    color:#002a80;
+  }
+  .btn:active{
+    background: linear-gradient(#dbe8ff, #f4f8ff);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.18);
+  }
+
+  /* 一组按钮之间的间距 */
+  .btnRow .btn{ margin-right:6px; margin-bottom:6px; }
+
+  /* 小屏：上下布局 */
+  @media (max-width:900px){
+    .wrap{ display:block; }
+    .left,.right{ display:block; width:auto; border-right:0; }
+    .left{ border-bottom:1px solid #d2d2d2; }
+  }
 </style>
 </head>
 
 <body>
-
-<div class="top">
-  <div class="brand">Project Gray Zone</div>
-  <div class="hint">灰色地带的含义正在变化。我们希望推动更准确的理解方式。</div>
-  <div class="metaLine">CSFS64/test2 · 项目页面</div>
-</div>
-
-<div class="wrap">
-
-  <!-- 左侧 -->
-  <div class="left">
-    <div class="boxTitle">目录</div>
-    <ul>
-      <li><a href="#about">项目简介</a></li>
-      <li><a href="#why">概念为何变化</a></li>
-      <li><a href="#how">呈现方式</a></li>
-      <li><a href="#terms">术语口径</a></li>
-      <li><a href="#sources">来源</a></li>
-      <li><a href="#updates">更新</a></li>
-    </ul>
-
-    <hr>
-
-    <div class="boxTitle">项目</div>
-    <p>
-      <a class="btn" href="#about">进入项目</a>
-      <a class="btn" href="#sources">查看来源</a>
-    </p>
-
-    <hr>
-
-    <div class="small">
-      提示：新增章节只需：<br>
-      1）目录加链接<br>
-      2）右侧加 section
-    </div>
+  <div class="top">
+    <div class="brand">Project Gray Zone</div>
+    <div class="hint">灰色地带的含义正在变化。我们希望推动更准确、更符合当下战场现实的理解方式。</div>
+    <div class="metaLine">CSFS64/test2 · 项目页面</div>
   </div>
 
-  <!-- 右侧 -->
-  <div class="right">
-    <h1>Project Gray Zone</h1>
-    <div class="small">说明灰色地带概念的演变与再定义。</div>
+  <div class="page">
+    <div class="frame">
+      <div class="wrap">
 
-    <hr>
+        <div class="left">
+          <div class="boxTitle">目录</div>
+          <ul>
+            <li><a href="#about">项目简介</a></li>
+            <li><a href="#why">概念为何变化</a></li>
+            <li><a href="#how">呈现方式</a></li>
+            <li><a href="#terms">术语口径</a></li>
+            <li><a href="#sources">来源</a></li>
+            <li><a href="#updates">更新</a></li>
+          </ul>
 
-    <section id="about">
-      <h2>项目简介</h2>
-      <p>
-        本项目旨在说明随着战争形态的变化，“灰色地带”的实际含义
-        已与传统认知产生明显偏离。
-      </p>
-      <p>
-        <a class="btn" href="#why">阅读概念变化</a>
-      </p>
-    </section>
+          <hr>
 
-    <section id="why">
-      <h2>为什么灰色地带正在变化</h2>
-      <p>（待补充）</p>
-      <p>
-        <a class="btn" href="#terms">查看术语</a>
-      </p>
-    </section>
+          <div class="boxTitle">快速操作</div>
+          <div class="btnRow">
+            <a class="btn" href="#about">进入项目</a>
+            <a class="btn" href="#sources">查看来源</a>
+            <a class="btn" href="#updates">查看更新</a>
+          </div>
 
-    <section id="how">
-      <h2>我们将如何呈现</h2>
-      <p>（待补充）</p>
-    </section>
+          <hr>
 
-    <section id="terms">
-      <h2>术语与判定口径</h2>
-      <p>（待补充）</p>
-    </section>
+          <div class="small">
+            新增章节最省事：<br>
+            1）目录加一行链接<br>
+            2）右侧加一个 section
+          </div>
+        </div>
 
-    <section id="sources">
-      <h2>来源</h2>
-      <ul>
-        <li>
-          <a href="https://x.com/TuiteroMartin/status/2021980963253756136?s=20" target="_blank">
-            TuiteroMartin 原帖
-          </a>
-        </li>
-      </ul>
-    </section>
+        <div class="right">
+          <h1>Project Gray Zone</h1>
+          <div class="small">说明“灰色地带”随着战争形态演进而发生的变化，并呼吁更新大众认知。</div>
 
-    <section id="updates">
-      <h2>更新记录</h2>
-      <ul>
-        <li>2026-02-14：Project Gray Zone 页面建立</li>
-      </ul>
-    </section>
+          <hr>
 
-    <hr>
+          <section id="about">
+            <h2>项目简介</h2>
+            <p>（待你补充）</p>
+            <div class="btnRow">
+              <a class="btn" href="#why">阅读概念变化</a>
+            </div>
+          </section>
 
-    <div class="small">
-      <a class="btn" href="./">返回主页</a>
+          <section id="why">
+            <h2>为什么灰色地带正在变化</h2>
+            <p>（待你补充）</p>
+          </section>
+
+          <section id="how">
+            <h2>我们将如何呈现与澄清</h2>
+            <p>（待你补充）</p>
+          </section>
+
+          <section id="terms">
+            <h2>术语与判定口径</h2>
+            <p>（待你补充）</p>
+          </section>
+
+          <section id="sources">
+            <h2>来源与引用</h2>
+            <ul>
+              <li><a href="https://x.com/TuiteroMartin/status/2021980963253756136?s=20" target="_blank">TuiteroMartin 原帖</a></li>
+            </ul>
+          </section>
+
+          <section id="updates">
+            <h2>更新记录</h2>
+            <ul>
+              <li>2026-02-14：Project Gray Zone 页面建立</li>
+            </ul>
+          </section>
+
+          <hr>
+
+          <div class="btnRow">
+            <a class="btn" href="./">返回主页</a>
+          </div>
+        </div>
+
+      </div>
     </div>
-
   </div>
-</div>
-
 </body>
 </html>
