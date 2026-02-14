@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Project Gray Zone | 灰色地带认知更新</title>
+  <style>
+    :root{
+      --bg: #ffffff;
+      --fg: #111111;
+      --muted:#666;
+      --border:#e6e6e6;
+      --link:#0b66ff;
+      --panel:#f7f7f7;
+      --active:#111;
+    }
+
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Arial, sans-serif;
+      color:var(--fg);
+      background:var(--bg);
+      line-height:1.65;
+    }
+
+    /* 顶部条（可选） */
+    header{
+      border-bottom:1px solid var(--border);
+      padding:14px 18px;
+      position: sticky;
+      top:0;
+      background:rgba(255,255,255,0.9);
+      backdrop-filter: blur(6px);
+      z-index: 10;
+    }
+    header .title{
+      font-size:16px;
+      font-weight:700;
+    }
+    header .sub{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:4px;
+    }
+
+    /* 布局：左目录 + 右内容 */
+    .layout{
+      display:grid;
+      grid-template-columns: 260px 1fr;
+      gap: 18px;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    nav{
+      position: sticky;
+      top: 64px; /* 给 header 留空间 */
+      align-self:start;
+      border:1px solid var(--border);
+      background:var(--panel);
+      border-radius: 10px;
+      padding: 12px 12px;
+    }
+    nav .navTitle{
+      font-weight:700;
+      font-size:13px;
+      margin: 2px 6px 10px;
+    }
+    nav a{
+      display:block;
+      padding: 8px 10px;
+      border-radius: 8px;
+      color: var(--fg);
+      text-decoration: none;
+      font-size: 14px;
+    }
+    nav a:hover{
+      background:#fff;
+      outline:1px solid var(--border);
+    }
+    nav a.active{
+      background:#fff;
+      outline:1px solid var(--border);
+      color: var(--active);
+      font-weight:700;
+    }
+
+    main{
+      border:1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 18px;
+      background:#fff;
+      min-height: 70vh;
+    }
+
+    h1{
+      margin: 0 0 8px;
+      font-size: 22px;
+    }
+    .lead{
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    section{
+      padding-top: 10px;
+      margin-top: 18px;
+      border-top: 1px dashed var(--border);
+    }
+    section:first-of-type{
+      border-top:none;
+      margin-top:0;
+    }
+
+    h2{
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+
+    a{ color: var(--link); }
+    .meta{
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 18px;
+    }
+
+    /* 小屏：目录折叠到上方（仍然原生可用） */
+    @media (max-width: 900px){
+      .layout{
+        grid-template-columns: 1fr;
+      }
+      nav{
+        position: relative;
+        top: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="title">Project Gray Zone</div>
+  <div class="sub">灰色地带的含义正在变化：我们希望推动新的理解方式。</div>
+</header>
+
+<div class="layout">
+  <!-- 左侧目录 -->
+  <nav aria-label="目录">
+    <div class="navTitle">目录</div>
+    <a href="#about">项目简介</a>
+    <a href="#why">为什么需要更新“灰色地带”概念</a>
+    <a href="#how">我们将如何呈现与澄清</a>
+    <a href="#terms">术语与判定口径</a>
+    <a href="#sources">来源与引用</a>
+    <a href="#updates">更新记录</a>
+  </nav>
+
+  <!-- 右侧内容 -->
+  <main>
+    <h1>Project Gray Zone</h1>
+    <p class="lead">本页面是项目说明页（内容可持续扩展）。左侧目录可快速跳转到对应章节。</p>
+
+    <section id="about">
+      <h2>项目简介</h2>
+      <p>（待你补充：用一段话说明项目目的、面向读者、输出形式。）</p>
+    </section>
+
+    <section id="why">
+      <h2>为什么需要更新“灰色地带”概念</h2>
+      <p>（待你补充：灰色地带随战争演进出现的新形态，传统“前线/后方/灰区”划分的局限。）</p>
+    </section>
+
+    <section id="how">
+      <h2>我们将如何呈现与澄清</h2>
+      <p>（待你补充：例如：前线说明卡、示意图、时间线、案例条目、证据链等。）</p>
+    </section>
+
+    <section id="terms">
+      <h2>术语与判定口径</h2>
+      <p>（待你补充：比如“控制线”“接触线”“渗透点”“交错阵地”“无人机主导交战”等。）</p>
+    </section>
+
+    <section id="sources">
+      <h2>来源与引用</h2>
+      <ul>
+        <li>（示例）X / Twitter：<a href="https://x.com/TuiteroMartin/status/2021980963253756136?s=20" target="_blank">TuiteroMartin 原帖</a></li>
+      </ul>
+      <p class="meta">建议：你后续每加一个关键结论，都在这里补一条来源链接，维护非常清晰。</p>
+    </section>
+
+    <section id="updates">
+      <h2>更新记录</h2>
+      <ul>
+        <li>2026-02-14：页面结构初始化。</li>
+        <li>（后续你继续加）</li>
+      </ul>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  // 可选增强：滚动时自动高亮当前目录（维护成本低）
+  const links = Array.from(document.querySelectorAll('nav a'));
+  const sections = links
+    .map(a => document.querySelector(a.getAttribute('href')))
+    .filter(Boolean);
+
+  const setActive = (id) => {
+    links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+  };
+
+  const obs = new IntersectionObserver((entries) => {
+    // 取最靠近顶部、正在进入视野的 section
+    const visible = entries
+      .filter(e => e.isIntersecting)
+      .sort((a,b) => b.intersectionRatio - a.intersectionRatio)[0];
+    if (visible) setActive(visible.target.id);
+  }, { rootMargin: "-20% 0px -70% 0px", threshold: [0.1, 0.2, 0.3, 0.4, 0.5] });
+
+  sections.forEach(s => obs.observe(s));
+
+  // 初始高亮
+  if (sections[0]) setActive(sections[0].id);
+</script>
+
+</body>
+</html>
