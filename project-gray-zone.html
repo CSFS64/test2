@@ -6,106 +6,143 @@
 <title>Project Gray Zone</title>
 
 <style>
+  :root{
+    --bg: #e6e6e6;          /* 阅读器工作区灰 */
+    --panel: #ededed;       /* 侧栏/顶栏灰 */
+    --line: #c8c8c8;        /* 分隔线 */
+    --text: #000;
+    --muted: #444;
+    --link: #00c;
+    --visited: #551a8b;
+    --paper: #fff;          /* 仅纸张为白 */
+  }
+
+  html, body { height: 100%; }
   body{
     margin:0;
-    background:#f2f2f2;
-    color:#000;
+    background: var(--bg);
+    color: var(--text);
     font:16px/1.55 Arial, Helvetica, sans-serif;
+    overflow-x: hidden; /* 防止任何横向滚动条 */
   }
-  a{ color:#00c; text-decoration:underline; }
-  a:visited{ color:#551a8b; }
 
+  a{ color: var(--link); text-decoration: underline; }
+  a:visited{ color: var(--visited); }
+
+  /* 顶栏：阅读器风，弱化“网页感” */
   .top{
     padding:10px 12px;
-    background:#e9e9e9;
-    border-bottom:1px solid #c9c9c9;
+    background: var(--panel);
+    border-bottom:1px solid var(--line);
   }
   .brand{ font-size:20px; font-weight:bold; }
-  .hint{ margin-top:4px; color:#444; font-size:13px; }
-  .metaLine{ color:#666; font-size:12px; margin-top:2px; }
+  .hint{ margin-top:4px; color: var(--muted); font-size:13px; }
 
   .page{
-    max-width:1100px;
-    margin:14px auto;
-    padding:0 10px;
+    max-width: 1200px;
+    margin: 12px auto;
+    padding: 0 10px;
   }
 
+  /* frame 不再白，保持工作区灰；不要“白框包白框” */
   .frame{
-    background:#fff;
-    border:1px solid #bfbfbf;
+    background: transparent;
+    border: 0;
   }
 
   .wrap{ display:table; width:100%; border-collapse:collapse; }
+
+  /* 左侧：变成阅读器侧栏（不再像后台面板） */
   .left{
     display:table-cell;
     width:260px;
     vertical-align:top;
-    background:#f7f7f7;
-    border-right:1px solid #d2d2d2;
-    padding:10px 12px;
+    background: transparent;
+    padding: 10px 10px 10px 0;
   }
+
+  .leftInner{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 10px 10px;
+  }
+
+  .boxTitle{ font-size:13px; font-weight:bold; margin:0 0 8px; }
+  .small{ font-size:13px; color: var(--muted); }
+
+  ul{ margin:6px 0 0 18px; padding:0; }
+  li{ margin:6px 0; }
+
+  hr{
+    border:0;
+    border-top:1px solid var(--line);
+    margin:12px 0;
+  }
+
+  /* “快速操作”改成论文阅读器式：文本工具条 */
+  .tools{
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .tools a{
+    text-decoration: underline;
+    margin-right: 10px;
+    white-space: nowrap;
+  }
+
+  /* 右侧：灰工作区 + 只滚这里 */
   .right{
     display:table-cell;
     vertical-align:top;
-    padding:10px 12px;
+    padding: 10px 0 10px 10px;
+    background: transparent;
   }
-
-  .boxTitle{ font-size:13px; font-weight:bold; margin:0 0 6px; }
-  .small{ font-size:13px; color:#444; }
-  ul{ margin:6px 0 0 18px; padding:0; }
-  li{ margin:4px 0; }
-  hr{ border:0; border-top:1px solid #ddd; margin:14px 0; }
-
-  .btn{
-    display:inline-block;
-    padding:4px 10px;
-    font-size:13px;
-    color:#003399;
-    text-decoration:none;
-    border:1px solid #8aa9d6;
-    border-radius:10px;
-    background: linear-gradient(#f4f8ff, #dbe8ff);
-    box-shadow: inset 0 1px 0 #ffffff, 0 1px 0 rgba(0,0,0,0.05);
-  }
-  .btn:hover{
-    border-color:#6f94cc;
-    background: linear-gradient(#ffffff, #dbe8ff);
-    color:#002a80;
-  }
-  .btn:active{
-    background: linear-gradient(#dbe8ff, #f4f8ff);
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.18);
-  }
-  .btnRow .btn{ margin-right:6px; margin-bottom:6px; }
 
   .scrollPane{
-    height: calc(100vh - 30px);
+    height: calc(100vh - 84px); /* 顶栏高度附近；比你原来的更贴合阅读器 */
     overflow-y: auto;
     overflow-x: hidden;      /* 禁止左右滑动 */
-    display: flex;           /* 让内部 doc 通过 flex 居中 */
-    justify-content: center; /* 水平居中 */
+    background: transparent;
+
+    display: flex;
+    justify-content: center; /* 纸张居中 */
+    padding: 16px 48px 16px 24px; /* 右侧留灰空间给滚动条（关键） */
   }
 
+  /* 纸张：唯一白色区域 */
   .doc{
-    background:#fff;
-    width: min(8.5in, 100%);
-    max-width: calc(100% - 24px); 
-    margin: 0 auto;
+    box-sizing: border-box;
+    background: var(--paper);
+
+    /* Letter 纸张感：固定目标宽 + 自适应收缩 */
+    width: 8.5in;
+    max-width: 100%;
+
+    /* Word/APA 页边距 */
     padding: 1in;
+
+    /* 轻边界（比阴影更像阅读器） */
+    border: 1px solid #d6d6d6;
 
     /* APA/Word 排版 */
     font-family: "Times New Roman", Times, "Courier New", monospace;
     font-size: 12pt;
-    line-height: 2;           /* 双倍行距 */
-    color:#000;
+    line-height: 2;
+    color: #000;
   }
 
-  /* APA：段落首行缩进 0.5 inch */
+  /* 中文等宽（按你要求） */
+  :lang(zh), :lang(zh-CN){
+    font-family: "Courier New", monospace;
+  }
+
+  /* 段落：APA 首行缩进 0.5 inch */
   .doc p{
     margin: 0 0 0.5em 0;
     text-indent: 0.5in;
   }
 
+  /* 标题不缩进 */
   .doc h1, .doc h2, .doc h3{
     text-indent: 0;
     margin: 0 0 0.6em 0;
@@ -119,7 +156,11 @@
   .doc ul, .doc ol{ margin: 0 0 0.8em 1.2em; padding: 0; }
   .doc li{ margin: 0 0 0.2em 0; }
 
-  .doc hr{ border:0; border-top:1px solid #000; margin: 1em 0; }
+  .doc hr{
+    border:0;
+    border-top:1px solid #000;
+    margin: 1em 0;
+  }
 
   /* 参考文献：悬挂缩进 */
   .doc .refs p{
@@ -130,12 +171,30 @@
 
   .doc [id]{ scroll-margin-top: 12px; }
 
+  /* 让目录当前项更像阅读器（可选但很“arXiv”） */
+  .left a{
+    color: var(--link);
+  }
+
+  /* 小屏：上下布局，滚动回归页面 */
   @media (max-width:900px){
     .wrap{ display:block; }
-    .left,.right{ display:block; width:auto; border-right:0; }
-    .left{ border-bottom:1px solid #d2d2d2; }
-    .scrollPane{ height:auto; overflow:visible; }
-    .doc{ width:100%; padding: 24px; }
+    .left,.right{ display:block; width:auto; padding: 0; }
+    .left{ margin-bottom: 10px; }
+    .right{ padding: 0; }
+    .scrollPane{
+      height: auto;
+      overflow: visible;
+      padding: 12px 0;
+      display: block;
+    }
+    .doc{
+      width: 100%;
+      max-width: 100%;
+      padding: 24px;
+      border-left: 0;
+      border-right: 0;
+    }
   }
 </style>
 </head>
@@ -150,25 +209,27 @@
     <div class="frame">
       <div class="wrap">
 
-        <!-- 左侧目录（保留） -->
+        <!-- 左侧目录（保留，不删内容） -->
         <div class="left">
-          <div class="boxTitle">目录</div>
-          <ul>
-            <li><a href="#effect">新的地图标准</a></li>
-            <li><a href="#intro">灰色地带过去的定义</a></li>
-            <li><a href="#now">现在的灰色地带</a></li>
-          </ul>
+          <div class="leftInner">
+            <div class="boxTitle">目录</div>
+            <ul>
+              <li><a href="#effect">新的地图标准</a></li>
+              <li><a href="#intro">灰色地带过去的定义</a></li>
+              <li><a href="#now">现在的灰色地带</a></li>
+              <li><a href="#sources">来源与引用</a></li>
+              <li><a href="#updates">更新记录</a></li>
+            </ul>
 
-          <hr>
+            <hr>
 
-          <div class="boxTitle">快速操作</div>
-          <div class="btnRow">
-            <a class="btn" href="#about">进入项目</a>
-            <a class="btn" href="#sources">查看来源</a>
-            <a class="btn" href="./">返回主页</a>
+            <div class="boxTitle">快速操作</div>
+            <div class="tools">
+              <a href="#sources">查看来源</a>
+              <a href="#updates">更新记录</a>
+              <a href="./">返回主页</a>
+            </div>
           </div>
-
-          <hr>
         </div>
 
         <!-- 右侧：只有这里滚动 -->
@@ -179,27 +240,26 @@
               <h1>Project Gray Zone</h1>
 
               <p>Project Gray Zone是Kalyna OSINT于2026年2月12日启动的项目。灰色地带概念已经随战争形态变化而发生偏移，而我们的目标是更新公众对“灰色地带”的理解框架，推动OSINT社区转变在开源分析中对“灰色地带”的定义。本页将持续汇总定义、口径、案例与来源。</p>
-              
+
               <p>该分析将随着研究和更多数据而持续更新，你所看到的并不是最终内容。你可以从Kalyna OSINT官方网站“项目”部分再次进入。</p>
 
               <h2 id="effect">新的地图参考标准</h2>
               <p>随着我们更新对灰色地带的定义，我们的互动地图Kalyna Battle Map所绘制的前线也将参照这一标准发生改变。目前，我们将在第聂伯彼得罗浮斯克和扎波罗热地区率先使用这一标准。</p>
               <p>新的前线取消了灰色地带，只由红蓝控制区和它们重叠的部分构成，下文将详细解释这样做的含义。</p>
-              
-              <h2 id="intro">灰色地带在过去的定义</h2>
-              <p>在过去，特别是2023-2024年间，战争研究机构和开源分析社区对于灰色地带的定义主要是两种区域的叠加或其中一种：灰色地带和交战区。灰色地带代表着一片不存在战争双方阵地的区域；
-              而交战区则代表着一片双方士兵都能临时进入并接触，但难以站稳脚跟的区域。</p>
 
-              <p>相对的，双方都存在稳定的控制线，在控制线内友军士兵占据所有阵地，控制所有增援路线，形成对区域的稳定控制，几乎无需担心存在敌方渗透。因此，在那一段时间通过地理定位来证实前线变化是十分容易的，
-              受到对方攻击的定位代表友方稳定控制，受到友方攻击的定位代表敌方稳定控制，双方袭击频繁的区域则为交战区。</p>
+              <h2 id="intro">灰色地带在过去的定义</h2>
+              <p>在过去，特别是2023-2024年间，战争研究机构和开源分析社区对于灰色地带的定义主要是两种区域的叠加或其中一种：灰色地带和交战区。灰色地带代表着一片不存在战争双方阵地的区域；而交战区则代表着一片双方士兵都能临时进入并接触，但难以站稳脚跟的区域。</p>
+
+              <p>相对的，双方都存在稳定的控制线，在控制线内友军士兵占据所有阵地，控制所有增援路线，形成对区域的稳定控制，几乎无需担心存在敌方渗透。因此，在那一段时间通过地理定位来证实前线变化是十分容易的，受到对方攻击的定位代表友方稳定控制，受到友方攻击的定位代表敌方稳定控制，双方袭击频繁的区域则为交战区。</p>
 
               <h2 id="now">现在的“灰色地带”</h2>
               <p>在2025年间，由于缺少真正的突破力量、实现目标所需要的人力和迫于宣传需要，俄罗斯军队大规模通过自杀式袭击或渗透的方式将步兵送入目标地点展示旗帜。这些士兵通过上述手段进入到目标地点并藏匿，他们无法得到来自稳定控制区的增援和补给，也难以仅凭自己站稳脚跟，他们的唯一任务是生存下去，而不是交战，甚至在一些情况下最好避免交战。</p>
 
-              <p>这是我们有关俄军<a href="https://www.zhihu.com/pin/1946648821078684789" target="_blank">第一次渗透波克罗夫斯克的报告</a>，以便你可以更好的理解上文所描述的现状。这种情况在几乎所有前线发生，相信大部分人都已有所耳闻。<p>
-              
-              <p>不仅如此，恶劣的天气和无人机的大量使用也让步兵渗透更加容易。<p>
-              
+              <p>这是我们有关俄军<a href="https://www.zhihu.com/pin/1946648821078684789" target="_blank">第一次渗透波克罗夫斯克的报告</a>，以便你可以更好的理解上文所描述的现状。这种情况在几乎所有前线发生，相信大部分人都已有所耳闻。</p>
+
+              <p>不仅如此，恶劣的天气和无人机的大量使用也让步兵渗透更加容易。</p>
+
+              <h2 id="sources">来源与引用</h2>
               <div class="refs">
                 <p>Martin. (n.d.). Post on X (Twitter). <a href="https://x.com/TuiteroMartin/status/2021980963253756136?s=20" target="_blank">https://x.com/TuiteroMartin/status/2021980963253756136?s=20</a></p>
               </div>
