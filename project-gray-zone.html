@@ -191,9 +191,11 @@
 
   @media print{
     body{ background:#fff; }
-    .top,.left,.scrollPane{ display:none !important; }
+    .top,.left{ display:none !important; }
     .page{ margin:0; padding:0; max-width:none; }
-    .right{ padding:0; }
+    .wrap{ display:block; }
+    .right{ display:block; padding:0; }
+    .scrollPane{ display:block !important; height:auto !important; overflow:visible !important; }
     .doc{
       border:0;
       width:auto;
