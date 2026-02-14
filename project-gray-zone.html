@@ -389,6 +389,7 @@
     const q = document.getElementById('q');
 
     function setLang(lang){
+      lang = newLang;
       root.classList.toggle('lang-zh', lang === 'zh');
       root.classList.toggle('lang-en', lang === 'en');
 
@@ -399,7 +400,8 @@
       updateMeta(0,0);
     }
 
-    let lang = 'zh';
+    let lang = root.classList.contains('lang-zh') ? 'zh' : 'en';
+    setLang(lang);
     btnLang.addEventListener('click', function(){
       lang = (lang === 'zh') ? 'en' : 'zh';
       setLang(lang);
