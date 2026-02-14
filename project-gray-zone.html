@@ -82,15 +82,18 @@
 
   /* ===== 关键：只有右侧滚动，且滚动区内只有“一个白色文档容器” ===== */
   .scrollPane{
-    height: calc(100vh - 170px); /* 顶栏+外边距的近似扣除 */
-    overflow: auto;
-    /* 注意：这里不加背景/边框，保持“外面不要套别的” */
+    height: calc(100vh - 170px);
+    overflow-y: auto;
+    overflow-x: hidden;      /* ✅ 禁止左右滑动 */
+    display: flex;           /* ✅ 让内部 doc 通过 flex 居中 */
+    justify-content: center; /* ✅ 水平居中 */
   }
 
   /* 这个 .doc 就是你要的“单个白色容器” */
   .doc{
     background:#fff;
     width: min(8.5in, 100%);
+    max-width: calc(100% - 24px); 
     margin: 0 auto;           /* 保持在滚动区中部 */
     padding: 1in;             /* Word/APA 常见 1 inch 页边距 */
     box-shadow: 0 2px 10px rgba(0,0,0,0.18); /* 纸张感（可删） */
