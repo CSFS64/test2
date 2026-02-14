@@ -130,6 +130,16 @@
   .lang-zh [data-lang="en"]{ display:none; }
   .lang-en [data-lang="zh"]{ display:none; }
 
+  .scrollPane{
+    height: calc(100vh - 84px);
+    overflow-y:auto;
+    overflow-x:hidden;
+    background:transparent;
+
+    display:flex;
+    justify-content:center;
+  }
+
   .doc{
     box-sizing:border-box;
     background:var(--paper);
