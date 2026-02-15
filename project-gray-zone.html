@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -29,12 +29,19 @@
   a{ color:var(--link); text-decoration:underline; }
   a:visited{ color:var(--visited); }
 
+  /* ===== Top bar (web2.0 silver) ===== */
   .top{
     padding:10px 12px;
-    background:var(--panel);
+    background: linear-gradient(#f2f2f2, #dcdcdc);
     border-bottom:1px solid var(--line);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
   }
-  .brand{ font-size:20px; font-weight:bold; }
+  .brand{
+    font-size:20px;
+    font-weight:bold;
+    letter-spacing:0.2px;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.9);
+  }
   .hint{ margin-top:4px; color:var(--muted); font-size:13px; }
 
   .page{
@@ -52,9 +59,13 @@
     padding:10px 10px 10px 0;
   }
   .leftInner{
-    background:var(--panel);
+    background: linear-gradient(#f2f2f2, #dcdcdc);
     border:1px solid var(--line);
-    padding:10px 10px;
+    padding:12px 12px;
+    border-radius:16px;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.95),
+      0 2px 10px rgba(0,0,0,0.08);
   }
 
   .right{
@@ -63,22 +74,23 @@
     padding:10px 0 10px 10px;
   }
 
-  .boxTitle{ font-size:13px; font-weight:bold; margin:0 0 8px; }
+  .boxTitle{ font-size:13px; font-weight:bold; margin:0 0 8px; padding:2px 0; }
   .small{ font-size:13px; color:var(--muted); }
 
   hr{ border:0; border-top:1px solid var(--line); margin:12px 0; }
   ul{ margin:6px 0 0 18px; padding:0; }
   li{ margin:6px 0; }
 
+  /* ===== Web2.0 silver buttons ===== */
   .btn{
     display:inline-block;
     font-size:13px;
     padding:5px 10px;
     color:#111;
     text-decoration:none;
-    border:1px solid #8c8c8c;
-    border-radius:10px;
-    background: linear-gradient(#f8f8f8, #d7d7d7);
+    border:1px solid #7f7f7f;
+    border-radius:12px;
+    background: linear-gradient(#ffffff, #d2d2d2);
     box-shadow:
       inset 0 1px 0 rgba(255,255,255,0.95),
       0 1px 0 rgba(0,0,0,0.08);
@@ -87,21 +99,16 @@
     user-select:none;
   }
   .btn:hover{
-    background: linear-gradient(#ffffff, #d0d0d0);
-    border-color:#777;
+    background: linear-gradient(#ffffff, #c9c9c9);
+    border-color:#6f6f6f;
   }
   .btn:active{
-    background: linear-gradient(#d0d0d0, #f0f0f0);
+    background: linear-gradient(#c9c9c9, #f2f2f2);
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
   }
+
   .btnRow{ display:flex; flex-wrap:wrap; gap:8px; }
-
-  .toolbar{
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-  }
-
+  .toolbar{ display:flex; flex-direction:column; gap:10px; }
 
   .searchRow{
     display:flex;
@@ -113,9 +120,10 @@
     font-size:13px;
     padding:6px 8px;
     border:1px solid #9a9a9a;
-    border-radius:8px;
+    border-radius:10px;
     background:#fff;
     outline:none;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.08);
   }
   .searchRow input:focus{
     border-color:#666;
@@ -127,17 +135,38 @@
     line-height:1.3;
   }
 
+  /* ===== lang show/hide ===== */
   .lang-zh [data-lang="en"]{ display:none; }
   .lang-en [data-lang="zh"]{ display:none; }
 
+  /* ===== Right: paper centered; scrollbar inside paper area ===== */
   .scrollPane{
     height: calc(100vh - 84px);
-    overflow-y:auto;
-    overflow-x:hidden;
+    overflow:auto;
     background:transparent;
 
     display:flex;
     justify-content:center;
+    align-items:flex-start;
+
+    padding:0 10px;
+  }
+
+  /* make scrollbar look like a simple gray bar (chromium/webkit) */
+  .scrollPane::-webkit-scrollbar{ width:12px; }
+  .scrollPane::-webkit-scrollbar-track{ background:transparent; }
+  .scrollPane::-webkit-scrollbar-thumb{
+    background:#bdbdbd;
+    border-radius:10px;
+    border:3px solid transparent;
+    background-clip: content-box;
+  }
+  .scrollPane::-webkit-scrollbar-thumb:hover{ background:#a9a9a9; border:3px solid transparent; background-clip: content-box; }
+
+  .docWrap{
+    /* this element keeps the paper centered while allowing internal transform scaling */
+    padding:0; /* keep clean */
+    margin:0 auto;
   }
 
   .doc{
@@ -147,6 +176,11 @@
     max-width:100%;
     padding:1in;
     border:1px solid #d6d6d6;
+    border-radius:6px;
+
+    box-shadow:
+      0 2px 16px rgba(0,0,0,0.10),
+      0 0 0 1px rgba(0,0,0,0.06);
 
     font-family:
       "Times New Roman",
@@ -154,10 +188,13 @@
       "Liberation Serif",
       "TeX Gyre Termes",
       serif;
-    
+
     font-size:12pt;
     line-height:2;
     color:#000;
+
+    /* zoom applied by JS via transform */
+    transform-origin: top center;
   }
 
   .doc p{
@@ -196,21 +233,95 @@
     outline: 2px solid #ff9900;
   }
 
+  /* ===== View row: radios + zoom + pdf ===== */
+  .viewRow{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+  }
+
+  .langToggle{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    padding:6px 8px;
+    border:1px solid var(--line);
+    border-radius:14px;
+    background: linear-gradient(#fbfbfb, #dedede);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
+  }
+
+  .langToggle label{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:13px;
+    color:#111;
+    user-select:none;
+    cursor:pointer;
+  }
+
+  .langToggle input[type="radio"]{
+    appearance:none;
+    -webkit-appearance:none;
+    width:14px;
+    height:14px;
+    border-radius:50%;
+    border:1px solid #777;
+    background: linear-gradient(#ffffff, #d8d8d8);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
+    position:relative;
+  }
+
+  .langToggle input[type="radio"]:checked::after{
+    content:"";
+    position:absolute;
+    left:3px;
+    top:3px;
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:#2b2b2b;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.35);
+  }
+
+  .zoomGroup{
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+  .zoomLabel{
+    font-size:12px;
+    color:#555;
+    min-width:46px;
+    text-align:center;
+  }
+
+  /* ===== Print ===== */
   @media print{
     body{ background:#fff; }
     .top,.left{ display:none !important; }
     .page{ margin:0; padding:0; max-width:none; }
     .wrap{ display:block; }
     .right{ display:block; padding:0; }
-    .scrollPane{ display:block !important; height:auto !important; overflow:visible !important; }
+    .scrollPane{
+      display:block !important;
+      height:auto !important;
+      overflow:visible !important;
+      padding:0 !important;
+    }
     .doc{
       border:0;
       width:auto;
       max-width:none;
       padding:0.75in;
+      box-shadow:none;
+      transform:none !important; /* print at natural size */
     }
   }
 
+  /* ===== Responsive ===== */
   @media (max-width:900px){
     .wrap{ display:block; }
     .left,.right{ display:block; width:auto; padding:0; }
@@ -229,9 +340,6 @@
       border-right:0;
     }
   }
-
-  .scrollPane{ align-items: flex-start; }
-  .doc{ align-self: flex-start; }
 </style>
 </head>
 
@@ -245,7 +353,7 @@
   <div class="page">
     <div class="wrap">
 
-      <!-- 侧栏 -->
+      <!-- Left toolbar -->
       <div class="left">
         <div class="leftInner">
 
@@ -254,14 +362,19 @@
 
           <div class="toolbar">
             <div class="searchRow">
-              <input id="q" type="text" placeholder="输入关键词（Enter搜索）" data-ph-zh="输入关键词（Enter搜索）" data-ph-en="Type keyword (Enter to search)" />
+              <input id="q" type="text"
+                     placeholder="Type keyword (Enter to search)"
+                     data-ph-zh="输入关键词（Enter搜索）"
+                     data-ph-en="Type keyword (Enter to search)" />
               <button class="btn" id="btnFind" type="button" title="Search">Find</button>
             </div>
+
             <div class="btnRow">
               <button class="btn" id="btnPrev" type="button">◀ Prev</button>
               <button class="btn" id="btnNext" type="button">Next ▶</button>
               <button class="btn" id="btnClear" type="button">Clear</button>
             </div>
+
             <div class="searchMeta" id="searchMeta">0 results</div>
 
             <hr>
@@ -269,8 +382,24 @@
             <div class="boxTitle" data-lang="zh">视图</div>
             <div class="boxTitle" data-lang="en">View</div>
 
-            <div class="btnRow">
-              <button class="btn" id="btnLang" type="button">中 / EN</button>
+            <div class="viewRow">
+              <div class="langToggle" aria-label="Language">
+                <label>
+                  <input type="radio" name="langPick" id="langEN" value="en">
+                  EN
+                </label>
+                <label>
+                  <input type="radio" name="langPick" id="langZH" value="zh">
+                  中
+                </label>
+              </div>
+
+              <div class="zoomGroup">
+                <button class="btn" id="btnZoomOut" type="button" title="Zoom out">A-</button>
+                <button class="btn" id="btnZoomIn" type="button" title="Zoom in">A+</button>
+                <span class="zoomLabel" id="zoomLabel">100%</span>
+              </div>
+
               <button class="btn" id="btnPdf" type="button">Download PDF</button>
             </div>
 
@@ -280,11 +409,26 @@
             <div class="boxTitle" data-lang="en">Contents</div>
 
             <ul>
-              <li><a href="#effect" data-lang="zh">新的地图标准</a><a href="#effect" data-lang="en">New Mapping Standard</a></li>
-              <li><a href="#intro"  data-lang="zh">灰色地带过去的定义</a><a href="#intro" data-lang="en">Previous Definition</a></li>
-              <li><a href="#now"    data-lang="zh">现在的灰色地带</a><a href="#now" data-lang="en">“Gray Zone” Today</a></li>
-              <li><a href="#sources" data-lang="zh">来源与引用</a><a href="#sources" data-lang="en">Sources</a></li>
-              <li><a href="#updates" data-lang="zh">更新记录</a><a href="#updates" data-lang="en">Updates</a></li>
+              <li>
+                <a href="#effect" data-lang="en">New Mapping Standard</a>
+                <a href="#effect" data-lang="zh">新的地图标准</a>
+              </li>
+              <li>
+                <a href="#intro" data-lang="en">Previous Definition</a>
+                <a href="#intro" data-lang="zh">灰色地带过去的定义</a>
+              </li>
+              <li>
+                <a href="#now" data-lang="en">“Gray Zone” Today</a>
+                <a href="#now" data-lang="zh">现在的灰色地带</a>
+              </li>
+              <li>
+                <a href="#sources" data-lang="en">Sources</a>
+                <a href="#sources" data-lang="zh">来源与引用</a>
+              </li>
+              <li>
+                <a href="#updates" data-lang="en">Updates</a>
+                <a href="#updates" data-lang="zh">更新记录</a>
+              </li>
             </ul>
 
             <hr>
@@ -296,76 +440,78 @@
         </div>
       </div>
 
-      <!-- 文本区域 -->
+      <!-- Right reading pane -->
       <div class="right">
         <div class="scrollPane" id="scrollPane">
-          <div class="doc" role="document" id="doc">
-      
-            <h1 id="topTitle">
-              <span data-lang="zh">Project Gray Zone</span>
-              <span data-lang="en">Project Gray Zone</span>
-            </h1>
-      
-            <p data-lang="zh">Project Gray Zone是Kalyna OSINT于2026年2月12日启动的项目。灰色地带概念已经随战争形态变化而发生偏移，而我们的目标是更新公众对“灰色地带”的理解框架，推动OSINT社区转变在开源分析中对“灰色地带”的定义。本页将持续汇总定义、口径、案例与来源。</p>
-            <p data-lang="en">Project Gray Zone is a Kalyna OSINT initiative launched on February 12, 2026. As the concept of “gray zones” has shifted with changes in the character of war, our goal is to update the public framework for understanding them and to encourage the OSINT community to refine how “gray zones” are defined in open-source analysis. This page will be continuously maintained as a living reference, consolidating definitions, analytic criteria, cases, and sources.</p>
-      
-            <p data-lang="zh">该分析将随着研究和更多数据而持续更新，你所看到的并不是最终内容。你可以从Kalyna OSINT官方网站“项目”部分再次进入。</p>
-            <p data-lang="en">This analysis will be updated as research progresses and additional data becomes available; what you are reading is not the final version. You can revisit the latest iteration via the “Projects” section on the official Kalyna OSINT website.</p>
-      
-            <h2 id="effect">
-              <span data-lang="zh">新的地图参考标准</span>
-              <span data-lang="en">New Mapping Reference Standard</span>
-            </h2>
-      
-            <p data-lang="zh">随着我们更新对灰色地带的定义，我们的互动地图Kalyna Battle Map所绘制的前线也将参照这一标准发生改变。目前，我们将在第聂伯彼得罗浮斯克和扎波罗热地区率先使用这一标准。</p>
-            <p data-lang="en">As we revise our definition of gray zones, the front line depicted on our interactive map (Kalyna Battle Map) will be updated accordingly. We will apply this standard first in Dnipropetrovsk and Zaporizhzhia regions.</p>
-      
-            <p data-lang="zh">新的前线取消了灰色地带，只由红蓝控制区和它们重叠的部分构成，下文将详细解释这样做的含义。</p>
-            <p data-lang="en">Under the new approach, the “gray zone” layer is removed. The front line will consist only of red and blue control areas and the portions where these areas overlap. The implications of this change are explained below.</p>
-      
-            <h2 id="intro">
-              <span data-lang="zh">灰色地带在过去的定义</span>
-              <span data-lang="en">Previous Definitions of the Gray Zone</span>
-            </h2>
-      
-            <p data-lang="zh">在过去，特别是2023-2024年间，战争研究机构和开源分析社区对于灰色地带的定义主要是两种区域的叠加或其中一种：灰色地带和交战区。灰色地带代表着一片不存在战争双方阵地的区域；而交战区则代表着一片双方士兵都能临时进入并接触，但难以站稳脚跟的区域。</p>
-            <p data-lang="en">In earlier periods—especially across 2023–2024—research institutions and the OSINT community commonly used two related notions: a “gray zone” and a “contested zone.” The gray zone referred to areas where neither side held established positions, while the contested zone referred to areas where forces could temporarily enter and make contact but could not reliably consolidate control.</p>
-      
-            <p data-lang="zh">相对的，双方都存在稳定的控制线，在控制线内友军士兵占据所有阵地，控制所有增援路线，形成对区域的稳定控制，几乎无需担心存在敌方渗透。因此，在那一段时间通过地理定位来证实前线变化是十分容易的，受到对方攻击的定位代表友方稳定控制，受到友方攻击的定位代表敌方稳定控制，双方袭击频繁的区域则为交战区。</p>
-            <p data-lang="en">By contrast, both sides could maintain relatively stable control lines. Within these lines, friendly forces held positions and controlled reinforcement routes, leaving limited room for deep infiltration. As a result, geolocation-based verification of front-line changes was often straightforward: strikes attributed to the enemy typically indicated friendly control, strikes attributed to friendly forces often indicated enemy control, and areas with frequent mutual strikes were treated as contested.</p>
-      
-            <h2 id="now">
-              <span data-lang="zh">现在的“灰色地带”</span>
-              <span data-lang="en">What “Gray Zone” Means Today</span>
-            </h2>
-      
-            <p data-lang="zh">在2025年间，由于缺少真正的突破力量、实现目标所需要的人力和迫于宣传需要，俄罗斯军队大规模通过自杀式袭击或渗透的方式将步兵送入目标地点展示旗帜。这些士兵通过上述手段进入到目标地点并藏匿，他们无法得到来自稳定控制区的增援和补给，也难以仅凭自己站稳脚跟，他们的唯一任务是生存下去，而不是交战，甚至在一些情况下最好避免交战。</p>
-            <p data-lang="en">In 2025, limited breakthrough capacity, manpower constraints, and propaganda pressures led Russian forces to insert infantry into target locations at scale—often through high-risk assaults or infiltration intended to “show the flag.” After entering, these troops frequently concealed themselves without reliable reinforcement or resupply from stable control areas. In many cases, they could not realistically consolidate control on their own; their primary objective became survival rather than sustained combat—and sometimes avoiding contact altogether.</p>
-      
-            <p data-lang="zh">这是我们有关俄军<a href="https://www.zhihu.com/pin/1946648821078684789" target="_blank">第一次渗透波克罗夫斯克的报告</a>，以便你可以更好的理解上文所描述的现状。这种情况在几乎所有前线发生，相信大部分人都已有所耳闻。</p>
-            <p data-lang="en">For additional context, see our report on the Russian forces’ <a href="https://www.zhihu.com/pin/1946648821078684789" target="_blank">first infiltration into Pokrovsk</a>, which illustrates the dynamics described above. Variations of this pattern have appeared across much of the front, and many observers have already encountered similar accounts.</p>
-      
-            <p data-lang="zh">不仅如此，恶劣的天气和无人机的大量使用也让步兵渗透更加容易。</p>
-            <p data-lang="en">Moreover, adverse weather and the widespread use of drones have further altered the tactical environment, often making infantry infiltration easier than before.</p>
-      
-            <h2 id="sources">
-              <span data-lang="zh">来源与引用</span>
-              <span data-lang="en">Sources</span>
-            </h2>
-      
-            <div class="refs">
-              <p data-lang="zh">Martin. (n.d.). Post on X (Twitter). <a href="https://x.com/TuiteroMartin/status/2021980963253756136?s=20" target="_blank">https://x.com/TuiteroMartin/status/2021980963253756136?s=20</a></p>
-              <p data-lang="en">Martin. (n.d.). Post on X (Twitter). <a href="https://x.com/TuiteroMartin/status/2021980963253756136?s=20" target="_blank">https://x.com/TuiteroMartin/status/2021980963253756136?s=20</a></p>
+          <div class="docWrap" id="docWrap">
+            <div class="doc" role="document" id="doc">
+
+              <h1 id="topTitle">
+                <span data-lang="en">Project Gray Zone</span>
+                <span data-lang="zh">Project Gray Zone</span>
+              </h1>
+
+              <p data-lang="zh">Project Gray Zone是Kalyna OSINT于2026年2月12日启动的项目。灰色地带概念已经随战争形态变化而发生偏移，而我们的目标是更新公众对“灰色地带”的理解框架，推动OSINT社区转变在开源分析中对“灰色地带”的定义。本页将持续汇总定义、口径、案例与来源。</p>
+              <p data-lang="en">Project Gray Zone is a Kalyna OSINT initiative launched on February 12, 2026. As the concept of “gray zones” has shifted with changes in the character of war, our goal is to update the public framework for understanding them and to encourage the OSINT community to refine how “gray zones” are defined in open-source analysis. This page is maintained as a living reference, consolidating definitions, analytic criteria, cases, and sources.</p>
+
+              <p data-lang="zh">该分析将随着研究和更多数据而持续更新，你所看到的并不是最终内容。你可以从Kalyna OSINT官方网站“项目”部分再次进入。</p>
+              <p data-lang="en">This analysis will be updated as research progresses and additional data becomes available; what you are reading is not the final version. You can revisit the latest iteration via the “Projects” section on the official Kalyna OSINT website.</p>
+
+              <h2 id="effect">
+                <span data-lang="en">New Mapping Reference Standard</span>
+                <span data-lang="zh">新的地图参考标准</span>
+              </h2>
+
+              <p data-lang="zh">随着我们更新对灰色地带的定义，我们的互动地图Kalyna Battle Map所绘制的前线也将参照这一标准发生改变。目前，我们将在第聂伯彼得罗浮斯克和扎波罗热地区率先使用这一标准。</p>
+              <p data-lang="en">As we revise our definition of gray zones, the front line depicted on our interactive map (Kalyna Battle Map) will be updated accordingly. We will apply this standard first in the Dnipropetrovsk and Zaporizhzhia regions.</p>
+
+              <p data-lang="zh">新的前线取消了灰色地带，只由红蓝控制区和它们重叠的部分构成，下文将详细解释这样做的含义。</p>
+              <p data-lang="en">Under the new approach, the “gray zone” layer is removed. The front line will consist only of red and blue control areas and the portions where these areas overlap. The implications of this change are explained below.</p>
+
+              <h2 id="intro">
+                <span data-lang="en">Previous Definitions of the Gray Zone</span>
+                <span data-lang="zh">灰色地带在过去的定义</span>
+              </h2>
+
+              <p data-lang="zh">在过去，特别是2023-2024年间，战争研究机构和开源分析社区对于灰色地带的定义主要是两种区域的叠加或其中一种：灰色地带和交战区。灰色地带代表着一片不存在战争双方阵地的区域；而交战区则代表着一片双方士兵都能临时进入并接触，但难以站稳脚跟的区域。</p>
+              <p data-lang="en">In earlier periods—especially across 2023–2024—research institutions and the OSINT community commonly used two related notions: a “gray zone” and a “contested zone.” The gray zone referred to areas where neither side held established positions, while the contested zone referred to areas where forces could temporarily enter and make contact but could not reliably consolidate control.</p>
+
+              <p data-lang="zh">相对的，双方都存在稳定的控制线，在控制线内友军士兵占据所有阵地，控制所有增援路线，形成对区域的稳定控制，几乎无需担心存在敌方渗透。因此，在那一段时间通过地理定位来证实前线变化是十分容易的，受到对方攻击的定位代表友方稳定控制，受到友方攻击的定位代表敌方稳定控制，双方袭击频繁的区域则为交战区。</p>
+              <p data-lang="en">By contrast, both sides could maintain relatively stable control lines. Within these lines, friendly forces held positions and controlled reinforcement routes, leaving limited room for deep infiltration. As a result, geolocation-based verification of front-line changes was often straightforward: strikes attributed to the enemy typically indicated friendly control, strikes attributed to friendly forces often indicated enemy control, and areas with frequent mutual strikes were treated as contested.</p>
+
+              <h2 id="now">
+                <span data-lang="en">What “Gray Zone” Means Today</span>
+                <span data-lang="zh">现在的“灰色地带”</span>
+              </h2>
+
+              <p data-lang="zh">在2025年间，由于缺少真正的突破力量、实现目标所需要的人力和迫于宣传需要，俄罗斯军队大规模通过自杀式袭击或渗透的方式将步兵送入目标地点展示旗帜。这些士兵通过上述手段进入到目标地点并藏匿，他们无法得到来自稳定控制区的增援和补给，也难以仅凭自己站稳脚跟，他们的唯一任务是生存下去，而不是交战，甚至在一些情况下最好避免交战。</p>
+              <p data-lang="en">In 2025, limited breakthrough capacity, manpower constraints, and propaganda pressures led Russian forces to insert infantry into target locations at scale—often through high-risk assaults or infiltration intended to “show the flag.” After entering, these troops frequently concealed themselves without reliable reinforcement or resupply from stable control areas. In many cases, they could not realistically consolidate control on their own; their primary objective became survival rather than sustained combat—and sometimes avoiding contact altogether.</p>
+
+              <p data-lang="zh">这是我们有关俄军<a href="https://www.zhihu.com/pin/1946648821078684789" target="_blank" rel="noopener noreferrer">第一次渗透波克罗夫斯克的报告</a>，以便你可以更好的理解上文所描述的现状。这种情况在几乎所有前线发生，相信大部分人都已有所耳闻。</p>
+              <p data-lang="en">For additional context, see our report on the Russian forces’ <a href="https://www.zhihu.com/pin/1946648821078684789" target="_blank" rel="noopener noreferrer">first infiltration into Pokrovsk</a>, which illustrates the dynamics described above. Variations of this pattern have appeared across much of the front, and many observers have already encountered similar accounts.</p>
+
+              <p data-lang="zh">不仅如此，恶劣的天气和无人机的大量使用也让步兵渗透更加容易。</p>
+              <p data-lang="en">Moreover, adverse weather and the widespread use of drones have further altered the tactical environment, often making infantry infiltration easier than before.</p>
+
+              <h2 id="sources">
+                <span data-lang="en">Sources</span>
+                <span data-lang="zh">来源与引用</span>
+              </h2>
+
+              <div class="refs">
+                <p data-lang="en">Martin. (n.d.). Post on X (Twitter). <a href="https://x.com/TuiteroMartin/status/2021980963253756136?s=20" target="_blank" rel="noopener noreferrer">https://x.com/TuiteroMartin/status/2021980963253756136?s=20</a></p>
+                <p data-lang="zh">Martin. (n.d.). X（Twitter）帖子。 <a href="https://x.com/TuiteroMartin/status/2021980963253756136?s=20" target="_blank" rel="noopener noreferrer">https://x.com/TuiteroMartin/status/2021980963253756136?s=20</a></p>
+              </div>
+
+              <h2 id="updates">
+                <span data-lang="en">Update Log</span>
+                <span data-lang="zh">更新记录</span>
+              </h2>
+
+              <p data-lang="en">2026-02-14: Initial page structure (left-side contents + right-side Word/APA-style document pane).</p>
+              <p data-lang="zh">2026-02-14：页面结构初始化（左侧目录 + 右侧 Word/APA 文档滚动区）。</p>
+
             </div>
-      
-            <h2 id="updates">
-              <span data-lang="zh">更新记录</span>
-              <span data-lang="en">Update Log</span>
-            </h2>
-      
-            <p data-lang="zh">2026-02-14：页面结构初始化（左侧目录 + 右侧 Word/APA 文档滚动区）。</p>
-            <p data-lang="en">2026-02-14: Initial page structure (left-side contents + right-side Word/APA-style document pane).</p>
-      
           </div>
         </div>
       </div>
@@ -378,7 +524,7 @@
   'use strict';
 
   // =========================
-  // 0) DOM refs（全局只取一次）
+  // 0) DOM refs（只取一次）
   // =========================
   const root = document.getElementById('appRoot');
   const pane = document.getElementById('scrollPane');
@@ -392,52 +538,58 @@
   const btnNext  = document.getElementById('btnNext');
   const btnClear = document.getElementById('btnClear');
 
-  const btnLang  = document.getElementById('btnLang');
-  const btnPdf   = document.getElementById('btnPdf');
+  const btnPdf     = document.getElementById('btnPdf');
+  const langEN     = document.getElementById('langEN');
+  const langZH     = document.getElementById('langZH');
+
+  const btnZoomOut = document.getElementById('btnZoomOut');
+  const btnZoomIn  = document.getElementById('btnZoomIn');
+  const zoomLabel  = document.getElementById('zoomLabel');
 
   // =========================
   // 1) State（统一放这）
   // =========================
   const STATE = {
     lang: 'en',
+    zoom: 1,
     hits: [],
     activeIdx: -1
   };
 
   // =========================
-  // 2) Helpers
+  // 2) Utilities
   // =========================
-  function setText(el, s) {
-    if (el) el.textContent = s;
+  function safeGet(key){
+    try { return localStorage.getItem(key); } catch (e) { return null; }
   }
-
-  function clampMod(i, n) {
-    if (n <= 0) return -1;
-    return ((i % n) + n) % n;
+  function safeSet(key, val){
+    try { localStorage.setItem(key, val); } catch (e) {}
   }
-
-  function normalizeQuery(s) {
-    return (s || '').trim();
-  }
+  function setText(el, s) { if (el) el.textContent = s; }
+  function normalizeQuery(s){ return (s || '').trim(); }
+  function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+  function clampMod(i, n){ if(n<=0) return -1; return ((i % n) + n) % n; }
 
   // =========================
-  // 3) Anchors（目录跳转）
+  // 3) Anchors（目录跳转：滚动右侧 pane）
   // =========================
-  function onAnchorClick(e) {
+  function onAnchorClick(e){
     const a = e.currentTarget;
     const href = a.getAttribute('href');
-    if (!href || href === '#' || !href.startsWith('#')) return;
+    if(!href || href === '#' || !href.startsWith('#')) return;
 
     const id = href.slice(1);
     const target = document.getElementById(id);
-    if (!target) return;
+    if(!target) return;
 
     e.preventDefault();
     history.replaceState(null, '', '#' + id);
-    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // IMPORTANT: make sure it scrolls inside pane
+    target.scrollIntoView({ behavior:'smooth', block:'start' });
   }
 
-  function bindAnchors() {
+  function bindAnchors(){
     document.querySelectorAll('a[href^="#"]').forEach(a => {
       a.addEventListener('click', onAnchorClick);
     });
@@ -446,17 +598,17 @@
   // =========================
   // 4) Search / Highlight
   // =========================
-  function updateMeta(found, idx) {
-    if (!meta) return;
-
-    if (found === 0) {
+  function updateMeta(found, idx){
+    if(!meta) return;
+    if(found === 0){
       setText(meta, STATE.lang === 'zh' ? '0 个结果' : '0 results');
-    } else {
-      setText(meta, `${idx + 1} / ${found} ${STATE.lang === 'zh' ? '处匹配' : 'matches'}`);
+    }else{
+      setText(meta, `${idx+1} / ${found} ${STATE.lang === 'zh' ? '处匹配' : 'matches'}`);
     }
   }
 
-  function clearHighlights() {
+  function clearHighlights(){
+    if(!doc) return;
     doc.querySelectorAll('mark.hl').forEach(m => {
       m.replaceWith(document.createTextNode(m.textContent));
     });
@@ -464,31 +616,33 @@
     STATE.activeIdx = -1;
   }
 
-  function getSearchRootElements() {
+  function getSearchRootElements(){
     const selector = root.classList.contains('lang-en') ? '[data-lang="en"]' : '[data-lang="zh"]';
     return Array.from(doc.querySelectorAll(selector));
   }
 
-  function walkTextNodes(el, out) {
+  function walkTextNodes(el, out){
     const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
-      acceptNode(node) {
-        if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+      acceptNode(node){
+        if(!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
 
         const p = node.parentElement;
-        if (p && (p.tagName === 'SCRIPT' || p.tagName === 'STYLE')) return NodeFilter.FILTER_REJECT;
+        if(p && (p.tagName === 'SCRIPT' || p.tagName === 'STYLE')) return NodeFilter.FILTER_REJECT;
+        // avoid highlighting inside existing mark
+        if(p && p.tagName === 'MARK' && p.classList.contains('hl')) return NodeFilter.FILTER_REJECT;
+
         return NodeFilter.FILTER_ACCEPT;
       }
     });
-
     let n;
-    while ((n = walker.nextNode())) out.push(n);
+    while((n = walker.nextNode())) out.push(n);
   }
 
-  function setActive(i) {
+  function setActive(i){
     const hits = STATE.hits;
-    if (!hits.length) {
+    if(!hits.length){
       STATE.activeIdx = -1;
-      updateMeta(0, 0);
+      updateMeta(0,0);
       return;
     }
 
@@ -497,19 +651,16 @@
 
     const m = hits[STATE.activeIdx];
     m.classList.add('active');
-    m.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    m.scrollIntoView({ behavior:'smooth', block:'center' });
 
     updateMeta(hits.length, STATE.activeIdx);
   }
 
-  function highlightAll(query) {
+  function highlightAll(query){
     clearHighlights();
 
     const q2 = normalizeQuery(query);
-    if (!q2) {
-      updateMeta(0, 0);
-      return;
-    }
+    if(!q2){ updateMeta(0,0); return; }
 
     const needle = q2.toLowerCase();
     const targets = getSearchRootElements();
@@ -522,17 +673,17 @@
     textNodes.forEach(node => {
       const hay = node.nodeValue;
       const low = hay.toLowerCase();
-      if (low.indexOf(needle) === -1) return;
+      if(low.indexOf(needle) === -1) return;
 
       let start = 0;
       const parent = node.parentNode;
       const frag = document.createDocumentFragment();
 
-      while (true) {
+      while(true){
         const pos = low.indexOf(needle, start);
-        if (pos === -1) break;
+        if(pos === -1) break;
 
-        if (pos > start) frag.appendChild(document.createTextNode(hay.slice(start, pos)));
+        if(pos > start) frag.appendChild(document.createTextNode(hay.slice(start, pos)));
 
         const m = document.createElement('mark');
         m.className = 'hl';
@@ -543,90 +694,124 @@
         start = pos + q2.length;
       }
 
-      if (start < hay.length) frag.appendChild(document.createTextNode(hay.slice(start)));
+      if(start < hay.length) frag.appendChild(document.createTextNode(hay.slice(start)));
       parent.replaceChild(frag, node);
     });
 
     STATE.hits = hits;
 
-    if (hits.length) setActive(0);
-    else updateMeta(0, 0);
+    if(hits.length) setActive(0);
+    else updateMeta(0,0);
   }
 
-  function bindSearch() {
-    if (btnFind) btnFind.addEventListener('click', () => highlightAll(q.value));
-    if (q) {
+  function bindSearch(){
+    if(btnFind) btnFind.addEventListener('click', () => highlightAll(q.value));
+    if(q){
       q.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
+        if(e.key === 'Enter'){
           e.preventDefault();
           highlightAll(q.value);
         }
       });
     }
-    if (btnPrev) btnPrev.addEventListener('click', () => setActive(STATE.activeIdx - 1));
-    if (btnNext) btnNext.addEventListener('click', () => setActive(STATE.activeIdx + 1));
-    if (btnClear) btnClear.addEventListener('click', () => {
+    if(btnPrev) btnPrev.addEventListener('click', () => setActive(STATE.activeIdx - 1));
+    if(btnNext) btnNext.addEventListener('click', () => setActive(STATE.activeIdx + 1));
+    if(btnClear) btnClear.addEventListener('click', () => {
       q.value = '';
       clearHighlights();
-      updateMeta(0, 0);
+      updateMeta(0,0);
     });
   }
 
   // =========================
-  // 5) Language
+  // 5) Language (radio UI)
   // =========================
-  function applyLang(lang) {
+  function syncLangRadios(){
+    if(langEN) langEN.checked = (STATE.lang === 'en');
+    if(langZH) langZH.checked = (STATE.lang === 'zh');
+  }
+
+  function applyLang(lang){
     STATE.lang = (lang === 'zh') ? 'zh' : 'en';
 
     root.classList.toggle('lang-zh', STATE.lang === 'zh');
     root.classList.toggle('lang-en', STATE.lang === 'en');
 
-    // placeholder
-    if (q) q.placeholder = (STATE.lang === 'zh') ? q.dataset.phZh : q.dataset.phEn;
+    if(q) q.placeholder = (STATE.lang === 'zh') ? q.dataset.phZh : q.dataset.phEn;
 
     clearHighlights();
-    updateMeta(0, 0);
+    updateMeta(0,0);
 
-    // persist
-    try { localStorage.setItem('pgz_lang', STATE.lang); } catch (e) {}
+    syncLangRadios();
+    safeSet('pgz_lang', STATE.lang);
   }
 
-  function toggleLang() {
-    applyLang(STATE.lang === 'zh' ? 'en' : 'zh');
-  }
-
-  function bindLang() {
-    if (btnLang) btnLang.addEventListener('click', toggleLang);
+  function bindLang(){
+    if(langEN) langEN.addEventListener('change', () => { if(langEN.checked) applyLang('en'); });
+    if(langZH) langZH.addEventListener('change', () => { if(langZH.checked) applyLang('zh'); });
   }
 
   // =========================
-  // 6) PDF (Print)
+  // 6) Zoom (A-/A+)
   // =========================
-  function bindPdf() {
-    if (btnPdf) btnPdf.addEventListener('click', () => window.print());
+  function setZoom(z){
+    const nz = clamp(z, 0.8, 1.3);
+    STATE.zoom = nz;
+
+    if(doc){
+      doc.style.transform = `scale(${nz})`;
+      doc.style.transformOrigin = 'top center';
+    }
+
+    // give bottom room so scaled page won't look cut off
+    if(pane){
+      pane.style.paddingBottom = (nz > 1) ? `${Math.round((nz - 1) * 260)}px` : '0px';
+    }
+
+    if(zoomLabel) setText(zoomLabel, `${Math.round(nz * 100)}%`);
+    safeSet('pgz_zoom', String(nz));
+  }
+
+  function bindZoom(){
+    if(btnZoomOut) btnZoomOut.addEventListener('click', () => setZoom((STATE.zoom || 1) - 0.1));
+    if(btnZoomIn)  btnZoomIn.addEventListener('click', () => setZoom((STATE.zoom || 1) + 0.1));
   }
 
   // =========================
-  // 7) init（唯一入口）
+  // 7) PDF (Print)
   // =========================
-  function init() {
-    if (!root || !doc) return;
+  function bindPdf(){
+    if(btnPdf) btnPdf.addEventListener('click', () => window.print());
+  }
 
-    let saved = null;
-    try { saved = localStorage.getItem('pgz_lang'); } catch (e) {}
-    const initial = (saved === 'zh' || saved === 'en') ? saved : 'en';
+  // =========================
+  // 8) init（唯一入口）
+  // =========================
+  function init(){
+    if(!root || !doc) return;
 
     bindAnchors();
     bindSearch();
     bindLang();
+    bindZoom();
     bindPdf();
 
-    applyLang(initial);
+    // default EN unless saved
+    const savedLang = safeGet('pgz_lang');
+    const initialLang = (savedLang === 'zh' || savedLang === 'en') ? savedLang : 'en';
+    applyLang(initialLang);
+
+    // zoom default 100% unless saved
+    const savedZoom = parseFloat(safeGet('pgz_zoom') || '');
+    setZoom(Number.isFinite(savedZoom) ? savedZoom : 1);
+
+    // ensure meta shows 0 in correct language
+    updateMeta(0,0);
   }
 
-  if (document.readyState === 'loading') {
+  if(document.readyState === 'loading'){
     document.addEventListener('DOMContentLoaded', init);
-  } else {
+  }else{
     init();
   }
 })();
