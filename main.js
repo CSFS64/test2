@@ -1874,6 +1874,7 @@ toGeoJSONFeatureCollection = function(){
 
 /* ===================== 更新列表（静态示例数据） ===================== */
 const updates = [
+  { date: "2026-02-17", summary: "乌克兰国防军继续向第聂伯彼得罗夫斯克边境推进；乌克兰国防军清除了Prydorozhnje、Ternyvate、Kosivtseve的俄军。" },
   { date: "2026-02-15", summary: "乌克兰国防军继续在第聂伯彼得罗夫斯克边境开展清理/进攻行动。" },
   { date: "2026-02-14", summary: "乌克兰国防军正在扎波罗热/第聂伯彼得罗浮斯克交界处开展 <a href=\"https://CSFS64.github.io/test2/clearing-offensive.html\" target=\"_blank\">清理/进攻行动</a>，我们将优先针对该方向的情况进行更新——目前该地区最新前线已澄清。"},
   { date: "2025-12-29", summary: "更新了过去10天所有前线的变化" },
