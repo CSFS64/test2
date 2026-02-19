@@ -1876,7 +1876,7 @@ toGeoJSONFeatureCollection = function(){
 const updates = [
   { date: "2026-02-17", summary: "乌克兰国防军继续向第聂伯彼得罗夫斯克边境推进；乌克兰国防军清除了Prydorozhnje、Ternyvate、Kosivtseve的俄军。" },
   { date: "2026-02-15", summary: "乌克兰国防军继续在第聂伯彼得罗夫斯克边境开展清理/进攻行动。" },
-  { date: "2026-02-14", summary: "乌克兰国防军正在扎波罗热/第聂伯彼得罗浮斯克交界处开展 <a href="https://csfs64.github.io/KFN/#/article/gray-zone" target="_blank">清理/进攻行动</a>，我们将优先针对该方向的情况进行更新——目前该地区最新前线已澄清。"},
+  { date: "2026-02-14", summary: '乌克兰国防军正在扎波罗热/第聂伯彼得罗浮斯克交界处开展 <a href="https://csfs64.github.io/KFN/#/article/gray-zone" target="_blank">清理/进攻行动</a>，我们将优先针对该方向的情况进行更新——目前该地区最新前线已澄清。'},
   { date: "2025-12-29", summary: "更新了过去10天所有前线的变化" },
   { date: "2025-12-19", summary: "库皮扬斯克：1. 乌克兰国防军向库皮扬斯克推进；西维尔斯克：1. 俄军在西维尔斯克方向取得了部分成功；波克罗夫斯克：1. 乌克兰国防军已从Pankivka撤退；2. 俄军在波克罗夫斯克取得了部分成功。" },
   { date: "2025-12-16", summary: "库皮扬斯克：1. 乌克兰国防军向库皮扬斯克推进；西维尔斯克：1. 俄军在西维尔斯克方向取得了部分成功；波克罗夫斯克：1. 俄军被从Rivne和米尔诺格勒西南部击退；2. 俄军在米尔诺格勒南部取得了部分成功。" },
