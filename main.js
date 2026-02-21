@@ -1875,6 +1875,7 @@ toGeoJSONFeatureCollection = function(){
 /* ===================== 更新列表（静态示例数据） ===================== */
 const updates = [
   { date: "2026-02-21", summary: "乌克兰国防军已向Uspenivka推进。" },
+  { date: "2026-02-19", summary: "乌克兰国防军已向Solodke、Rivnopillya和Uspenivka推进。" },
   { date: "2026-02-18", summary: "乌克兰国防军已完成对Dbropillia的清理。" },
   { date: "2026-02-17", summary: "乌克兰国防军继续向第聂伯彼得罗夫斯克边境推进；乌克兰国防军清除了Prydorozhnje、Ternyvate、Kosivtseve的俄军。" },
   { date: "2026-02-15", summary: "乌克兰国防军继续在第聂伯彼得罗夫斯克边境开展清理/进攻行动。" },
