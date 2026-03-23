@@ -34,7 +34,8 @@
         const s = document.createElement('script');
         s.src = 'https://kalyna.homes/assets/hub-banner.js';
         s.defer = true;
-        s.dataset.base = location.origin + '/';
+        s.dataset.base = 'https://kalyna.homes/';
+        s.dataset.updatesJson = 'https://kalyna.homes/data/updates.json';
         s.dataset.updatesLink = 'https://kalyna.homes/#updates';
         s.dataset.autohide = '5000';
         s.dataset.edge = '8';
