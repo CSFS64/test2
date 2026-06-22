@@ -1874,6 +1874,7 @@ toGeoJSONFeatureCollection = function(){
 
 /* ===================== 更新列表（静态示例数据） ===================== */
 const updates = [
+  { date: "2026-06-22", summary: "乌克兰国防军在Hrushivske方向推进。" },
   { date: "2026-06-14", summary: "乌克兰国防军继续在亚历山德罗夫卡方向推进。" },
   { date: "2026-03-26", summary: "乌克兰国防军解放了Berezove。" },
   { date: "2026-03-17", summary: "乌克兰国防军继续向第聂伯彼得罗夫斯克边境推进。" },
