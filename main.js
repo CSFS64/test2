@@ -1874,6 +1874,7 @@ toGeoJSONFeatureCollection = function(){
 
 /* ===================== 更新列表（静态示例数据） ===================== */
 const updates = [
+  { date: "2026-07-23", summary: "乌克兰国防军继续在Komar方向上推进。" },
   { date: "2026-07-16", summary: "乌克兰国防军继续在Komar方向上推进。" },
   { date: "2026-07-14", summary: "乌克兰国防军解放了Zaporizke、Maliivka和Piddubne。" },
   { date: "2026-06-22", summary: "乌克兰国防军在Hrushivske方向推进。" },
