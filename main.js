@@ -1874,6 +1874,7 @@ toGeoJSONFeatureCollection = function(){
 
 /* ===================== 更新列表（静态示例数据） ===================== */
 const updates = [
+  { date: "2026-11-19", summary: "乌克兰国防军继续在Komar和大诺沃西尔卡方向上推进。" },
   { date: "2026-11-19", summary: "乌克兰国防军继续在Komar方向上推进。" },
   { date: "2026-08-10", summary: "乌克兰国防军继续在Komar方向上推进。" },
   { date: "2026-07-23", summary: "乌克兰国防军继续在Komar方向上推进。" },
